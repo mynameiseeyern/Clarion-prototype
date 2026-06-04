@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import * as Dialog from "@radix-ui/react-dialog"
-import { Monitor, MapPin, Globe, User, ChevronUp, ChevronDown, Maximize2, Minimize2, X } from "lucide-react"
+import { Monitor, MapPin, Globe, User, ChevronUp, ChevronDown, Maximize2, Minimize2, X, ArrowLeft } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getEndpointDetail } from "@/data/endpointDetail"
@@ -47,13 +47,15 @@ const TABS = [
 ]
 
 export function EndpointDrawer({
-  rows, index, onIndexChange, open, onOpenChange,
+  rows, index, onIndexChange, open, onOpenChange, onBack, backLabel,
 }: {
   rows: Endpoint[]
   index: number
   onIndexChange: (i: number) => void
   open: boolean
   onOpenChange: (o: boolean) => void
+  onBack?: () => void
+  backLabel?: string
 }) {
   const [expanded, setExpanded] = useState(false)
   const [tab, setTab] = useState("network")
