@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { KpiCard } from "./KpiCard"
 import { LegendItem } from "./primitives"
 import { locations, locationById, recentActivityFor, type RecentActivity, type Status } from "@/data/dashboard"
-import { rollupsForLocation, rollupsAll, type RollupCause, type Endpoint } from "@/data/endpoints"
+import { rollupsForLocation, rollupsAll, type RollupCause, type Rollup } from "@/data/endpoints"
 
 const iconMap: Record<string, LucideIcon> = { resolved: CircleCheck, time: Timer, auto: Bot }
 const causeIcon: Record<RollupCause, LucideIcon> = {
@@ -27,11 +27,11 @@ function aggregateRecent(): RecentActivity {
 export function ActiveAlertsCard({
   selectedId,
   onViewAll,
-  onOpenEndpoint,
+  onOpenAlert,
 }: {
   selectedId: string
   onViewAll: () => void
-  onOpenEndpoint: (rows: Endpoint[], index: number) => void
+  onOpenAlert: (r: Rollup) => void
 }) {
   const isAll = selectedId === "all"
   const loc = locationById(selectedId)
@@ -69,7 +69,7 @@ export function ActiveAlertsCard({
                 <button
                   key={r.id}
                   type="button"
-                  onClick={() => onOpenEndpoint(r.endpoints, 0)}
+                  onClick={() => onOpenAlert(r)}
                   className="group flex items-center gap-3 rounded-lg px-2 py-3 text-left transition-colors"
                   onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
