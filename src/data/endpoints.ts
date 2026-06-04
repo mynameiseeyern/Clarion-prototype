@@ -205,3 +205,37 @@ export function queryEndpoints(q: EndpointQuery): Endpoint[] {
   })
   return rows
 }
+
+// ---- Active alerts (derived from unhealthy endpoints) ----------------------
+
+export interface ActiveAlert {
+  id: string
+  endpoint: Endpoint
+  severity: Exclude<Status, "healthy">
+  reason: string
+  minutesAgo: number
+}
+
+const sev: Record<Status, number> = { critical: 0, warning: 1, healthy: 2 }
+
+export function activeAlertsForLocation(locId: string): ActiveAlert[] {
+  const loc = locations.find((l) => l.id === locId)
+  if (!loc) return []
+  const picked = endpoints
+    .filter((e) => e.locationId === locId && e.status !== "healthy")
+    .sort((a, b) => sev[a.status] - sev[b.status] || (a.score ?? 9) - (b.score ?? 9))
+    .slice(0, loc.activeAlerts)
+  return picked.map((e, i) => ({
+    id: `al-${e.id}`,
+    endpoint: e,
+    severity: e.status as Exclude<Status, "healthy">,
+    reason: e.primaryIssue ?? "Degraded",
+    minutesAgo: 3 + i * 9,
+  }))
+}
+
+export function activeAlertsAll(): ActiveAlert[] {
+  return locations
+    .flatMap((l) => activeAlertsForLocation(l.id))
+    .sort((a, b) => sev[a.severity] - sev[b.severity] || a.minutesAgo - b.minutesAgo)
+}
