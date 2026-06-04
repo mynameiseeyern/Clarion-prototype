@@ -1,11 +1,12 @@
 import { useMemo, useState, type ReactNode } from "react"
-import { Search, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, CircleCheck, X } from "lucide-react"
+import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, CircleCheck } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { LocalSearch } from "@/components/search/LocalSearch"
 import { locations } from "@/data/dashboard"
-import { queryEndpoints, type Endpoint, type EndpointStatus, type SortKey, type SortDir } from "@/data/endpoints"
+import { endpoints as allEndpoints, queryEndpoints, type Endpoint, type EndpointStatus, type SortKey, type SortDir } from "@/data/endpoints"
 
 const statusVar: Record<EndpointStatus, string> = {
   healthy: "var(--status-healthy)",
@@ -67,7 +68,6 @@ export function EndpointsTable({
   onOpenEndpoint: (rows: Endpoint[], index: number) => void
   openEndpointId?: string | null
 }) {
-  const [search, setSearch] = useState("")
   const [status, setStatus] = useState<EndpointStatus | "all">("all")
   const [issuesOnly, setIssuesOnly] = useState(true)
   const [sortKey, setSortKey] = useState<SortKey>("status")
@@ -80,10 +80,16 @@ export function EndpointsTable({
   const issuesActive = issuesOnly && status === "all"
 
   const rows = useMemo(() => {
-    let r = queryEndpoints({ search, locationId, status, sortKey, sortDir })
+    let r = queryEndpoints({ locationId, status, sortKey, sortDir })
     if (issuesActive) r = r.filter((e) => e.status !== "healthy")
     return r
-  }, [search, locationId, status, sortKey, sortDir, issuesActive])
+  }, [locationId, status, sortKey, sortDir, issuesActive])
+
+  // typeahead searches the page's endpoints (scoped to the current location)
+  const searchData = useMemo(
+    () => allEndpoints.filter((e) => locationId === "all" || e.locationId === locationId),
+    [locationId]
+  )
 
   // adaptive: only show the Primary issue column when something is actually wrong
   const showIssue = useMemo(() => rows.some((e) => e.primaryIssue !== null), [rows])
@@ -115,30 +121,25 @@ export function EndpointsTable({
 
       {/* toolbar */}
       <div className="flex flex-col gap-2 px-4 pb-4 sm:flex-row sm:items-center">
-        <div
-          className="flex h-9 w-full items-center gap-1.5 rounded-lg px-2.5 sm:max-w-xs"
-          style={{ background: "var(--bg-input-default)", border: "1px solid var(--border-input-default)" }}
-        >
-          <Search className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
-          <input
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); resetPage() }}
-            placeholder="Search user or machine…"
-            className="min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]"
-            style={{ color: "var(--fg-neutral-emphasis)" }}
-          />
-          {search && (
-            <button
-              type="button"
-              aria-label="Clear search"
-              onClick={() => { setSearch(""); resetPage() }}
-              className="flex size-5 shrink-0 items-center justify-center rounded-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]"
-              style={{ color: "var(--fg-neutral-muted)" }}
-            >
-              <X className="size-3.5" />
-            </button>
+        <LocalSearch
+          placeholder="Search user or machine…"
+          data={searchData}
+          toText={(e) => `${e.user} ${e.machine}`}
+          onSelect={(e) => onOpenEndpoint([e], 0)}
+          renderRow={(e) => (
+            <>
+              <Avatar className="size-7"><AvatarFallback>{initials(e.user)}</AvatarFallback></Avatar>
+              <div className="flex min-w-px flex-1 flex-col">
+                <span className="truncate text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{e.user}</span>
+                <span className="truncate font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{e.machine} · {e.locationName}</span>
+              </div>
+              <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
+                <span className="size-1.5 rounded-full" style={{ background: statusVar[e.status] }} />
+                {e.score === null ? "—" : e.score.toFixed(1)}
+              </span>
+            </>
           )}
-        </div>
+        />
         <div className="flex items-center gap-2 sm:ml-auto">
           <button
             type="button"
