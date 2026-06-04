@@ -3,11 +3,21 @@
 Prototype scope mapped to epics, stories and acceptance criteria. Status reflects
 the current prototype (dummy data): ✅ built · 🟡 partial · ⬜ backlog.
 
+**Terminology** (see the in-app Glossary + Issues-model pages):
+
+- **Issue** — a persistent, trackable problem affecting one or more endpoints (the feature; formerly "Alerts").
+- **Alert** — an ephemeral, real-time event on the bell that raises/updates an Issue.
+- **Symptom** — the per-endpoint observed condition (the Endpoints column; formerly "Primary issue").
+- **Status** — endpoint health: healthy / warning / critical / offline.
+- **Ticket** — an Issue escalated to ITSM (future).
+
 Structure:
 
-- **Overview** — Endpoints overview, Alerts overview
+- **Overview** — Endpoints overview, Issues overview
 - **Endpoints** — Endpoint table, Endpoint drilldown
-- **Alerts** — Alerts table, Alerts drilldown (impacted endpoints)
+- **Issues** — Issues table, Issue drilldown (impacted endpoints)
+- **Alerts (real-time)** — bell notifications
+- **Product development (internal)** — Glossary, Issues model
 - **Foundations & cross-cutting** — tokens, search, theming, live data
 
 ---
@@ -19,45 +29,36 @@ worst location / issue.
 
 ### 1.1 Endpoints overview (map + locations) ✅
 
-> As a supervisor, I want to see fleet endpoint health by region on a map and a
+> As a supervisor, I want fleet endpoint health by region on a map and a
 > locations list, so I can spot where problems are concentrated and drill in.
 
 Acceptance criteria
 
-- Fleet KPI strip: Online endpoints (with healthy/warning/critical split bar),
-  Active alerts, Clarity™ Network Score, plus "N total endpoints". ✅
+- Fleet KPI strip: Online endpoints (healthy/warning/critical split bar),
+  Open issues, Clarity™ Network Score, plus "N total endpoints". ✅
 - World map **clusters endpoints by country**; each country marker shows
   aggregated count + worst status. ✅
-- Drilling a country reveals its **cities/centres**; a city can be selected to
-  preview it. ✅
-- Locations list mirrors the map: regions at top level, cities one level down,
-  with an **"All locations"** control back to the world view; list is scrollable. ✅
-- Each city row has a drill affordance into that city's endpoints. ✅
-- KPI numbers stay internally consistent (country aggregates = sum of cities;
-  fleet total preserved). ✅
+- Drilling a country reveals its **cities/centres**; single-city countries
+  auto-select their city, multi-city countries let you choose. ✅
+- Locations list mirrors the map (regions → cities) with an **"All locations"**
+  control back to the world view; scrollable; per-city drill arrow. ✅
+- Per-location alert count is shown as **"N issues"**, consistent with the KPI. ✅
+- Country aggregates = sum of cities; fleet total preserved (2,847). ✅
 
-Backlog / next
+Backlog: real map tiles ⬜ · country-level endpoints filter ⬜
 
-- Real geographic map tiles instead of the stylised placeholder. ⬜
-- Country-level endpoints filter (currently endpoints filter is per-city). ⬜
+### 1.2 Issues overview (open issues card) ✅
 
-### 1.2 Alerts overview (active alerts) ✅
-
-> As a supervisor, I want the overview to summarise active alerts (or recent
-> recovery when clear), so I know if anything needs attention right now.
+> As a supervisor, I want the overview to summarise open issues (or recent
+> recovery when clear), so I know what needs attention now.
 
 Acceptance criteria
 
-- When there are active alerts, show a list of **rollups** — alerts grouped by
-  cause (e.g. "Elevated packet loss · 52 endpoints") with affected count, avatars
-  and "started Xm ago". ✅
-- Rollups mix multi-endpoint issues with **isolated, endpoint-specific** issues
-  (e.g. "High CPU utilisation" affecting 1). ✅
-- When there are no active alerts, show a **24h recovery snapshot**
-  (Resolved / Average time / Auto-fixed). ✅
-- Clicking a rollup opens the endpoint drilldown, flicking through that rollup's
-  affected endpoints. ✅
-- "View all alerts" navigates to the Alerts page. ✅
+- With open issues: a list of **issue rollups** (cause + affected count +
+  avatars + "started Xm ago"); mixes multi-endpoint rollups with isolated
+  single-endpoint issues. ✅
+- When clear: a **24h recovery snapshot** (Resolved / Average time / Auto-fixed). ✅
+- Clicking a rollup opens the **issue drilldown**; "View all issues" → Issues page. ✅
 
 ---
 
@@ -65,118 +66,116 @@ Acceptance criteria
 
 ### 2.1 Endpoint table ✅
 
-> As a supervisor, I want a filterable table of endpoints so I can triage which
-> ones need attention.
-
 Acceptance criteria
 
-- Columns: User / Machine, Status, Location (auto-hidden when filtered to one
-  location), Clarity™ Score, Primary issue. ✅
-- **Primary issue** is derived from telemetry vs thresholds (worst breaching
-  signal); shows "—" when healthy. ✅
-- Default sort **worst-first** (critical → warning → healthy, then lowest score). ✅
-- Sortable column headers; hostname/user search with clear button;
-  Location + Status filters; client-side pagination (10/15/25/50). ✅
+- Columns: User / Machine, Status, Location (auto-hidden when filtered),
+  Clarity™ Score, **Symptom**. ✅
+- **Symptom** is derived from telemetry vs thresholds (worst breaching signal);
+  "—" when healthy; column auto-hides when the view is all-healthy. ✅
+- Default sort **worst-first**: critical → warning → healthy → offline. ✅
+- Sortable headers, hostname/user search (clearable), Location + Status filters
+  (incl. **Offline**), client-side pagination. ✅
 - **"Issues only"** toggle (default on) hides healthy endpoints; mutually
   exclusive with an explicit Status selection. ✅
-- **Primary issue column auto-hides** when the current view is all-healthy;
-  all-clear empty state shown. ✅
-- Arriving via "View endpoints" pre-filters to the chosen location and the page
-  title reflects it. ✅
 - ~2,847 seeded endpoints, counts consistent with the Overview. ✅
 
-Backlog / next
-
-- Column chooser / saved views. ⬜
-- Bulk selection + actions. ⬜
-- Sticky severity grouping option (group stays even when sorting another column). ⬜
+Backlog: column chooser / saved views ⬜ · bulk actions ⬜ · sticky severity grouping ⬜
 
 ### 2.2 Endpoint drilldown ✅
 
-> As a supervisor, I want a detailed view of a single endpoint so I can diagnose
-> the cause without leaving the list.
-
 Acceptance criteria
 
-- Opens as a right-side sheet (CRM record style) from any table row, alert
-  rollup, or search result. ✅
+- Right-side sheet (CRM record style) from any table row, issue, or search result. ✅
 - Header: avatar, name, status, machine, location · ISP·IP · team · connection. ✅
-- Tabs: **Network** (internet health + speed/connection), **UC/CC platforms**
-  (per-platform metrics + "why this matters"), **Devices**, **System**. ✅
-- **Flick up/down** between endpoints (↑/↓ keys + buttons) within the current
-  sorted/filtered set; "N of M" indicator. ✅
-- **Expand** to a near-fullscreen dialog; lower page dimmed with the scrim token. ✅
-- When opened from an alert, a **"back to alert"** control returns to the rollup. ✅
+- Tabs: Network · UC/CC platforms · Devices · System. ✅
+- **Flick ↑/↓** between endpoints in the current set; "N of M". ✅
+- **Expand** to near-fullscreen over the scrim; **always opens as the side
+  drawer** (resets on open). ✅
+- Opened from an issue → a **"back to issue"** control returns to it. ✅
 
-Backlog / next
-
-- Historical charts / time-series per metric. ⬜
-- Actions (remote fix, message user, acknowledge). ⬜
-- "Open in new tab" / full-page route. ⬜
+Backlog: historical charts ⬜ · actions (remote fix / message) ⬜ · full-page route ⬜
 
 ---
 
-## Epic 3 — Alerts
+## Epic 3 — Issues
 
-### 3.1 Alerts table ✅
-
-> As a supervisor, I want a table of active alerts across the fleet so I can work
-> through them.
+### 3.1 Issues table ✅
 
 Acceptance criteria
 
-- Lists alert rollups fleet-wide: cause/title, location, affected count +
+- Lists issue rollups fleet-wide: cause/title, location, affected count +
   avatars, severity, started. ✅
 - Location + Severity filters, search, worst-first ordering. ✅
-- Row click opens the alert drilldown. ✅
+- Header counts read "N open · N endpoints". ✅
+- Row click opens the issue drilldown. ✅
 
-Backlog / next
+Backlog: acknowledge / resolve / snooze + lifecycle ⬜ · history tab ⬜ · pagination ⬜
 
-- Acknowledge / resolve / snooze actions + state. ⬜
-- Alert history / resolved tab. ⬜
-- Pagination once volume grows. ⬜
-
-### 3.2 Alert drilldown (impacted endpoints) ✅
-
-> As a supervisor, I want to open an alert and see every endpoint it impacts so I
-> can assess blast radius and jump to a specific endpoint.
+### 3.2 Issue drilldown (impacted endpoints) ✅
 
 Acceptance criteria
 
-- Sheet with alert header (cause, severity, location, affected count, started). ✅
-- **Lists impacted endpoints**; each row shows status + its specific reason. ✅
-- Clicking an impacted endpoint opens the endpoint drilldown (and can flick
-  through all impacted endpoints), with a back path to the alert. ✅
+- Sheet with issue header (cause, severity, location, affected count, started). ✅
+- **Lists impacted endpoints**, each with status + symptom. ✅
+- **Flick ↑/↓** between issues in the current set. ✅
+- Clicking an impacted endpoint opens the endpoint drilldown (flick through all
+  impacted), with a back path to the issue. ✅
+- Opens as a side sheet normally; **centered/expanded when reached from an alert**. ✅
 
-Backlog / next
+### 3.3 Issue severity & rollups ✅
 
-- Correlation hints ("3 other locations show the same cause"). ⬜
-- Per-alert timeline / activity. ⬜
+> As a supervisor, I want issues grouped and severity-rated meaningfully.
 
----
+Acceptance criteria
 
-## Epic 4 — Foundations & cross-cutting
-
-| Item | Story | Status |
-|---|---|---|
-| Design tokens | Build on the `@ir/tokens` primitive + semantic tokens; every component reads semantic tokens, light + dark. | ✅ |
-| shadcn component library | Themed shadcn components (button, card, badge, table, tabs, select, etc.) wired to Clarity tokens. | ✅ |
-| Global search (⌘K) | Command palette over endpoints + locations; selecting opens drilldown / filters endpoints. | ✅ |
-| Dark mode | Theme toggle flips all tokens via one `.dark` class. | ✅ |
-| Live streaming feel | "Streaming Xs ago" + jittering fleet numbers (online never exceeds total). | ✅ |
-| Sidebar nav | Overview / Endpoints / Alerts / Thresholds with active state + breadcrumb. | ✅ |
-| Thresholds page | Configure warning/critical limits per metric. | ⬜ |
-| Auth / roles | Sign-in, workspace switching, permissions. | ⬜ |
-| Real data / API | Replace dummy data with live telemetry + alerting engine. | ⬜ |
+- Unhealthy endpoints (warning+critical) sharing a **cause + location** roll up
+  into one issue with an affected count; offline excluded. ✅
+- **Severity = critical** if a platform outage **or** affected endpoints are
+  **majority-critical (≥ 50%)**; otherwise **warning**. ✅
+- Issue types: platform outage, packet loss, latency, jitter, isolated
+  endpoint issues. ✅
 
 ---
 
-## Key concepts (glossary)
+## Epic 4 — Alerts (real-time notifications)
 
-- **Rollup** — multiple endpoints sharing one cause, collated into a single alert
-  with an affected-endpoint count (vs. one row per endpoint).
-- **Primary issue** — the single worst-breaching signal for an endpoint, derived
-  from its metrics vs. thresholds.
-- **Cluster** — countries group their cities/centres on the map; drill a country
-  to see its cities.
-- **Clarity™ Network Score** — the headline 1.0–5.0 quality score (formerly MOS).
+### 4.1 Bell notifications ✅
+
+> As a supervisor, I want real-time alerts on the bell so I notice problems as
+> they happen.
+
+Acceptance criteria
+
+- Bell shows an **unread dot**; panel lists alerts **newest-first**. ✅
+- Severities: critical / warning / info (e.g. recovery). ✅
+- Per-alert actions: **read**, **dismiss/clear**, **mute that type** (1/8/24h);
+  plus "Mark all read". ✅
+- Alerts **arrive live** (first ~10s, then ~every minute) to illustrate the flow. ✅
+- Clicking an alert **navigates to its area** and **opens the related issue
+  drilldown (centered)**; recovery alerts open Endpoints. ✅
+
+Backlog: real event stream ⬜ · per-user preferences ⬜ · alert → ticket ⬜
+
+---
+
+## Epic 5 — Product development (internal, not shipped)
+
+### 5.1 Glossary ✅ — shared definitions of every concept.
+### 5.2 Issues model ✅ — issue types, alert types & linkage, status, and the
+rollup severity calculation (with worked examples).
+
+---
+
+## Epic 6 — Foundations & cross-cutting
+
+| Item | Status |
+|---|---|
+| Design tokens (`@ir/tokens`) — semantic tokens, light + dark | ✅ |
+| Themed shadcn component library | ✅ |
+| Global search (⌘K) — endpoints + locations | ✅ |
+| Dark mode (single `.dark` class) | ✅ |
+| Live "streaming" feel (online never exceeds total) | ✅ |
+| Sidebar nav + breadcrumb + responsive/full-width drawers on mobile | ✅ |
+| Thresholds page | ⬜ |
+| Auth / roles / workspace switching | ⬜ |
+| Real data / API (telemetry + alerting engine) | ⬜ |
