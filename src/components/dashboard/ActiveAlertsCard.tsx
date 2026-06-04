@@ -43,7 +43,7 @@ export function ActiveAlertsCard({
     <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
       <div className="flex items-center justify-between p-4" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Active alerts</h2>
+          <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Open issues</h2>
           {rollups.length > 0 && (
             <span className="flex h-5 items-center rounded-full px-2 text-xs font-medium" style={{ background: "var(--bg-danger-subtle)", color: "var(--fg-on-danger-subtle)" }}>
               {rollups.length}
@@ -51,7 +51,7 @@ export function ActiveAlertsCard({
           )}
         </div>
         <Button variant="outline" size="sm" className="gap-1.5" onClick={onViewAll}>
-          View all alerts
+          View all issues
           <ArrowRight className="size-4" />
         </Button>
       </div>
@@ -59,7 +59,7 @@ export function ActiveAlertsCard({
       {rollups.length > 0 ? (
         <>
           <div className="px-4 pt-3 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
-            {rollups.length} alert{rollups.length === 1 ? "" : "s"} · {totalAffected.toLocaleString()} endpoints affected in {name}
+            {rollups.length} issue{rollups.length === 1 ? "" : "s"} · {totalAffected.toLocaleString()} endpoints affected in {name}
           </div>
           <div className="flex flex-col p-2">
             {rollups.map((r, i) => {
@@ -112,7 +112,7 @@ export function ActiveAlertsCard({
         <div className="flex flex-col gap-0.5 px-4 py-4">
           <p className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
             <CircleCheck className="size-4" style={{ color: "var(--fg-success)" }} />
-            No active alerts in {name}
+            No open issues in {name}
           </p>
           <p className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
             Recent activity for this location · last 24 h

@@ -44,9 +44,9 @@ export function AlertsTable({
   return (
     <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
       <div className="flex items-center gap-2 px-4 py-4">
-        <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Alerts</h2>
+        <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Issues</h2>
         <span className="flex h-5 items-center rounded-full px-2 text-xs font-medium" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>
-          {rows.length} active · {totalAffected.toLocaleString()} endpoints
+          {rows.length} open · {totalAffected.toLocaleString()} endpoints
         </span>
       </div>
 
@@ -54,7 +54,7 @@ export function AlertsTable({
       <div className="flex flex-col gap-2 px-4 pb-4 sm:flex-row sm:items-center">
         <div className="flex h-9 w-full items-center gap-1.5 rounded-lg px-2.5 sm:max-w-xs" style={{ background: "var(--bg-input-default)", border: "1px solid var(--border-input-default)" }}>
           <Search className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search alerts…"
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search issues…"
             className="min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]" style={{ color: "var(--fg-neutral-emphasis)" }} />
           {search && (
             <button type="button" aria-label="Clear search" onClick={() => setSearch("")} className="flex size-5 shrink-0 items-center justify-center rounded-sm hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }}>
@@ -85,7 +85,7 @@ export function AlertsTable({
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr style={{ borderBottom: "1px solid var(--border-neutral-muted)", background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>
-              <th className="h-10 px-4 text-left text-xs font-medium">Alert</th>
+              <th className="h-10 px-4 text-left text-xs font-medium">Issue</th>
               <th className="h-10 px-4 text-left text-xs font-medium">Location</th>
               <th className="h-10 px-4 text-left text-xs font-medium">Affected</th>
               <th className="h-10 px-4 text-left text-xs font-medium">Severity</th>
@@ -127,7 +127,7 @@ export function AlertsTable({
               )
             })}
             {rows.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-16 text-center text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No alerts match your filters — all clear.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-16 text-center text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No issues match your filters — all clear.</td></tr>
             )}
           </tbody>
         </table>

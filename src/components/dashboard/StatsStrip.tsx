@@ -34,7 +34,7 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
           </div>
         </KpiCard>
 
-        <KpiCard title="Active alerts" icon={Siren} value={String(live.activeAlerts)}>
+        <KpiCard title="Open issues" icon={Siren} value={String(live.activeAlerts)}>
           <SegmentedBar
             segments={[
               { status: "warning", flex: 5 },

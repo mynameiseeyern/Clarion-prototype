@@ -179,7 +179,7 @@ export function EndpointsTable({
               <SortHeader label="Status" col="status" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
               {showLocation && <SortHeader label="Location" col="location" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />}
               <SortHeader label="Clarity Score" col="score" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
-              {showIssue && <SortHeader label="Primary issue" col="issue" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />}
+              {showIssue && <SortHeader label="Symptom" col="issue" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />}
               <th className="w-10" />
             </tr>
           </thead>
