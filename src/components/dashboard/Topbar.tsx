@@ -24,11 +24,13 @@ export function Topbar({
   dark,
   onToggleTheme,
   onToggleSidebar,
+  onOpenSearch,
 }: {
   page: PageId
   dark: boolean
   onToggleTheme: () => void
   onToggleSidebar: () => void
+  onOpenSearch: () => void
 }) {
   return (
     <header
@@ -54,23 +56,25 @@ export function Topbar({
       </div>
 
       <div className="flex items-center gap-4">
-        <div
-          className="flex h-8 w-[373px] max-w-[40vw] items-center gap-1.5 rounded-lg px-2.5 py-1"
+        <button
+          type="button"
+          onClick={onOpenSearch}
+          className="flex h-8 w-[373px] max-w-[40vw] items-center gap-1.5 rounded-lg px-2.5 py-1 text-left transition-colors"
           style={{ background: "var(--bg-input-default)", border: "1px solid var(--border-input-default)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--border-input-hovered)")}
+          onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border-input-default)")}
         >
           <Search className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
-          <input
-            className="min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]"
-            style={{ color: "var(--fg-neutral-emphasis)" }}
-            placeholder="Search endpoints, users, locations..."
-          />
+          <span className="min-w-px flex-1 truncate text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
+            Search endpoints, users, locations...
+          </span>
           <kbd
             className="flex h-5 min-w-5 items-center justify-center gap-1 rounded-sm px-1 text-xs font-medium"
             style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}
           >
-            ⌘F
+            ⌘K
           </kbd>
-        </div>
+        </button>
         <div className="flex items-center gap-2">
           <IconButton label="Toggle theme" onClick={onToggleTheme}>
             {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}

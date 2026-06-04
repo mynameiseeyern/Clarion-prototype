@@ -5,8 +5,11 @@ import { Topbar } from "@/components/dashboard/Topbar"
 import { OverviewPage } from "@/pages/OverviewPage"
 import { EndpointsPage } from "@/pages/EndpointsPage"
 import { PlaceholderPage } from "@/pages/PlaceholderPage"
+import { EndpointDrawer } from "@/components/endpoints/drawer/EndpointDrawer"
+import { CommandPalette } from "@/components/search/CommandPalette"
 import { useStreaming } from "@/hooks/useStreaming"
 import { DEFAULT_LOCATION, locationById } from "@/data/dashboard"
+import type { Endpoint } from "@/data/endpoints"
 import { pageLabel, type PageId } from "@/nav"
 
 export default function App() {
@@ -15,16 +18,32 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string>(DEFAULT_LOCATION)
   const [endpointFilter, setEndpointFilter] = useState<string>("all")
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [drawer, setDrawer] = useState<{ rows: Endpoint[]; index: number } | null>(null)
+  const [searchOpen, setSearchOpen] = useState(false)
   const live = useStreaming()
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark)
   }, [dark])
 
+  // ⌘K / Ctrl-K opens the command palette
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault()
+        setSearchOpen((v) => !v)
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
+
   const handleViewEndpoints = () => {
     setEndpointFilter(selectedId === "all" ? "all" : selectedId)
     setPage("endpoints")
   }
+
+  const openEndpointId = drawer ? drawer.rows[drawer.index]?.id ?? null : null
 
   return (
     <div className="flex h-screen w-full items-start overflow-hidden" style={{ background: "var(--bg-app)" }}>
@@ -44,6 +63,7 @@ export default function App() {
           dark={dark}
           onToggleTheme={() => setDark((v) => !v)}
           onToggleSidebar={() => setSidebarOpen((v) => !v)}
+          onOpenSearch={() => setSearchOpen(true)}
         />
 
         <div className="shrink-0 p-5" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
@@ -70,7 +90,12 @@ export default function App() {
             />
           )}
           {page === "endpoints" && (
-            <EndpointsPage locationId={endpointFilter} onLocationChange={setEndpointFilter} />
+            <EndpointsPage
+              locationId={endpointFilter}
+              onLocationChange={setEndpointFilter}
+              onOpenEndpoint={(rows, index) => setDrawer({ rows, index })}
+              openEndpointId={openEndpointId}
+            />
           )}
           {page === "alerts" && (
             <PlaceholderPage
@@ -88,6 +113,23 @@ export default function App() {
           )}
         </div>
       </div>
+
+      {/* global endpoint drilldown */}
+      <EndpointDrawer
+        rows={drawer?.rows ?? []}
+        index={drawer?.index ?? 0}
+        open={drawer !== null}
+        onIndexChange={(i) => setDrawer((d) => (d ? { ...d, index: i } : d))}
+        onOpenChange={(o) => { if (!o) setDrawer(null) }}
+      />
+
+      {/* global command palette */}
+      <CommandPalette
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        onPickEndpoint={(e) => setDrawer({ rows: [e], index: 0 })}
+        onPickLocation={(id) => { setEndpointFilter(id); setPage("endpoints") }}
+      />
     </div>
   )
 }

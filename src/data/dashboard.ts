@@ -28,7 +28,7 @@ export const fleet = {
 
 export const locations: LocationRow[] = [
   { id: "london", name: "London HQ", status: "healthy", endpoints: 612, issues: 0, activeAlerts: 0, healthy: 612, warning: 0, critical: 0, score: 4.41 },
-  { id: "manilla", name: "Manilla CC", status: "critical", endpoints: 1184, issues: 6, activeAlerts: 4, healthy: 1031, warning: 89, critical: 64, score: 3.52 },
+  { id: "manilla", name: "Manila CC", status: "critical", endpoints: 1184, issues: 6, activeAlerts: 4, healthy: 1031, warning: 89, critical: 64, score: 3.52 },
   { id: "newyork", name: "New York", status: "warning", endpoints: 487, issues: 3, activeAlerts: 2, healthy: 441, warning: 38, critical: 8, score: 4.02 },
   { id: "bangalore", name: "Bangalore", status: "warning", endpoints: 346, issues: 2, activeAlerts: 1, healthy: 318, warning: 24, critical: 4, score: 4.11 },
   { id: "sydney", name: "Sydney", status: "healthy", endpoints: 218, issues: 0, activeAlerts: 0, healthy: 218, warning: 0, critical: 0, score: 4.36 },

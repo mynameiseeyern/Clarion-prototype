@@ -1,12 +1,11 @@
 import { useMemo, useState, type ReactNode } from "react"
-import { Search, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, CircleCheck } from "lucide-react"
+import { Search, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, CircleCheck, X } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { locations, type Status } from "@/data/dashboard"
 import { queryEndpoints, type Endpoint, type SortKey, type SortDir } from "@/data/endpoints"
-import { EndpointDrawer } from "./drawer/EndpointDrawer"
 
 const statusVar: Record<Status, string> = {
   healthy: "var(--status-healthy)",
@@ -60,10 +59,12 @@ export function EndpointsTable({
   locationId,
   onLocationChange,
   onOpenEndpoint,
+  openEndpointId,
 }: {
   locationId: string
   onLocationChange: (id: string) => void
-  onOpenEndpoint?: (e: Endpoint) => void
+  onOpenEndpoint: (rows: Endpoint[], index: number) => void
+  openEndpointId?: string | null
 }) {
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState<Status | "all">("all")
@@ -72,7 +73,6 @@ export function EndpointsTable({
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(15)
-  const [openIdx, setOpenIdx] = useState<number | null>(null)
 
   const showLocation = locationId === "all"
   // "Issues only" applies unless the user has picked an explicit status
@@ -100,7 +100,6 @@ export function EndpointsTable({
   const resetPage = () => setPage(1)
 
   return (
-    <>
     <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
       {/* header */}
       <div className="flex items-center gap-2 px-4 py-4">
@@ -127,6 +126,17 @@ export function EndpointsTable({
             className="min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]"
             style={{ color: "var(--fg-neutral-emphasis)" }}
           />
+          {search && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => { setSearch(""); resetPage() }}
+              className="flex size-5 shrink-0 items-center justify-center rounded-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]"
+              style={{ color: "var(--fg-neutral-muted)" }}
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
           <button
@@ -174,11 +184,11 @@ export function EndpointsTable({
           <tbody>
             {pageRows.map((e, i) => {
               const absoluteIndex = (safePage - 1) * pageSize + i
-              const isSel = openIdx === absoluteIndex
+              const isSel = openEndpointId === e.id
               return (
                 <tr
                   key={e.id}
-                  onClick={() => { setOpenIdx(absoluteIndex); onOpenEndpoint?.(e) }}
+                  onClick={() => onOpenEndpoint(rows, absoluteIndex)}
                   className="group cursor-pointer transition-colors"
                   style={{
                     borderBottom: "1px solid var(--border-neutral-subtle)",
@@ -294,15 +304,6 @@ export function EndpointsTable({
         </div>
       </div>
     </Card>
-
-    <EndpointDrawer
-      rows={rows}
-      index={openIdx ?? 0}
-      open={openIdx !== null}
-      onIndexChange={setOpenIdx}
-      onOpenChange={(o) => { if (!o) setOpenIdx(null) }}
-    />
-    </>
   )
 }
 
