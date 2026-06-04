@@ -16,10 +16,11 @@ const statusVar: Record<Status, string> = {
 
 /* ---------------- Map ---------------- */
 function MapPanel({
-  country, setCountry, selectedId, onSelect, onViewEndpoints,
+  country, onEnterCountry, onBack, selectedId, onSelect, onViewEndpoints,
 }: {
   country: string | null
-  setCountry: (id: string | null) => void
+  onEnterCountry: (id: string) => void
+  onBack: () => void
   selectedId: string
   onSelect: (id: string) => void
   onViewEndpoints: (locId?: string) => void
@@ -34,7 +35,7 @@ function MapPanel({
         <h2 className="flex items-center gap-1.5 text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
           {ctry ? (
             <>
-              <button type="button" onClick={() => setCountry(null)} className="rounded p-0.5 transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }} aria-label="Back to world">
+              <button type="button" onClick={onBack} className="rounded p-0.5 transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }} aria-label="Back to world">
                 <ArrowLeft className="size-4" />
               </button>
               Endpoints in <span style={{ color: "var(--fg-link-default)" }}>{ctry.name}</span>
@@ -63,7 +64,7 @@ function MapPanel({
 
           {/* world view: country clusters */}
           {!country && cs.map((c) => (
-            <button key={c.id} type="button" onClick={() => setCountry(c.id)} aria-label={c.name}
+            <button key={c.id} type="button" onClick={() => onEnterCountry(c.id)} aria-label={c.name}
               className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 focus:outline-none"
               style={{ left: `${c.x}%`, top: `${c.y}%` }}>
               <span className="flex items-center gap-1.5 rounded-full px-2 py-1 shadow-md transition-transform hover:scale-105"
@@ -111,10 +112,10 @@ function MapPanel({
 
 /* ---------------- Locations / regions panel ---------------- */
 function LocationsPanel({
-  country, setCountry, selectedId, onSelect, onViewEndpoints, onAllLocations,
+  country, onEnterCountry, selectedId, onSelect, onViewEndpoints, onAllLocations,
 }: {
   country: string | null
-  setCountry: (id: string | null) => void
+  onEnterCountry: (id: string) => void
   selectedId: string
   onSelect: (id: string) => void
   onViewEndpoints: (locId?: string) => void
@@ -146,7 +147,7 @@ function LocationsPanel({
       <div className="flex max-h-[312px] flex-col overflow-y-auto">
         {!country
           ? cs.map((c) => (
-              <button key={c.id} type="button" onClick={() => setCountry(c.id)}
+              <button key={c.id} type="button" onClick={() => onEnterCountry(c.id)}
                 className="group relative flex items-center justify-between gap-2 p-4 text-left transition-colors"
                 style={{ borderBottom: "1px solid var(--border-neutral-subtle)", background: "var(--bg-card)" }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)")}
@@ -214,6 +215,12 @@ export function MapAndLocations({
     if (loc) setCountry(loc.countryId)
     onSelect(id)
   }
+  // entering a country auto-selects its top city (map marker + list + panels follow)
+  const handleEnterCountry = (id: string) => {
+    const cities = citiesInCountry(id)
+    if (cities[0]) handleSelectCity(cities[0].id)
+    else setCountry(id)
+  }
   const handleAllLocations = () => {
     setCountry(null)
     onSelect("all")
@@ -222,8 +229,8 @@ export function MapAndLocations({
   return (
     <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
       <div className="flex flex-col lg:flex-row">
-        <MapPanel country={country} setCountry={setCountry} selectedId={selectedId} onSelect={handleSelectCity} onViewEndpoints={onViewEndpoints} />
-        <LocationsPanel country={country} setCountry={setCountry} selectedId={selectedId} onSelect={handleSelectCity} onViewEndpoints={onViewEndpoints} onAllLocations={handleAllLocations} />
+        <MapPanel country={country} onEnterCountry={handleEnterCountry} onBack={handleAllLocations} selectedId={selectedId} onSelect={handleSelectCity} onViewEndpoints={onViewEndpoints} />
+        <LocationsPanel country={country} onEnterCountry={handleEnterCountry} selectedId={selectedId} onSelect={handleSelectCity} onViewEndpoints={onViewEndpoints} onAllLocations={handleAllLocations} />
       </div>
     </Card>
   )
