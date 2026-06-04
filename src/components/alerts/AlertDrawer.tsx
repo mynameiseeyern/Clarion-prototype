@@ -1,6 +1,6 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import * as Dialog from "@radix-ui/react-dialog"
-import { X, MapPin, Clock, Users, Siren, Wifi, Activity, Gauge, ChevronRight, ChevronUp, ChevronDown, type LucideIcon } from "lucide-react"
+import { X, MapPin, Clock, Users, Siren, Wifi, Activity, Gauge, ChevronRight, ChevronUp, ChevronDown, Maximize2, Minimize2, type LucideIcon } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import type { Status } from "@/data/dashboard"
 import type { Rollup, RollupCause, Endpoint, EndpointStatus } from "@/data/endpoints"
@@ -41,7 +41,7 @@ function IconBtn({ children, label, onClick, disabled }: { children: React.React
 }
 
 export function AlertDrawer({
-  rows, index, onIndexChange, open, onOpenChange, onOpenEndpoint,
+  rows, index, onIndexChange, open, onOpenChange, onOpenEndpoint, defaultExpanded = false,
 }: {
   rows: Rollup[]
   index: number
@@ -49,7 +49,13 @@ export function AlertDrawer({
   open: boolean
   onOpenChange: (o: boolean) => void
   onOpenEndpoint: (rows: Endpoint[], index: number) => void
+  /** open centered/expanded (used by the alert → issue flow) */
+  defaultExpanded?: boolean
 }) {
+  const [expanded, setExpanded] = useState(defaultExpanded)
+  // reset the view mode each time the drawer opens
+  useEffect(() => { if (open) setExpanded(defaultExpanded) }, [open, defaultExpanded])
+
   const go = (delta: number) => {
     const next = index + delta
     if (next >= 0 && next < rows.length) onIndexChange(next)
@@ -70,13 +76,17 @@ export function AlertDrawer({
   const Icon = causeIcon[rollup.cause]
   const tone = sevTone[rollup.severity]
 
+  const contentClass = expanded
+    ? "fixed left-1/2 top-1/2 z-50 flex h-[92vh] w-[920px] max-w-[96vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
+    : "fixed right-0 top-0 z-50 flex h-full w-full flex-col overflow-hidden shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:w-[600px] sm:max-w-[95vw]"
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 data-[state=open]:animate-in data-[state=open]:fade-in-0" style={{ background: "var(--bg-scrim)" }} />
         <Dialog.Content
-          className="fixed right-0 top-0 z-50 flex h-full w-full flex-col overflow-hidden shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:w-[600px] sm:max-w-[95vw]"
-          style={{ background: "var(--bg-card)", borderLeft: "1px solid var(--border-neutral-muted)" }}
+          className={contentClass}
+          style={{ background: "var(--bg-card)", border: expanded ? "1px solid var(--border-neutral-muted)" : undefined, borderLeft: expanded ? undefined : "1px solid var(--border-neutral-muted)" }}
         >
           {/* utility bar */}
           <div className="flex shrink-0 items-center justify-between px-3 py-2" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
@@ -87,7 +97,12 @@ export function AlertDrawer({
                 <Siren className="size-3.5" /> Issue {index + 1} <span style={{ color: "var(--fg-neutral-subtle)" }}>of {rows.length}</span>
               </span>
             </div>
-            <IconBtn label="Close" onClick={() => onOpenChange(false)}><X className="size-4" /></IconBtn>
+            <div className="flex items-center gap-1">
+              <IconBtn label={expanded ? "Collapse" : "Expand"} onClick={() => setExpanded((v) => !v)}>
+                {expanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              </IconBtn>
+              <IconBtn label="Close" onClick={() => onOpenChange(false)}><X className="size-4" /></IconBtn>
+            </div>
           </div>
 
           {/* header */}

@@ -33,8 +33,8 @@ export default function App() {
   const [alertFilter, setAlertFilter] = useState<string>("all")
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [drawer, setDrawer] = useState<{ rows: Endpoint[]; index: number } | null>(null)
-  const [alertDrawer, setAlertDrawer] = useState<{ rows: Rollup[]; index: number } | null>(null)
-  const [backAlert, setBackAlert] = useState<{ rows: Rollup[]; index: number } | null>(null)
+  const [alertDrawer, setAlertDrawer] = useState<{ rows: Rollup[]; index: number; expanded?: boolean } | null>(null)
+  const [backAlert, setBackAlert] = useState<{ rows: Rollup[]; index: number; expanded?: boolean } | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const live = useStreaming()
 
@@ -101,7 +101,7 @@ export default function App() {
             if (rows.length) {
               const cause = alertTypeToCause[a.type]
               const idx = Math.max(0, rows.findIndex((r) => r.cause === cause))
-              setAlertDrawer({ rows, index: idx })
+              setAlertDrawer({ rows, index: idx, expanded: true })
             }
           }}
         />
@@ -173,6 +173,7 @@ export default function App() {
       <AlertDrawer
         rows={alertDrawer?.rows ?? []}
         index={alertDrawer?.index ?? 0}
+        defaultExpanded={alertDrawer?.expanded ?? false}
         open={alertDrawer !== null}
         onIndexChange={(i) => setAlertDrawer((d) => (d ? { ...d, index: i } : d))}
         onOpenChange={(o) => { if (!o) setAlertDrawer(null) }}

@@ -62,6 +62,9 @@ export function EndpointDrawer({
   const e = rows[index]
   const detail = useMemo(() => (e ? getEndpointDetail(e) : null), [e])
 
+  // always open as the side drawer (never persist a previous expanded view)
+  useEffect(() => { if (open) setExpanded(false) }, [open])
+
   const go = (delta: number) => {
     const next = index + delta
     if (next >= 0 && next < rows.length) onIndexChange(next)
