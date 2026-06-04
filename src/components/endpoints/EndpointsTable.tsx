@@ -163,8 +163,8 @@ export function EndpointsTable({
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="critical">Critical</SelectItem>
               <SelectItem value="warning">Warning</SelectItem>
-              <SelectItem value="offline">Offline</SelectItem>
               <SelectItem value="healthy">Healthy</SelectItem>
+              <SelectItem value="offline">Offline</SelectItem>
             </SelectContent>
           </Select>
         </div>

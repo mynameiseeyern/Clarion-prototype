@@ -177,7 +177,7 @@ export const endpoints: Endpoint[] = generate()
 export type SortKey = "status" | "user" | "location" | "score" | "issue"
 export type SortDir = "asc" | "desc"
 
-const severity: Record<EndpointStatus, number> = { critical: 0, offline: 1, warning: 2, healthy: 3 }
+const severity: Record<EndpointStatus, number> = { critical: 0, warning: 1, healthy: 2, offline: 3 }
 
 export interface EndpointQuery {
   search?: string
@@ -227,7 +227,7 @@ export interface ActiveAlert {
   minutesAgo: number
 }
 
-const sev: Record<EndpointStatus, number> = { critical: 0, offline: 1, warning: 2, healthy: 3 }
+const sev: Record<EndpointStatus, number> = { critical: 0, warning: 1, healthy: 2, offline: 3 }
 
 export function activeAlertsForLocation(locId: string): ActiveAlert[] {
   const loc = locations.find((l) => l.id === locId)
