@@ -158,7 +158,7 @@ function LocationsPanel({
                 onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "var(--bg-card)")}>
                 <span className="flex min-w-px items-center gap-2">
-                  <StatusDot status={c.status} />
+                  <StatusDot status={countrySeverity(c.id)} />
                   <span className="truncate text-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>{c.name}</span>
                   <span className="shrink-0 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{c.cityCount} cities</span>
                 </span>
