@@ -99,9 +99,11 @@ function MapPanel({
 function LocationsPanel({
   selectedId,
   onSelect,
+  onViewEndpoints,
 }: {
   selectedId: string
   onSelect: (id: string) => void
+  onViewEndpoints: (locId?: string) => void
 }) {
   const totalEndpoints = locations.reduce((s, l) => s + l.endpoints, 0)
   const totalIssues = locations.reduce((s, l) => s + l.issues, 0)
@@ -121,11 +123,9 @@ function LocationsPanel({
         {rows.map((loc) => {
           const isSelected = loc.id === selectedId
           return (
-            <button
+            <div
               key={loc.id}
-              type="button"
-              onClick={() => onSelect(loc.id)}
-              className="relative flex items-center justify-between gap-2 p-4 text-left transition-colors"
+              className="group relative flex items-stretch transition-colors"
               style={{
                 borderBottom: "1px solid var(--border-neutral-subtle)",
                 background: isSelected ? "var(--bg-neutral-subtle-hovered)" : "var(--bg-card)",
@@ -138,19 +138,38 @@ function LocationsPanel({
               {isSelected && (
                 <span className="absolute left-0 top-0 h-full w-0.5" style={{ background: "var(--border-focused)" }} />
               )}
-              <span className="flex items-center gap-2">
-                {loc.status && <StatusDot status={loc.status} />}
-                <span className="text-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>{loc.name}</span>
-              </span>
-              <span
-                className="flex items-center gap-1 font-mono text-xs"
-                style={{ color: isSelected ? "var(--fg-neutral-emphasis)" : "var(--fg-neutral-muted)" }}
+              {/* select / preview on map */}
+              <button
+                type="button"
+                onClick={() => onSelect(loc.id)}
+                className="flex min-w-px flex-1 items-center justify-between gap-2 py-4 pl-4 pr-2 text-left"
               >
-                <span>{loc.endpoints.toLocaleString()} endpoints</span>
-                <span>·</span>
-                <span>{loc.issues === 0 ? "No issues" : `${loc.issues} issues`}</span>
-              </span>
-            </button>
+                <span className="flex items-center gap-2">
+                  {loc.status && <StatusDot status={loc.status} />}
+                  <span className="text-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>{loc.name}</span>
+                </span>
+                <span
+                  className="flex items-center gap-1 font-mono text-xs"
+                  style={{ color: isSelected ? "var(--fg-neutral-emphasis)" : "var(--fg-neutral-muted)" }}
+                >
+                  <span>{loc.endpoints.toLocaleString()} endpoints</span>
+                  <span>·</span>
+                  <span>{loc.issues === 0 ? "No issues" : `${loc.issues} issues`}</span>
+                </span>
+              </button>
+              {/* drill into this location's endpoints */}
+              <button
+                type="button"
+                aria-label={`View ${loc.name} endpoints`}
+                onClick={() => onViewEndpoints(loc.id)}
+                className="flex w-10 shrink-0 items-center justify-center transition-colors hover:bg-[var(--bg-neutral-subtle-pressed)]"
+              >
+                <ChevronRight
+                  className="size-4 opacity-40 transition-opacity group-hover:opacity-100"
+                  style={{ color: "var(--fg-neutral-muted)" }}
+                />
+              </button>
+            </div>
           )
         })}
       </div>
