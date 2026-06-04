@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, ChevronRight } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { StatusDot, LegendItem } from "./primitives"
@@ -25,14 +25,14 @@ function MapPanel({
       className="flex w-full flex-col lg:w-[654px] lg:shrink-0"
       style={{ borderRight: "1px solid var(--border-neutral-subtle)" }}
     >
-      <div className="flex items-start justify-between p-4">
+      <div className="flex items-center justify-between p-4">
         <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
           Endpoints in{" "}
           <span style={{ color: "var(--fg-link-default)" }}>{selected?.name ?? "—"}</span>
         </h2>
-        <Button variant="ghost" size="sm" className="h-6 gap-1 px-2 text-xs" onClick={onViewEndpoints}>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={onViewEndpoints}>
           View endpoints
-          <ArrowRight className="size-3" />
+          <ArrowRight className="size-4" />
         </Button>
       </div>
 
