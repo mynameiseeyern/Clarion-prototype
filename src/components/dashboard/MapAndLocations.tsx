@@ -178,13 +178,15 @@ function LocationsPanel({
                   {isSelected && <span className="absolute left-0 top-0 h-full w-0.5" style={{ background: "var(--border-focused)" }} />}
                   <button type="button" onClick={() => onSelect(loc.id)} className="flex min-w-px flex-1 items-center justify-between gap-2 py-4 pl-4 pr-2 text-left">
                     <span className="flex min-w-px items-center gap-2">
-                      {loc.status && <StatusDot status={loc.status} />}
+                      <StatusDot status={locationSeverity(loc.id)} />
                       <span className="truncate text-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>{loc.name}</span>
                     </span>
                     <span className="flex shrink-0 items-center gap-1 whitespace-nowrap font-mono text-xs" style={{ color: isSelected ? "var(--fg-neutral-emphasis)" : "var(--fg-neutral-muted)" }}>
-                      <span>{loc.endpoints.toLocaleString()} endpoints</span>
-                      <span>·</span>
-                      <span>{loc.activeAlerts === 0 ? "No issues" : `${loc.activeAlerts} issue${loc.activeAlerts === 1 ? "" : "s"}`}</span>
+                      {(() => { const n = locationIssueCount(loc.id); return (<>
+                        <span>{loc.endpoints.toLocaleString()} endpoints</span>
+                        <span>·</span>
+                        <span>{n === 0 ? "No issues" : `${n} issue${n === 1 ? "" : "s"}`}</span>
+                      </>) })()}
                     </span>
                   </button>
                   <button type="button" aria-label={`View ${loc.name} endpoints`} onClick={() => onViewEndpoints(loc.id)}
