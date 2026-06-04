@@ -98,6 +98,17 @@ export function EndpointDrawer({
           {/* utility bar */}
           <div className="flex shrink-0 items-center justify-between px-3 py-2" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
             <div className="flex items-center gap-1">
+              {onBack && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="mr-1 flex h-8 items-center gap-1.5 rounded-md pl-1.5 pr-2.5 text-xs font-medium transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]"
+                  style={{ color: "var(--fg-neutral-muted)" }}
+                >
+                  <ArrowLeft className="size-4" />
+                  <span className="max-w-[160px] truncate">{backLabel ?? "Back"}</span>
+                </button>
+              )}
               <IconBtn label="Previous endpoint" onClick={() => go(-1)} disabled={index === 0}><ChevronUp className="size-4" /></IconBtn>
               <IconBtn label="Next endpoint" onClick={() => go(1)} disabled={index === rows.length - 1}><ChevronDown className="size-4" /></IconBtn>
               <span className="ml-1 text-xs font-medium tabular-nums" style={{ color: "var(--fg-neutral-muted)" }}>
