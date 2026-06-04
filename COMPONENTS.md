@@ -1,5 +1,9 @@
 # Clarity — component rules
 
+> Terminology note: **Issue** = persistent problem record (feature), **Alert** =
+> real-time bell notification, **Symptom** = per-endpoint condition. Full
+> definitions live in the in-app Glossary / Issues-model pages.
+
 How shadcn components and dashboard elements bind to the Clarity semantic
 tokens (`@ir/tokens`). The bridge lives in `src/index.css` (`@theme inline`),
 which aliases shadcn's variable names to the Clarity semantic layer, so the
@@ -64,8 +68,9 @@ stock shadcn class names resolve to Clarity values automatically.
   accent; workspace icon tile `--bg-neutral-emphasis` / `--fg-on-neutral-emphasis`.
 - **KPI card** — title `.text-heading-sm` on `--fg-neutral-emphasis`; metric
   `.text-metric-xl` (JetBrains Mono); top-right icon `--fg-neutral-subtle`.
-- **Status dot** — fill from `--status-{healthy|warning|critical|info|unknown}`,
-  `1px` ring in `--bg-card`, `--shadow-xs`.
+- **Status dot** — fill from `--status-{healthy|warning|critical|info|unknown}`.
+  Endpoint statuses map: healthy/warning/critical → matching status tokens;
+  **offline → `--status-unknown`** (neutral grey). `1px` ring in `--bg-card`, `--shadow-xs`.
 - **Segmented bar** — equal flex segments filled with `--status-healthy`,
   `--status-warning`, `--status-critical`.
 - **Legend** — dot = status token, label `.text-body-xs` on `--fg-neutral-emphasis`
