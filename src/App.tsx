@@ -143,7 +143,7 @@ export default function App() {
         rollup={alertDrawer}
         open={alertDrawer !== null}
         onOpenChange={(o) => { if (!o) setAlertDrawer(null) }}
-        onOpenEndpoint={(rows, index) => { setAlertDrawer(null); setDrawer({ rows, index }) }}
+        onOpenEndpoint={(rows, index) => { setBackRollup(alertDrawer); setAlertDrawer(null); setDrawer({ rows, index }) }}
       />
 
       {/* global command palette */}
