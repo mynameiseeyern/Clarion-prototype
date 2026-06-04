@@ -15,8 +15,10 @@ const REFRESH_EVERY = 5 // seconds
  */
 export function useStreaming(): LiveFleet {
   const base = fleetTotals()
+  // `offline` is how many of the fleet aren't reporting right now, so online
+  // can only ever dip BELOW total — never exceed it.
   const [secondsAgo, setSecondsAgo] = useState(0)
-  const [jitter, setJitter] = useState({ online: 0, score: 0 })
+  const [jitter, setJitter] = useState({ offline: 0, score: 0 })
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -25,7 +27,7 @@ export function useStreaming(): LiveFleet {
         if (next >= REFRESH_EVERY) {
           // re-roll the stream
           setJitter({
-            online: Math.floor((Math.random() - 0.5) * 8),
+            offline: Math.floor(Math.random() * 12),
             score: Math.round((Math.random() - 0.5) * 0.08 * 100) / 100,
           })
           return 0
@@ -38,7 +40,7 @@ export function useStreaming(): LiveFleet {
 
   return {
     ...base,
-    online: base.online + jitter.online,
+    online: Math.max(0, Math.min(base.endpoints, base.online - jitter.offline)),
     score: Math.min(5, Math.max(1, base.score + jitter.score)),
     secondsAgo,
   }
