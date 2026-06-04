@@ -215,11 +215,16 @@ export function MapAndLocations({
     if (loc) setCountry(loc.countryId)
     onSelect(id)
   }
-  // entering a country auto-selects its top city (map marker + list + panels follow)
+  // entering a country: auto-select only when it has a single city; otherwise
+  // just drill in with nothing selected
   const handleEnterCountry = (id: string) => {
     const cities = citiesInCountry(id)
-    if (cities[0]) handleSelectCity(cities[0].id)
-    else setCountry(id)
+    if (cities.length === 1) {
+      handleSelectCity(cities[0].id)
+    } else {
+      setCountry(id)
+      onSelect("all")
+    }
   }
   const handleAllLocations = () => {
     setCountry(null)
