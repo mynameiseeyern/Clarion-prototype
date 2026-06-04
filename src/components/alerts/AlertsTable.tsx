@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react"
-import { Siren, Wifi, Activity, Gauge, ChevronRight, type LucideIcon } from "lucide-react"
+import { Search, X, Siren, Wifi, Activity, Gauge, ChevronRight, type LucideIcon } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-import { LocalSearch } from "@/components/search/LocalSearch"
 import { locations, type Status } from "@/data/dashboard"
 import { rollupsAll, type Rollup, type RollupCause } from "@/data/endpoints"
 
@@ -27,15 +26,18 @@ export function AlertsTable({
   onOpenAlert: (rollups: Rollup[], index: number) => void
   openAlertId?: string | null
 }) {
+  const [search, setSearch] = useState("")
   const [severity, setSeverity] = useState<"all" | "critical" | "warning">("all")
 
   const rows = useMemo(() => {
+    const term = search.trim().toLowerCase()
     return rollupsAll().filter((r) => {
       if (locationId !== "all" && r.locationId !== locationId) return false
       if (severity !== "all" && r.severity !== severity) return false
+      if (term && !`${r.title} ${r.locationName}`.toLowerCase().includes(term)) return false
       return true
     })
-  }, [locationId, severity])
+  }, [search, locationId, severity])
 
   const totalAffected = rows.reduce((s, r) => s + r.affected, 0)
 
@@ -50,26 +52,16 @@ export function AlertsTable({
 
       {/* toolbar */}
       <div className="flex flex-col gap-2 px-4 pb-4 sm:flex-row sm:items-center">
-        <LocalSearch
-          placeholder="Search issues…"
-          data={rows}
-          toText={(r) => `${r.title} ${r.locationName}`}
-          onSelect={(r) => { const i = rows.findIndex((x) => x.id === r.id); onOpenAlert(rows, i < 0 ? 0 : i) }}
-          renderRow={(r) => {
-            const Icon = causeIcon[r.cause]
-            const tone = sevTone[r.severity]
-            return (
-              <>
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-lg" style={{ background: tone.bg, color: tone.fg }}><Icon className="size-4" /></span>
-                <div className="flex min-w-px flex-1 flex-col">
-                  <span className="truncate text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{r.title}</span>
-                  <span className="truncate text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{r.locationName} · {r.affected} endpoints</span>
-                </div>
-                <span className="text-xs font-semibold uppercase" style={{ color: tone.fg }}>{cap(r.severity)}</span>
-              </>
-            )
-          }}
-        />
+        <div className="flex h-9 w-full items-center gap-1.5 rounded-lg px-2.5 sm:max-w-xs" style={{ background: "var(--bg-input-default)", border: "1px solid var(--border-input-default)" }}>
+          <Search className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search issues…"
+            className="min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]" style={{ color: "var(--fg-neutral-emphasis)" }} />
+          {search && (
+            <button type="button" aria-label="Clear search" onClick={() => setSearch("")} className="flex size-5 shrink-0 items-center justify-center rounded-sm hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }}>
+              <X className="size-3.5" />
+            </button>
+          )}
+        </div>
         <div className="flex items-center gap-2 sm:ml-auto">
           <Select value={locationId} onValueChange={onLocationChange}>
             <SelectTrigger className="h-9"><SelectValue placeholder="Location" /></SelectTrigger>
