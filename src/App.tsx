@@ -1,23 +1,29 @@
 import { useEffect, useState } from "react"
+import { Monitor, TriangleAlert, SlidersHorizontal } from "lucide-react"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { Topbar } from "@/components/dashboard/Topbar"
-import { StatsStrip } from "@/components/dashboard/StatsStrip"
-import { MapAndLocations } from "@/components/dashboard/MapAndLocations"
-import { ActiveAlertsCard } from "@/components/dashboard/ActiveAlertsCard"
+import { OverviewPage } from "@/pages/OverviewPage"
+import { PlaceholderPage } from "@/pages/PlaceholderPage"
+import { useStreaming } from "@/hooks/useStreaming"
+import { DEFAULT_LOCATION } from "@/data/dashboard"
+import { pageLabel, type PageId } from "@/nav"
 
 export default function App() {
   const [dark, setDark] = useState(false)
+  const [page, setPage] = useState<PageId>("overview")
+  const [selectedId, setSelectedId] = useState<string>(DEFAULT_LOCATION)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const live = useStreaming()
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark)
   }, [dark])
 
   return (
-    <div
-      className="flex h-screen w-full items-start overflow-hidden"
-      style={{ background: "var(--bg-app)" }}
-    >
-      <Sidebar />
+    <div className="flex h-screen w-full items-start overflow-hidden" style={{ background: "var(--bg-app)" }}>
+      {sidebarOpen && (
+        <Sidebar active={page} onNavigate={setPage} secondsAgo={live.secondsAgo} />
+      )}
 
       <div
         className="flex h-full min-w-px flex-1 flex-col overflow-hidden"
@@ -26,23 +32,44 @@ export default function App() {
           borderRight: "1px solid var(--border-neutral-muted)",
         }}
       >
-        <Topbar dark={dark} onToggleTheme={() => setDark((v) => !v)} />
+        <Topbar
+          page={page}
+          dark={dark}
+          onToggleTheme={() => setDark((v) => !v)}
+          onToggleSidebar={() => setSidebarOpen((v) => !v)}
+        />
 
-        {/* page title band */}
-        <div
-          className="shrink-0 p-5"
-          style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}
-        >
+        <div className="shrink-0 p-5" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
           <h1 className="text-xl font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
-            Overview
+            {pageLabel(page)}
           </h1>
         </div>
 
-        {/* scrollable content */}
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
-          <StatsStrip />
-          <MapAndLocations />
-          <ActiveAlertsCard />
+        <div className="flex flex-1 flex-col overflow-y-auto p-4">
+          {page === "overview" && (
+            <OverviewPage live={live} selectedId={selectedId} onSelect={setSelectedId} onNavigate={setPage} />
+          )}
+          {page === "endpoints" && (
+            <PlaceholderPage
+              title="Endpoints"
+              icon={Monitor}
+              description="A searchable table of every monitored endpoint across your fleet — status, Clarity Network Score, jitter, latency and packet loss."
+            />
+          )}
+          {page === "alerts" && (
+            <PlaceholderPage
+              title="Alerts"
+              icon={TriangleAlert}
+              description="Triage active alerts across all locations, acknowledge or resolve them, and review alert history."
+            />
+          )}
+          {page === "thresholds" && (
+            <PlaceholderPage
+              title="Thresholds"
+              icon={SlidersHorizontal}
+              description="Configure the warning and critical limits that drive alerting for each network quality metric."
+            />
+          )}
         </div>
       </div>
     </div>
