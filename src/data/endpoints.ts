@@ -301,7 +301,11 @@ export function rollupsForLocation(locId: string): Rollup[] {
   const rollupWanted = Math.max(1, slots - singlesWanted)
 
   const multi: Rollup[] = groupArr.slice(0, rollupWanted).map(([key, g], i) => {
-    const severity: Exclude<Status, "healthy"> = g.eps.some((e) => e.status === "critical") ? "critical" : "warning"
+    // Issue severity = critical only for a platform outage OR when affected
+    // endpoints are majority-critical; otherwise it's a warning-level issue.
+    const criticalCount = g.eps.filter((e) => e.status === "critical").length
+    const severity: Exclude<Status, "healthy"> =
+      g.cause === "platform" || criticalCount * 2 >= g.eps.length ? "critical" : "warning"
     return {
       id: `ru-${locId}-${key}`,
       locationId: locId,
@@ -317,7 +321,15 @@ export function rollupsForLocation(locId: string): Rollup[] {
 
   const used = new Set(multi.flatMap((r) => r.endpoints.map((e) => e.id)))
   const singlesPool = unhealthy.filter((e) => !used.has(e.id))
-  const singles: Rollup[] = singlesPool.slice(0, singlesWanted).map((e, i) => ({
+  // interleave critical + warning so single-endpoint issues carry a mix of severities
+  const critPool = singlesPool.filter((e) => e.status === "critical")
+  const warnPool = singlesPool.filter((e) => e.status === "warning")
+  const interleaved: Endpoint[] = []
+  for (let i = 0; i < Math.max(critPool.length, warnPool.length); i++) {
+    if (critPool[i]) interleaved.push(critPool[i])
+    if (warnPool[i]) interleaved.push(warnPool[i])
+  }
+  const singles: Rollup[] = interleaved.slice(0, singlesWanted).map((e, i) => ({
     id: `ru1-${e.id}`,
     locationId: locId,
     locationName: loc.name,
