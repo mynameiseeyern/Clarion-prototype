@@ -56,14 +56,15 @@ function SortHeader({
 const PAGE_SIZES = [10, 15, 25, 50]
 
 export function EndpointsTable({
-  initialLocationId = "all",
+  locationId,
+  onLocationChange,
   onOpenEndpoint,
 }: {
-  initialLocationId?: string
+  locationId: string
+  onLocationChange: (id: string) => void
   onOpenEndpoint?: (e: Endpoint) => void
 }) {
   const [search, setSearch] = useState("")
-  const [locationId, setLocationId] = useState(initialLocationId)
   const [status, setStatus] = useState<Status | "all">("all")
   const [issuesOnly, setIssuesOnly] = useState(true)
   const [sortKey, setSortKey] = useState<SortKey>("status")
@@ -136,7 +137,7 @@ export function EndpointsTable({
           >
             Issues only
           </button>
-          <Select value={locationId} onValueChange={(v) => { setLocationId(v); resetPage() }}>
+          <Select value={locationId} onValueChange={(v) => { onLocationChange(v); resetPage() }}>
             <SelectTrigger className="h-9"><SelectValue placeholder="Location" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All locations</SelectItem>
