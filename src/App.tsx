@@ -23,6 +23,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [drawer, setDrawer] = useState<{ rows: Endpoint[]; index: number } | null>(null)
   const [alertDrawer, setAlertDrawer] = useState<Rollup | null>(null)
+  const [backRollup, setBackRollup] = useState<Rollup | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const live = useStreaming()
 
@@ -132,7 +133,9 @@ export default function App() {
         index={drawer?.index ?? 0}
         open={drawer !== null}
         onIndexChange={(i) => setDrawer((d) => (d ? { ...d, index: i } : d))}
-        onOpenChange={(o) => { if (!o) setDrawer(null) }}
+        onOpenChange={(o) => { if (!o) { setDrawer(null); setBackRollup(null) } }}
+        backLabel={backRollup ? backRollup.title : undefined}
+        onBack={backRollup ? () => { setDrawer(null); setAlertDrawer(backRollup); setBackRollup(null) } : undefined}
       />
 
       {/* alert rollup drilldown */}
