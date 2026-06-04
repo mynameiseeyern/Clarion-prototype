@@ -76,6 +76,11 @@ export default function App() {
           onToggleTheme={() => setDark((v) => !v)}
           onToggleSidebar={() => setSidebarOpen((v) => !v)}
           onOpenSearch={() => setSearchOpen(true)}
+          onViewIssues={() => { setAlertFilter("all"); setPage("alerts") }}
+          onAlertNavigate={(a) => {
+            if (a.navTo === "endpoints") { setEndpointFilter(a.locationId ?? "all"); setPage("endpoints") }
+            else { setAlertFilter(a.locationId ?? "all"); setPage("alerts") }
+          }}
         />
 
         <div className="shrink-0 p-5" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>

@@ -27,12 +27,16 @@ export function Topbar({
   onToggleTheme,
   onToggleSidebar,
   onOpenSearch,
+  onAlertNavigate,
+  onViewIssues,
 }: {
   page: PageId
   dark: boolean
   onToggleTheme: () => void
   onToggleSidebar: () => void
   onOpenSearch: () => void
+  onAlertNavigate: (a: AlertNotification) => void
+  onViewIssues: () => void
 }) {
   return (
     <header
@@ -81,7 +85,7 @@ export function Topbar({
           <IconButton label="Toggle theme" onClick={onToggleTheme}>
             {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </IconButton>
-          <IconButton label="Notifications"><Bell className="size-4" /></IconButton>
+          <NotificationsBell onNavigate={onAlertNavigate} onViewIssues={onViewIssues} />
           <IconButton label="Account"><CircleUserRound className="size-4" /></IconButton>
         </div>
       </div>
