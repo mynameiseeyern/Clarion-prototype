@@ -87,6 +87,7 @@ export default function App() {
               onSelect={setSelectedId}
               onViewEndpoints={handleViewEndpoints}
               onViewAllAlerts={() => setPage("alerts")}
+              onOpenEndpoint={(rows, index) => setDrawer({ rows, index })}
             />
           )}
           {page === "endpoints" && (
