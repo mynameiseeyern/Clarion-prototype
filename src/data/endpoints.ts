@@ -265,21 +265,32 @@ function categorize(e: Endpoint): { cause: RollupCause; key: string; title: stri
   return { cause: "other", key: "other", title: "Degraded performance" }
 }
 
+// Isolated, endpoint-specific issues that don't pertain to other endpoints.
+const singleReasons = ["High CPU utilisation", "Memory pressure", "Headset disconnected", "Agent app crash"]
+
 export function rollupsForLocation(locId: string): Rollup[] {
   const loc = locations.find((l) => l.id === locId)
-  if (!loc) return []
-  const unhealthy = endpoints.filter((e) => e.locationId === locId && e.status !== "healthy")
+  if (!loc || loc.activeAlerts === 0) return []
+  const slots = loc.activeAlerts
+  const unhealthy = endpoints
+    .filter((e) => e.locationId === locId && e.status !== "healthy")
+    .sort((a, b) => sev[a.status] - sev[b.status] || (a.score ?? 9) - (b.score ?? 9))
 
+  // group by cause
   const groups = new Map<string, { title: string; cause: RollupCause; eps: Endpoint[] }>()
   for (const e of unhealthy) {
     const { cause, key, title } = categorize(e)
     if (!groups.has(key)) groups.set(key, { title, cause, eps: [] })
     groups.get(key)!.eps.push(e)
   }
+  const groupArr = [...groups.entries()].sort((a, b) => b[1].eps.length - a[1].eps.length)
 
-  const rollups: Rollup[] = [...groups.entries()].map(([key, g], i) => {
-    const eps = g.eps.sort((a, b) => sev[a.status] - sev[b.status] || (a.score ?? 9) - (b.score ?? 9))
-    const severity: Exclude<Status, "healthy"> = eps.some((e) => e.status === "critical") ? "critical" : "warning"
+  // mix: most slots are multi-endpoint rollups, the last 1–2 are isolated single-endpoint alerts
+  const singlesWanted = slots >= 4 ? 2 : slots >= 2 ? 1 : 0
+  const rollupWanted = Math.max(1, slots - singlesWanted)
+
+  const multi: Rollup[] = groupArr.slice(0, rollupWanted).map(([key, g], i) => {
+    const severity: Exclude<Status, "healthy"> = g.eps.some((e) => e.status === "critical") ? "critical" : "warning"
     return {
       id: `ru-${locId}-${key}`,
       locationId: locId,
@@ -287,15 +298,29 @@ export function rollupsForLocation(locId: string): Rollup[] {
       severity,
       title: g.title,
       cause: g.cause,
-      affected: eps.length,
-      endpoints: eps,
-      startedMinAgo: 6 + i * 13,
+      affected: g.eps.length,
+      endpoints: g.eps,
+      startedMinAgo: 8 + i * 13,
     }
   })
 
-  // worst + largest first, capped to the location's curated alert count
-  rollups.sort((a, b) => sev[a.severity] - sev[b.severity] || b.affected - a.affected)
-  return rollups.slice(0, loc.activeAlerts)
+  const used = new Set(multi.flatMap((r) => r.endpoints.map((e) => e.id)))
+  const singlesPool = unhealthy.filter((e) => !used.has(e.id))
+  const singles: Rollup[] = singlesPool.slice(0, singlesWanted).map((e, i) => ({
+    id: `ru1-${e.id}`,
+    locationId: locId,
+    locationName: loc.name,
+    severity: e.status as Exclude<Status, "healthy">,
+    title: singleReasons[(i + locId.length) % singleReasons.length],
+    cause: "other" as RollupCause,
+    affected: 1,
+    endpoints: [e],
+    startedMinAgo: 4 + i * 6,
+  }))
+
+  const result = [...multi, ...singles]
+  result.sort((a, b) => sev[a.severity] - sev[b.severity] || b.affected - a.affected)
+  return result.slice(0, slots)
 }
 
 export function rollupsAll(): Rollup[] {

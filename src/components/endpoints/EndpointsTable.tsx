@@ -156,7 +156,7 @@ export function EndpointsTable({
               {locations.map((l) => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={status} onValueChange={(v) => { setStatus(v as Status | "all"); resetPage() }}>
+          <Select value={status} onValueChange={(v) => { const s = v as Status | "all"; setStatus(s); if (s !== "all") setIssuesOnly(false); resetPage() }}>
             <SelectTrigger className="h-9"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
