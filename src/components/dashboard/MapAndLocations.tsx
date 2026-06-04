@@ -30,7 +30,7 @@ function MapPanel({
           Endpoints in{" "}
           <span style={{ color: "var(--fg-link-default)" }}>{selected?.name ?? "—"}</span>
         </h2>
-        <Button variant="outline" size="sm" className="gap-1.5" onClick={onViewEndpoints}>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => onViewEndpoints()}>
           View endpoints
           <ArrowRight className="size-4" />
         </Button>
