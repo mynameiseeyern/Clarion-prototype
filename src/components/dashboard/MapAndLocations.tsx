@@ -144,12 +144,12 @@ function LocationsPanel({
                 onClick={() => onSelect(loc.id)}
                 className="flex min-w-px flex-1 items-center justify-between gap-2 py-4 pl-4 pr-2 text-left"
               >
-                <span className="flex items-center gap-2">
+                <span className="flex min-w-px items-center gap-2">
                   {loc.status && <StatusDot status={loc.status} />}
-                  <span className="text-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>{loc.name}</span>
+                  <span className="truncate text-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>{loc.name}</span>
                 </span>
                 <span
-                  className="flex items-center gap-1 font-mono text-xs"
+                  className="flex shrink-0 items-center gap-1 whitespace-nowrap font-mono text-xs"
                   style={{ color: isSelected ? "var(--fg-neutral-emphasis)" : "var(--fg-neutral-muted)" }}
                 >
                   <span>{loc.endpoints.toLocaleString()} endpoints</span>

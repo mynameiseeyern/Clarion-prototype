@@ -239,3 +239,67 @@ export function activeAlertsAll(): ActiveAlert[] {
     .flatMap((l) => activeAlertsForLocation(l.id))
     .sort((a, b) => sev[a.severity] - sev[b.severity] || a.minutesAgo - b.minutesAgo)
 }
+
+// ---- Alert rollups (group affected endpoints by cause) ---------------------
+
+export type RollupCause = "platform" | "loss" | "latency" | "jitter" | "other"
+
+export interface Rollup {
+  id: string
+  locationId: string
+  locationName: string
+  severity: Exclude<Status, "healthy">
+  title: string
+  cause: RollupCause
+  affected: number
+  endpoints: Endpoint[]
+  startedMinAgo: number
+}
+
+function categorize(e: Endpoint): { cause: RollupCause; key: string; title: string } {
+  const reason = (e.primaryIssue ?? "").toLowerCase()
+  if (reason.endsWith("down")) return { cause: "platform", key: `platform:${e.primaryPlatform}`, title: `${e.primaryPlatform} unreachable` }
+  if (reason.startsWith("packet loss")) return { cause: "loss", key: "loss", title: "Elevated packet loss" }
+  if (reason.includes("jitter")) return { cause: "jitter", key: "jitter", title: "Network jitter" }
+  if (reason.startsWith("latency")) return { cause: "latency", key: "latency", title: "High latency" }
+  return { cause: "other", key: "other", title: "Degraded performance" }
+}
+
+export function rollupsForLocation(locId: string): Rollup[] {
+  const loc = locations.find((l) => l.id === locId)
+  if (!loc) return []
+  const unhealthy = endpoints.filter((e) => e.locationId === locId && e.status !== "healthy")
+
+  const groups = new Map<string, { title: string; cause: RollupCause; eps: Endpoint[] }>()
+  for (const e of unhealthy) {
+    const { cause, key, title } = categorize(e)
+    if (!groups.has(key)) groups.set(key, { title, cause, eps: [] })
+    groups.get(key)!.eps.push(e)
+  }
+
+  const rollups: Rollup[] = [...groups.entries()].map(([key, g], i) => {
+    const eps = g.eps.sort((a, b) => sev[a.status] - sev[b.status] || (a.score ?? 9) - (b.score ?? 9))
+    const severity: Exclude<Status, "healthy"> = eps.some((e) => e.status === "critical") ? "critical" : "warning"
+    return {
+      id: `ru-${locId}-${key}`,
+      locationId: locId,
+      locationName: loc.name,
+      severity,
+      title: g.title,
+      cause: g.cause,
+      affected: eps.length,
+      endpoints: eps,
+      startedMinAgo: 6 + i * 13,
+    }
+  })
+
+  // worst + largest first, capped to the location's curated alert count
+  rollups.sort((a, b) => sev[a.severity] - sev[b.severity] || b.affected - a.affected)
+  return rollups.slice(0, loc.activeAlerts)
+}
+
+export function rollupsAll(): Rollup[] {
+  return locations
+    .flatMap((l) => rollupsForLocation(l.id))
+    .sort((a, b) => sev[a.severity] - sev[b.severity] || b.affected - a.affected)
+}
