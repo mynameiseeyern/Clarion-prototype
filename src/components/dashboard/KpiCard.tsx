@@ -11,7 +11,7 @@ export function KpiCard({
   className,
   fixedWidth = false,
 }: {
-  title: string
+  title: ReactNode
   icon: LucideIcon
   value: string
   children?: ReactNode

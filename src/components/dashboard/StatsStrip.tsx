@@ -18,7 +18,7 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
         </span>
       </div>
 
-      <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+      <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-stretch">
         <KpiCard title="Online endpoints" icon={Monitor} value={live.online.toLocaleString()}>
           <SegmentedBar
             segments={[
@@ -47,7 +47,15 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
           </div>
         </KpiCard>
 
-        <KpiCard title="Clarity Network Score" icon={Tally5} value={live.score.toFixed(2)}>
+        <KpiCard
+          title={
+            <>
+              Clarity<sup className="top-[-0.4em] text-[0.6em]">™</sup> Network Score
+            </>
+          }
+          icon={Tally5}
+          value={live.score.toFixed(2)}
+        >
           <div className="flex items-center gap-2">
             <span className="text-xs" style={{ color: "var(--fg-neutral-emphasis)" }}>Acceptable: &gt;3.6</span>
             <span className="text-xs" style={{ color: "var(--fg-neutral-emphasis)" }}>Good: &gt;4</span>
