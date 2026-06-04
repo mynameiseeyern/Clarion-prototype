@@ -7,13 +7,23 @@ import { EndpointsPage } from "@/pages/EndpointsPage"
 import { AlertsPage } from "@/pages/AlertsPage"
 import { PlaceholderPage } from "@/pages/PlaceholderPage"
 import { GlossaryPage } from "@/pages/GlossaryPage"
+import { IssuesDocPage } from "@/pages/IssuesDocPage"
 import { EndpointDrawer } from "@/components/endpoints/drawer/EndpointDrawer"
 import { AlertDrawer } from "@/components/alerts/AlertDrawer"
 import { CommandPalette } from "@/components/search/CommandPalette"
 import { useStreaming } from "@/hooks/useStreaming"
 import { DEFAULT_LOCATION, locationById } from "@/data/dashboard"
-import type { Endpoint, Rollup } from "@/data/endpoints"
+import type { Endpoint, Rollup, RollupCause } from "@/data/endpoints"
+import { rollupsForLocation, rollupsAll } from "@/data/endpoints"
 import { pageLabel, type PageId } from "@/nav"
+
+// map a real-time alert type to the issue cause it belongs to
+const alertTypeToCause: Record<string, RollupCause> = {
+  "Platform outage": "platform",
+  "High latency": "latency",
+  "Packet loss": "loss",
+  "Network jitter": "jitter",
+}
 
 export default function App() {
   const [dark, setDark] = useState(false)
@@ -79,8 +89,20 @@ export default function App() {
           onOpenSearch={() => setSearchOpen(true)}
           onViewIssues={() => { setAlertFilter("all"); setPage("alerts") }}
           onAlertNavigate={(a) => {
-            if (a.navTo === "endpoints") { setEndpointFilter(a.locationId ?? "all"); setPage("endpoints") }
-            else { setAlertFilter(a.locationId ?? "all"); setPage("alerts") }
+            if (a.navTo === "endpoints") {
+              setEndpointFilter(a.locationId ?? "all")
+              setPage("endpoints")
+              return
+            }
+            // navigate to Issues (filtered) AND open the related issue drilldown
+            setAlertFilter(a.locationId ?? "all")
+            setPage("alerts")
+            const rows = a.locationId ? rollupsForLocation(a.locationId) : rollupsAll()
+            if (rows.length) {
+              const cause = alertTypeToCause[a.type]
+              const idx = Math.max(0, rows.findIndex((r) => r.cause === cause))
+              setAlertDrawer({ rows, index: idx })
+            }
           }}
         />
 
@@ -132,6 +154,7 @@ export default function App() {
             />
           )}
           {page === "glossary" && <GlossaryPage />}
+          {page === "issuesdoc" && <IssuesDocPage />}
         </div>
       </div>
 

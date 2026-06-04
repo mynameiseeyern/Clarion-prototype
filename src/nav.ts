@@ -4,10 +4,11 @@ import {
   TriangleAlert,
   SlidersHorizontal,
   BookOpen,
+  Workflow,
   type LucideIcon,
 } from "lucide-react"
 
-export type PageId = "overview" | "endpoints" | "alerts" | "thresholds" | "glossary"
+export type PageId = "overview" | "endpoints" | "alerts" | "thresholds" | "glossary" | "issuesdoc"
 
 export interface NavItem {
   id: PageId
@@ -25,6 +26,7 @@ export const navItems: NavItem[] = [
 // Internal — not shipped in the built product.
 export const devNavItems: NavItem[] = [
   { id: "glossary", label: "Glossary", icon: BookOpen },
+  { id: "issuesdoc", label: "Issues model", icon: Workflow },
 ]
 
 export const pageLabel = (id: PageId) =>
