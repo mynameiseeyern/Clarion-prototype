@@ -6,6 +6,7 @@ import { OverviewPage } from "@/pages/OverviewPage"
 import { EndpointsPage } from "@/pages/EndpointsPage"
 import { AlertsPage } from "@/pages/AlertsPage"
 import { PlaceholderPage } from "@/pages/PlaceholderPage"
+import { GlossaryPage } from "@/pages/GlossaryPage"
 import { EndpointDrawer } from "@/components/endpoints/drawer/EndpointDrawer"
 import { AlertDrawer } from "@/components/alerts/AlertDrawer"
 import { CommandPalette } from "@/components/search/CommandPalette"
@@ -130,6 +131,7 @@ export default function App() {
               description="Configure the warning and critical limits that drive alerting for each network quality metric."
             />
           )}
+          {page === "glossary" && <GlossaryPage />}
         </div>
       </div>
 

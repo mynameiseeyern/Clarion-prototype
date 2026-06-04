@@ -1,0 +1,87 @@
+import { Card } from "@/components/ui/card"
+
+interface Term { term: string; def: string; eg?: string }
+interface Group { title: string; terms: Term[] }
+
+const groups: Group[] = [
+  {
+    title: "Core objects",
+    terms: [
+      { term: "Endpoint", def: "A single monitored device/agent (a person's machine). Identified by user + machine name.", eg: "Anna Reyes · DESKTOP-MNL-0428" },
+      { term: "Location", def: "A centre / city where endpoints are based.", eg: "Manila CC, Cebu, New York" },
+      { term: "Country (cluster)", def: "A grouping of one or more locations. The Overview map clusters endpoints by country, then drills down to its cities.", eg: "Philippines → Manila CC, Cebu" },
+      { term: "Issue", def: "A persistent, trackable problem the system has identified, affecting one or more endpoints. The feature formerly labelled 'Alerts'. Has a severity, affected endpoints, and (later) a lifecycle and ticket.", eg: "Elevated packet loss · 52 endpoints · Manila CC" },
+      { term: "Alert (notification)", def: "An ephemeral, real-time event that raises or updates an Issue. Surfaces on the bell. NOT the same as an Issue.", eg: "“Latency spike detected — New York” on the bell" },
+      { term: "Ticket (future / ITSM)", def: "An Issue handed off to an external ITSM system (ServiceNow, Jira) for resolution. Issue → Ticket is the escalation bridge.", eg: "Not built yet" },
+    ],
+  },
+  {
+    title: "Status & health",
+    terms: [
+      { term: "Status", def: "The health of a single endpoint.", eg: "Healthy · Warning · Critical · Offline" },
+      { term: "Healthy", def: "Reporting normally, all metrics within threshold." },
+      { term: "Warning", def: "At least one metric in the warning band (e.g. latency ≥ 80ms)." },
+      { term: "Critical", def: "At least one metric in the critical band, or a platform unreachable (e.g. latency ≥ 150ms, packet loss ≥ 3%)." },
+      { term: "Offline", def: "Not reporting / unreachable. No live metrics. Lowest priority in sorts and filters; excluded from the online count and from Issue rollups." },
+      { term: "Online endpoints", def: "Endpoints currently reporting = total − offline. Can never exceed total endpoints." },
+    ],
+  },
+  {
+    title: "Metrics",
+    terms: [
+      { term: "Clarity™ Network Score", def: "The headline 1.0–5.0 network-quality score for an endpoint or aggregate (formerly 'MOS / Average MOS score'). Acceptable > 3.6, Good > 4.", eg: "3.97" },
+      { term: "Latency", def: "Round-trip time in ms. Threshold: warn ≥ 80ms · crit ≥ 150ms." },
+      { term: "Jitter", def: "Variation in latency in ms. Threshold: warn ≥ 30ms · crit ≥ 50ms." },
+      { term: "Packet loss", def: "% of packets lost. Threshold: warn ≥ 1% · crit ≥ 3%." },
+    ],
+  },
+  {
+    title: "Concepts & behaviours",
+    terms: [
+      { term: "Symptom", def: "The single worst-breaching condition observed on an endpoint — the 'why' shown in the Endpoints table (formerly 'Primary issue'). A symptom rolls up into an Issue.", eg: "Packet loss 7.2% · Wi-Fi · jitter 81ms · Offline" },
+      { term: "Rollup", def: "How an Issue groups many affected endpoints by shared cause, shown as one row with an affected-endpoint count instead of one row per endpoint.", eg: "High latency · 38 endpoints" },
+      { term: "Affected endpoints", def: "The set of endpoints an Issue covers." },
+      { term: "Issues only", def: "Endpoints-table toggle (default on) that hides healthy endpoints to focus on what needs attention." },
+      { term: "Mute (alert type)", def: "Silences a type of real-time alert for a chosen period (1 / 8 / 24 hours) from the bell." },
+      { term: "Streaming", def: "The 'live' feel — fleet figures refresh on an interval and the sidebar shows 'Streaming Xs ago'." },
+    ],
+  },
+]
+
+export function GlossaryPage() {
+  return (
+    <div className="flex flex-col gap-4">
+      <Card className="w-full rounded-xl p-5">
+        <div className="flex items-center gap-2">
+          <span className="rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide" style={{ background: "var(--bg-primary-subtle)", color: "var(--fg-primary-emphasis)" }}>
+            Internal
+          </span>
+          <span className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Product development · not shipped in the built product</span>
+        </div>
+        <h2 className="mt-3 text-heading-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>Glossary</h2>
+        <p className="mt-1 text-body-sm" style={{ color: "var(--fg-neutral-muted)" }}>
+          Shared definitions for the key concepts in Clarity, so design, product and engineering use the same words.
+        </p>
+      </Card>
+
+      {groups.map((g) => (
+        <Card key={g.title} className="w-full gap-0 overflow-hidden rounded-xl p-0">
+          <div className="px-5 py-3 text-xs font-semibold uppercase tracking-wide" style={{ borderBottom: "1px solid var(--border-neutral-subtle)", color: "var(--fg-neutral-subtle)" }}>
+            {g.title}
+          </div>
+          <dl className="flex flex-col">
+            {g.terms.map((t, i) => (
+              <div key={t.term} className="grid grid-cols-1 gap-1 px-5 py-4 sm:grid-cols-[200px_1fr] sm:gap-6" style={{ borderTop: i ? "1px solid var(--border-neutral-subtle)" : undefined }}>
+                <dt className="text-sm font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{t.term}</dt>
+                <dd className="flex flex-col gap-1">
+                  <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>{t.def}</span>
+                  {t.eg && <span className="text-xs italic" style={{ color: "var(--fg-neutral-subtle)" }}>e.g. {t.eg}</span>}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </Card>
+      ))}
+    </div>
+  )
+}
