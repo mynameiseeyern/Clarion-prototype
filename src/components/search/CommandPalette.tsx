@@ -3,12 +3,13 @@ import * as Dialog from "@radix-ui/react-dialog"
 import { Search, MapPin, CornerDownLeft } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { locations, type Status } from "@/data/dashboard"
-import { endpoints, type Endpoint } from "@/data/endpoints"
+import { endpoints, type Endpoint, type EndpointStatus } from "@/data/endpoints"
 
-const statusVar: Record<Status, string> = {
+const statusVar: Record<EndpointStatus, string> = {
   healthy: "var(--status-healthy)",
   warning: "var(--status-warning)",
   critical: "var(--status-critical)",
+  offline: "var(--status-unknown)",
 }
 const initials = (name: string) => name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
 

@@ -3,7 +3,7 @@ import * as Dialog from "@radix-ui/react-dialog"
 import { X, MapPin, Clock, Users, Siren, Wifi, Activity, Gauge, ChevronRight, ChevronUp, ChevronDown, type LucideIcon } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import type { Status } from "@/data/dashboard"
-import type { Rollup, RollupCause, Endpoint } from "@/data/endpoints"
+import type { Rollup, RollupCause, Endpoint, EndpointStatus } from "@/data/endpoints"
 
 const causeIcon: Record<RollupCause, LucideIcon> = {
   platform: Siren, loss: Activity, latency: Gauge, jitter: Wifi, other: Activity,
@@ -12,8 +12,8 @@ const sevTone: Record<Exclude<Status, "healthy">, { bg: string; fg: string }> = 
   critical: { bg: "var(--bg-danger-subtle)", fg: "var(--fg-on-danger-subtle)" },
   warning: { bg: "var(--bg-warning-subtle)", fg: "var(--fg-on-warning-subtle)" },
 }
-const statusVar: Record<Status, string> = {
-  healthy: "var(--status-healthy)", warning: "var(--status-warning)", critical: "var(--status-critical)",
+const statusVar: Record<EndpointStatus, string> = {
+  healthy: "var(--status-healthy)", warning: "var(--status-warning)", critical: "var(--status-critical)", offline: "var(--status-unknown)",
 }
 const initials = (name: string) => name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1)

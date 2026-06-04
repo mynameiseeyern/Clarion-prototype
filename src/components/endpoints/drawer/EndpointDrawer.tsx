@@ -4,14 +4,14 @@ import { Monitor, MapPin, Globe, User, ChevronUp, ChevronDown, Maximize2, Minimi
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getEndpointDetail } from "@/data/endpointDetail"
-import type { Endpoint } from "@/data/endpoints"
-import type { Status } from "@/data/dashboard"
+import type { Endpoint, EndpointStatus } from "@/data/endpoints"
 import { NetworkTab, PlatformsTab, DevicesTab, SystemTab } from "./tabs"
 
-const statusTone: Record<Status, { bg: string; fg: string }> = {
+const statusTone: Record<EndpointStatus, { bg: string; fg: string }> = {
   healthy: { bg: "var(--bg-success-subtle)", fg: "var(--fg-on-success-subtle)" },
   warning: { bg: "var(--bg-warning-subtle)", fg: "var(--fg-on-warning-subtle)" },
   critical: { bg: "var(--bg-danger-subtle)", fg: "var(--fg-on-danger-subtle)" },
+  offline: { bg: "var(--bg-neutral-subtle)", fg: "var(--fg-neutral-muted)" },
 }
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
 const initials = (name: string) => name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()

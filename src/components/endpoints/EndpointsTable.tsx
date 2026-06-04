@@ -4,16 +4,17 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-import { locations, type Status } from "@/data/dashboard"
-import { queryEndpoints, type Endpoint, type SortKey, type SortDir } from "@/data/endpoints"
+import { locations } from "@/data/dashboard"
+import { queryEndpoints, type Endpoint, type EndpointStatus, type SortKey, type SortDir } from "@/data/endpoints"
 
-const statusVar: Record<Status, string> = {
+const statusVar: Record<EndpointStatus, string> = {
   healthy: "var(--status-healthy)",
   warning: "var(--status-warning)",
   critical: "var(--status-critical)",
+  offline: "var(--status-unknown)",
 }
-const statusBadge: Record<Status, "success" | "warning" | "danger"> = {
-  healthy: "success", warning: "warning", critical: "danger",
+const statusBadge: Record<EndpointStatus, "success" | "warning" | "danger" | "secondary"> = {
+  healthy: "success", warning: "warning", critical: "danger", offline: "secondary",
 }
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
 const initials = (name: string) => name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
@@ -67,7 +68,7 @@ export function EndpointsTable({
   openEndpointId?: string | null
 }) {
   const [search, setSearch] = useState("")
-  const [status, setStatus] = useState<Status | "all">("all")
+  const [status, setStatus] = useState<EndpointStatus | "all">("all")
   const [issuesOnly, setIssuesOnly] = useState(true)
   const [sortKey, setSortKey] = useState<SortKey>("status")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
@@ -156,12 +157,13 @@ export function EndpointsTable({
               {locations.map((l) => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={status} onValueChange={(v) => { const s = v as Status | "all"; setStatus(s); if (s !== "all") setIssuesOnly(false); resetPage() }}>
+          <Select value={status} onValueChange={(v) => { const s = v as EndpointStatus | "all"; setStatus(s); if (s !== "all") setIssuesOnly(false); resetPage() }}>
             <SelectTrigger className="h-9"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="critical">Critical</SelectItem>
               <SelectItem value="warning">Warning</SelectItem>
+              <SelectItem value="offline">Offline</SelectItem>
               <SelectItem value="healthy">Healthy</SelectItem>
             </SelectContent>
           </Select>

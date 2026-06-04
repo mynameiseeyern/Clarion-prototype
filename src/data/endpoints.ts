@@ -7,6 +7,8 @@ import { locations, type Status } from "./dashboard"
 export type Connection = "Ethernet" | "Wi-Fi"
 export type Site = "Office" | "Remote"
 export type Platform = "Genesys Cloud" | "Microsoft Teams" | "Zoom" | "Webex"
+/** endpoint health, plus "offline" (not reporting) */
+export type EndpointStatus = Status | "offline"
 
 export interface Endpoint {
   id: string
@@ -15,7 +17,7 @@ export interface Endpoint {
   locationId: string
   locationName: string
   site: Site
-  status: Status
+  status: EndpointStatus
   /** Clarity Network Score 1.0–5.0, or null when unreachable */
   score: number | null
   connection: Connection
@@ -96,13 +98,16 @@ function deriveIssue(
   return candidates[0].label
 }
 
-function makeEndpoint(locId: string, locName: string, status: Status, n: number): Endpoint {
+function makeEndpoint(locId: string, locName: string, status: EndpointStatus, n: number): Endpoint {
   const site: Site = rand() > 0.5 ? "Office" : "Remote"
   const connection: Connection = site === "Office" ? (rand() > 0.15 ? "Ethernet" : "Wi-Fi") : "Wi-Fi"
   let latency: number, jitter: number, loss: number, score: number | null
   let downPlatform: Platform | null = null
 
-  if (status === "healthy") {
+  if (status === "offline") {
+    // not reporting — no live metrics
+    latency = 0; jitter = 0; loss = 0; score = null
+  } else if (status === "healthy") {
     latency = round(between(8, 70)); jitter = round(between(4, 20)); loss = round(between(0, 0.6), 1)
     score = round(between(4.0, 4.8), 1)
   } else if (status === "warning") {
@@ -146,7 +151,7 @@ function makeEndpoint(locId: string, locName: string, status: Status, n: number)
     ip: `10.${Math.floor(between(10, 90))}.${Math.floor(between(1, 250))}.${Math.floor(between(1, 250))}`,
     team: pick(teams),
     primaryPlatform: downPlatform ?? pick(platforms),
-    primaryIssue: deriveIssue(status, connection, latency, jitter, loss, downPlatform),
+    primaryIssue: status === "offline" ? "Offline" : deriveIssue(status, connection, latency, jitter, loss, downPlatform),
   }
 }
 
@@ -154,10 +159,11 @@ function generate(): Endpoint[] {
   const out: Endpoint[] = []
   for (const loc of locations) {
     let n = 421
-    const add = (status: Status, count: number) => {
+    const add = (status: EndpointStatus, count: number) => {
       for (let i = 0; i < count; i++) out.push(makeEndpoint(loc.id, loc.name, status, n++))
     }
     add("critical", loc.critical)
+    add("offline", loc.offline)
     add("warning", loc.warning)
     add("healthy", loc.healthy)
   }
@@ -171,12 +177,12 @@ export const endpoints: Endpoint[] = generate()
 export type SortKey = "status" | "user" | "location" | "score" | "issue"
 export type SortDir = "asc" | "desc"
 
-const severity: Record<Status, number> = { critical: 0, warning: 1, healthy: 2 }
+const severity: Record<EndpointStatus, number> = { critical: 0, offline: 1, warning: 2, healthy: 3 }
 
 export interface EndpointQuery {
   search?: string
   locationId?: string // "all" or a location id
-  status?: Status | "all"
+  status?: EndpointStatus | "all"
   sortKey?: SortKey
   sortDir?: SortDir
 }
@@ -221,13 +227,13 @@ export interface ActiveAlert {
   minutesAgo: number
 }
 
-const sev: Record<Status, number> = { critical: 0, warning: 1, healthy: 2 }
+const sev: Record<EndpointStatus, number> = { critical: 0, offline: 1, warning: 2, healthy: 3 }
 
 export function activeAlertsForLocation(locId: string): ActiveAlert[] {
   const loc = locations.find((l) => l.id === locId)
   if (!loc) return []
   const picked = endpoints
-    .filter((e) => e.locationId === locId && e.status !== "healthy")
+    .filter((e) => e.locationId === locId && (e.status === "critical" || e.status === "warning"))
     .sort((a, b) => sev[a.status] - sev[b.status] || (a.score ?? 9) - (b.score ?? 9))
     .slice(0, loc.activeAlerts)
   return picked.map((e, i) => ({
@@ -278,7 +284,7 @@ export function rollupsForLocation(locId: string): Rollup[] {
   if (!loc || loc.activeAlerts === 0) return []
   const slots = loc.activeAlerts
   const unhealthy = endpoints
-    .filter((e) => e.locationId === locId && e.status !== "healthy")
+    .filter((e) => e.locationId === locId && (e.status === "critical" || e.status === "warning"))
     .sort((a, b) => sev[a.status] - sev[b.status] || (a.score ?? 9) - (b.score ?? 9))
 
   // group by cause
