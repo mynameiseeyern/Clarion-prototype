@@ -1,7 +1,9 @@
 import type { ReactNode } from "react"
-import { PanelLeft, ChevronRight, Search, Bell, CircleUserRound, Sun, Moon } from "lucide-react"
+import { PanelLeft, ChevronRight, Search, CircleUserRound, Sun, Moon } from "lucide-react"
 import { fleet } from "@/data/dashboard"
 import { pageLabel, type PageId } from "@/nav"
+import { NotificationsBell } from "./NotificationsBell"
+import type { AlertNotification } from "@/data/alerts"
 
 function IconButton({ children, label, onClick }: { children: ReactNode; label: string; onClick?: () => void }) {
   return (
