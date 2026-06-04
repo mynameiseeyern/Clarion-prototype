@@ -7,7 +7,7 @@ import {
   locationById, citiesInCountry, countryById, countriesWithStats,
   type Status, type LocationRow,
 } from "@/data/dashboard"
-import { locationSeverity, locationIssueCount, countrySeverity, countryIssueCount } from "@/data/endpoints"
+import { locationSeverity, locationIssueCount, countrySeverity } from "@/data/endpoints"
 
 const statusVar: Record<Status, string> = {
   healthy: "var(--status-healthy)",
