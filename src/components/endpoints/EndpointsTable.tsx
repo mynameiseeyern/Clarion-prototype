@@ -141,7 +141,7 @@ export function EndpointsTable({
         <div className="flex items-center gap-2 sm:ml-auto">
           <button
             type="button"
-            onClick={() => { setIssuesOnly((v) => !v); resetPage() }}
+            onClick={() => { setIssuesOnly((v) => { const next = !v; if (next) setStatus("all"); return next }); resetPage() }}
             className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors"
             style={issuesOnly
               ? { background: "var(--bg-primary-subtle)", color: "var(--fg-primary-emphasis)", border: "1px solid var(--border-primary-muted)" }

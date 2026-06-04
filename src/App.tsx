@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react"
-import { TriangleAlert, SlidersHorizontal } from "lucide-react"
+import { SlidersHorizontal } from "lucide-react"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { Topbar } from "@/components/dashboard/Topbar"
 import { OverviewPage } from "@/pages/OverviewPage"
 import { EndpointsPage } from "@/pages/EndpointsPage"
+import { AlertsPage } from "@/pages/AlertsPage"
 import { PlaceholderPage } from "@/pages/PlaceholderPage"
 import { EndpointDrawer } from "@/components/endpoints/drawer/EndpointDrawer"
+import { AlertDrawer } from "@/components/alerts/AlertDrawer"
 import { CommandPalette } from "@/components/search/CommandPalette"
 import { useStreaming } from "@/hooks/useStreaming"
 import { DEFAULT_LOCATION, locationById } from "@/data/dashboard"
-import type { Endpoint } from "@/data/endpoints"
+import type { Endpoint, Rollup } from "@/data/endpoints"
 import { pageLabel, type PageId } from "@/nav"
 
 export default function App() {
@@ -17,8 +19,10 @@ export default function App() {
   const [page, setPage] = useState<PageId>("overview")
   const [selectedId, setSelectedId] = useState<string>(DEFAULT_LOCATION)
   const [endpointFilter, setEndpointFilter] = useState<string>("all")
+  const [alertFilter, setAlertFilter] = useState<string>("all")
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [drawer, setDrawer] = useState<{ rows: Endpoint[]; index: number } | null>(null)
+  const [alertDrawer, setAlertDrawer] = useState<Rollup | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const live = useStreaming()
 
@@ -42,6 +46,11 @@ export default function App() {
     const id = locId ?? selectedId
     setEndpointFilter(id === "all" ? "all" : id)
     setPage("endpoints")
+  }
+
+  const handleViewAllAlerts = () => {
+    setAlertFilter(selectedId === "all" ? "all" : selectedId)
+    setPage("alerts")
   }
 
   const openEndpointId = drawer ? drawer.rows[drawer.index]?.id ?? null : null
@@ -87,7 +96,7 @@ export default function App() {
               selectedId={selectedId}
               onSelect={setSelectedId}
               onViewEndpoints={handleViewEndpoints}
-              onViewAllAlerts={() => setPage("alerts")}
+              onViewAllAlerts={handleViewAllAlerts}
               onOpenEndpoint={(rows, index) => setDrawer({ rows, index })}
             />
           )}
@@ -100,10 +109,11 @@ export default function App() {
             />
           )}
           {page === "alerts" && (
-            <PlaceholderPage
-              title="Alerts"
-              icon={TriangleAlert}
-              description="Triage active alerts across all locations, acknowledge or resolve them, and review alert history."
+            <AlertsPage
+              locationId={alertFilter}
+              onLocationChange={setAlertFilter}
+              onOpenAlert={setAlertDrawer}
+              openAlertId={alertDrawer?.id ?? null}
             />
           )}
           {page === "thresholds" && (
@@ -123,6 +133,14 @@ export default function App() {
         open={drawer !== null}
         onIndexChange={(i) => setDrawer((d) => (d ? { ...d, index: i } : d))}
         onOpenChange={(o) => { if (!o) setDrawer(null) }}
+      />
+
+      {/* alert rollup drilldown */}
+      <AlertDrawer
+        rollup={alertDrawer}
+        open={alertDrawer !== null}
+        onOpenChange={(o) => { if (!o) setAlertDrawer(null) }}
+        onOpenEndpoint={(rows, index) => { setAlertDrawer(null); setDrawer({ rows, index }) }}
       />
 
       {/* global command palette */}
