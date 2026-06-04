@@ -54,6 +54,11 @@ const teams = [
   "Sales", "Technical Support", "Retentions", "Onboarding",
 ]
 const platforms: Platform[] = ["Genesys Cloud", "Microsoft Teams", "Zoom", "Webex"]
+// Per-location dominant critical metric (0 = latency, 1 = jitter, 2 = packet loss),
+// so criticals concentrate on one cause → that issue reads critical, others warning.
+const critBias: Record<string, number> = {
+  london: 0, manilla: 2, cebu: 1, newyork: 0, austin: 1, denver: 0, bangalore: 2, hyderabad: 0, sydney: 0,
+}
 const firstNames = [
   "Anna", "Luis", "Sarah", "James", "Priya", "Tom", "Rahul", "Maria", "David", "Mei",
   "Omar", "Grace", "Chen", "Sofia", "Liam", "Aisha", "Noah", "Elena", "Raj", "Hana",
@@ -124,7 +129,8 @@ function makeEndpoint(locId: string, locName: string, status: EndpointStatus, n:
       latency = round(between(40, 90)); jitter = round(between(8, 25)); loss = round(between(0, 0.5), 1)
       score = null
     } else {
-      const which = Math.floor(rand() * 3)
+      // concentrate criticals on the location's dominant metric most of the time
+      const which = rand() < 0.7 ? (critBias[locId] ?? Math.floor(rand() * 3)) : Math.floor(rand() * 3)
       latency = round(which === 0 ? between(150, 280) : between(40, 120))
       jitter = round(which === 1 ? between(50, 90) : between(10, 35))
       loss = round(which === 2 ? between(3, 9) : between(0.2, 2), 1)
