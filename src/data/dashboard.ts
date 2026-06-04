@@ -1,24 +1,33 @@
 // Dummy data for the Clarity Fleet dashboard (Overview).
-// Page-level data (endpoints/alerts/thresholds tables) is intentionally NOT
-// modelled yet — those nav pages are placeholders for now.
+// Locations are cities (centres) grouped into countries, so the map can cluster
+// by country and drill down country → cities. Country aggregates and the fleet
+// total (2,847 endpoints / 7 active alerts) are preserved across the split.
 
 export type Status = "healthy" | "warning" | "critical"
+
+export interface Country {
+  id: string
+  name: string
+  /** approx position on the stylised world map, % of container */
+  x: number
+  y: number
+}
 
 export interface LocationRow {
   id: string
   name: string
+  countryId: string
   status?: Status
   endpoints: number
-  /** "issues" shown in the locations panel */
   issues: number
-  /** active alerts contributing to the fleet KPI */
   activeAlerts: number
-  /** status breakdown (counts sum to `endpoints`) */
   healthy: number
   warning: number
   critical: number
-  /** Clarity Network Score 1.0–5.0 */
   score: number
+  /** approx position on the stylised world map, % of container */
+  x: number
+  y: number
 }
 
 export const fleet = {
@@ -26,15 +35,32 @@ export const fleet = {
   product: "Clarity",
 }
 
-export const locations: LocationRow[] = [
-  { id: "london", name: "London HQ", status: "healthy", endpoints: 612, issues: 0, activeAlerts: 0, healthy: 612, warning: 0, critical: 0, score: 4.41 },
-  { id: "manilla", name: "Manila CC", status: "critical", endpoints: 1184, issues: 6, activeAlerts: 4, healthy: 1031, warning: 89, critical: 64, score: 3.52 },
-  { id: "newyork", name: "New York", status: "warning", endpoints: 487, issues: 3, activeAlerts: 2, healthy: 441, warning: 38, critical: 8, score: 4.02 },
-  { id: "bangalore", name: "Bangalore", status: "warning", endpoints: 346, issues: 2, activeAlerts: 1, healthy: 318, warning: 24, critical: 4, score: 4.11 },
-  { id: "sydney", name: "Sydney", status: "healthy", endpoints: 218, issues: 0, activeAlerts: 0, healthy: 218, warning: 0, critical: 0, score: 4.36 },
+export const countries: Country[] = [
+  { id: "us", name: "United States", x: 26, y: 38 },
+  { id: "gb", name: "United Kingdom", x: 47, y: 30 },
+  { id: "in", name: "India", x: 67, y: 52 },
+  { id: "ph", name: "Philippines", x: 78, y: 55 },
+  { id: "au", name: "Australia", x: 82, y: 80 },
 ]
 
-export const DEFAULT_LOCATION = "sydney"
+export const locations: LocationRow[] = [
+  // United Kingdom
+  { id: "london", name: "London HQ", countryId: "gb", status: "healthy", endpoints: 612, issues: 0, activeAlerts: 0, healthy: 612, warning: 0, critical: 0, score: 4.41, x: 46, y: 28 },
+  // Philippines
+  { id: "manilla", name: "Manila CC", countryId: "ph", status: "critical", endpoints: 800, issues: 4, activeAlerts: 3, healthy: 700, warning: 55, critical: 45, score: 3.55, x: 77, y: 53 },
+  { id: "cebu", name: "Cebu", countryId: "ph", status: "warning", endpoints: 384, issues: 2, activeAlerts: 1, healthy: 331, warning: 34, critical: 19, score: 3.62, x: 79, y: 58 },
+  // United States
+  { id: "newyork", name: "New York", countryId: "us", status: "warning", endpoints: 240, issues: 2, activeAlerts: 1, healthy: 214, warning: 20, critical: 6, score: 3.98, x: 30, y: 36 },
+  { id: "austin", name: "Austin", countryId: "us", status: "warning", endpoints: 140, issues: 1, activeAlerts: 1, healthy: 130, warning: 8, critical: 2, score: 4.08, x: 23, y: 42 },
+  { id: "denver", name: "Denver", countryId: "us", status: "healthy", endpoints: 107, issues: 0, activeAlerts: 0, healthy: 97, warning: 10, critical: 0, score: 4.05, x: 21, y: 38 },
+  // India
+  { id: "bangalore", name: "Bangalore", countryId: "in", status: "warning", endpoints: 220, issues: 1, activeAlerts: 1, healthy: 202, warning: 15, critical: 3, score: 4.10, x: 66, y: 54 },
+  { id: "hyderabad", name: "Hyderabad", countryId: "in", status: "warning", endpoints: 126, issues: 1, activeAlerts: 0, healthy: 116, warning: 9, critical: 1, score: 4.13, x: 66, y: 50 },
+  // Australia
+  { id: "sydney", name: "Sydney", countryId: "au", status: "healthy", endpoints: 218, issues: 0, activeAlerts: 0, healthy: 218, warning: 0, critical: 0, score: 4.36, x: 84, y: 80 },
+]
+
+export const DEFAULT_LOCATION = "all"
 
 export interface FleetTotals {
   endpoints: number
@@ -68,22 +94,48 @@ export function locationById(id: string) {
   return locations.find((l) => l.id === id)
 }
 
-// ---- Map markers -----------------------------------------------------------
+// ---- Countries (clusters of cities) ----------------------------------------
 
-export interface MapMarker {
-  id: string
-  status: Status
-  x: number
-  y: number
+export function countryById(id: string) {
+  return countries.find((c) => c.id === id)
 }
 
-export const mapMarkers: MapMarker[] = [
-  { id: "london", status: "healthy", x: 30, y: 34 },
-  { id: "newyork", status: "warning", x: 47, y: 30 },
-  { id: "bangalore", status: "warning", x: 58, y: 50 },
-  { id: "manilla", status: "critical", x: 62, y: 50 },
-  { id: "sydney", status: "healthy", x: 68, y: 78 },
-]
+export function citiesInCountry(countryId: string) {
+  return locations.filter((l) => l.countryId === countryId)
+}
+
+export interface CountryStats extends Country {
+  endpoints: number
+  issues: number
+  activeAlerts: number
+  status: Status
+  cityCount: number
+}
+
+/** worst status among a country's cities */
+function worstStatus(rows: LocationRow[]): Status {
+  if (rows.some((r) => r.status === "critical")) return "critical"
+  if (rows.some((r) => r.status === "warning")) return "warning"
+  return "healthy"
+}
+
+export function countryStats(countryId: string): CountryStats | undefined {
+  const c = countryById(countryId)
+  if (!c) return undefined
+  const cities = citiesInCountry(countryId)
+  return {
+    ...c,
+    endpoints: cities.reduce((s, l) => s + l.endpoints, 0),
+    issues: cities.reduce((s, l) => s + l.issues, 0),
+    activeAlerts: cities.reduce((s, l) => s + l.activeAlerts, 0),
+    status: worstStatus(cities),
+    cityCount: cities.length,
+  }
+}
+
+export function countriesWithStats(): CountryStats[] {
+  return countries.map((c) => countryStats(c.id)!).filter(Boolean)
+}
 
 // ---- Recent activity (per location, last 24h) ------------------------------
 
@@ -95,9 +147,13 @@ export interface RecentActivity {
 
 const recentByLocation: Record<string, RecentActivity> = {
   london: { resolved: 5, avgTime: "14m", autoFixed: 4 },
-  manilla: { resolved: 22, avgTime: "31m", autoFixed: 9 },
-  newyork: { resolved: 11, avgTime: "19m", autoFixed: 6 },
-  bangalore: { resolved: 8, avgTime: "24m", autoFixed: 5 },
+  manilla: { resolved: 18, avgTime: "31m", autoFixed: 7 },
+  cebu: { resolved: 9, avgTime: "27m", autoFixed: 4 },
+  newyork: { resolved: 7, avgTime: "19m", autoFixed: 4 },
+  austin: { resolved: 4, avgTime: "16m", autoFixed: 3 },
+  denver: { resolved: 3, avgTime: "15m", autoFixed: 2 },
+  bangalore: { resolved: 6, avgTime: "24m", autoFixed: 4 },
+  hyderabad: { resolved: 4, avgTime: "21m", autoFixed: 2 },
   sydney: { resolved: 3, avgTime: "22m", autoFixed: 3 },
 }
 

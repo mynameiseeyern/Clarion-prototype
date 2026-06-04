@@ -33,13 +33,18 @@ export interface Endpoint {
 // ---- generation inputs -----------------------------------------------------
 
 const prefix: Record<string, string> = {
-  london: "LDN", manilla: "MNL", newyork: "NYC", bangalore: "BLR", sydney: "SYD",
+  london: "LDN", manilla: "MNL", cebu: "CEB", newyork: "NYC", austin: "AUS",
+  denver: "DEN", bangalore: "BLR", hyderabad: "HYD", sydney: "SYD",
 }
 const isps: Record<string, string[]> = {
   london: ["BT", "Virgin Media"],
   manilla: ["PLDT", "Globe"],
+  cebu: ["PLDT", "Converge"],
   newyork: ["Verizon", "Comcast"],
+  austin: ["AT&T", "Spectrum"],
+  denver: ["CenturyLink", "Comcast"],
   bangalore: ["ACT Fibernet", "Airtel"],
+  hyderabad: ["ACT Fibernet", "Jio"],
   sydney: ["Telstra", "Optus"],
 }
 const teams = [
