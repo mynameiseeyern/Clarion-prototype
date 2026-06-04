@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { locations, type Status } from "@/data/dashboard"
 import { queryEndpoints, type Endpoint, type SortKey, type SortDir } from "@/data/endpoints"
+import { EndpointDrawer } from "./drawer/EndpointDrawer"
 
 const statusVar: Record<Status, string> = {
   healthy: "var(--status-healthy)",
@@ -71,7 +72,7 @@ export function EndpointsTable({
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(15)
-  const [selected, setSelected] = useState<string | null>(null)
+  const [openIdx, setOpenIdx] = useState<number | null>(null)
 
   const showLocation = locationId === "all"
   // "Issues only" applies unless the user has picked an explicit status
@@ -99,6 +100,7 @@ export function EndpointsTable({
   const resetPage = () => setPage(1)
 
   return (
+    <>
     <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
       {/* header */}
       <div className="flex items-center gap-2 px-4 py-4">
@@ -170,12 +172,13 @@ export function EndpointsTable({
             </tr>
           </thead>
           <tbody>
-            {pageRows.map((e) => {
-              const isSel = selected === e.id
+            {pageRows.map((e, i) => {
+              const absoluteIndex = (safePage - 1) * pageSize + i
+              const isSel = openIdx === absoluteIndex
               return (
                 <tr
                   key={e.id}
-                  onClick={() => { setSelected(e.id); onOpenEndpoint?.(e) }}
+                  onClick={() => { setOpenIdx(absoluteIndex); onOpenEndpoint?.(e) }}
                   className="group cursor-pointer transition-colors"
                   style={{
                     borderBottom: "1px solid var(--border-neutral-subtle)",
@@ -291,6 +294,15 @@ export function EndpointsTable({
         </div>
       </div>
     </Card>
+
+    <EndpointDrawer
+      rows={rows}
+      index={openIdx ?? 0}
+      open={openIdx !== null}
+      onIndexChange={setOpenIdx}
+      onOpenChange={(o) => { if (!o) setOpenIdx(null) }}
+    />
+    </>
   )
 }
 
