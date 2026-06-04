@@ -179,7 +179,7 @@ function LocationsPanel({
                     <span className="flex shrink-0 items-center gap-1 whitespace-nowrap font-mono text-xs" style={{ color: isSelected ? "var(--fg-neutral-emphasis)" : "var(--fg-neutral-muted)" }}>
                       <span>{loc.endpoints.toLocaleString()} endpoints</span>
                       <span>·</span>
-                      <span>{loc.issues === 0 ? "No issues" : `${loc.issues} issues`}</span>
+                      <span>{loc.activeAlerts === 0 ? "No alerts" : `${loc.activeAlerts} alert${loc.activeAlerts === 1 ? "" : "s"}`}</span>
                     </span>
                   </button>
                   <button type="button" aria-label={`View ${loc.name} endpoints`} onClick={() => onViewEndpoints(loc.id)}
