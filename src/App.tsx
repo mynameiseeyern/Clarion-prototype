@@ -48,7 +48,14 @@ export default function App() {
 
         <div className="shrink-0 p-5" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
           <h1 className="text-xl font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
-            {pageLabel(page)}
+            {page === "endpoints" && endpointFilter !== "all" ? (
+              <>
+                Endpoints{" "}
+                <span style={{ color: "var(--fg-neutral-subtle)" }}>— {locationById(endpointFilter)?.name}</span>
+              </>
+            ) : (
+              pageLabel(page)
+            )}
           </h1>
         </div>
 
@@ -63,7 +70,7 @@ export default function App() {
             />
           )}
           {page === "endpoints" && (
-            <EndpointsPage key={endpointFilter} initialLocationId={endpointFilter} />
+            <EndpointsPage locationId={endpointFilter} onLocationChange={setEndpointFilter} />
           )}
           {page === "alerts" && (
             <PlaceholderPage
