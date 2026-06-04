@@ -64,36 +64,40 @@ function MapPanel({
           </svg>
 
           {/* world view: country clusters */}
-          {!country && cs.map((c) => (
-            <button key={c.id} type="button" onClick={() => onEnterCountry(c.id)} aria-label={c.name}
-              className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 focus:outline-none"
-              style={{ left: `${c.x}%`, top: `${c.y}%` }}>
-              <span className="flex items-center gap-1.5 rounded-full px-2 py-1 shadow-md transition-transform hover:scale-105"
-                style={{ background: "var(--bg-card)", border: `2px solid ${statusVar[c.status]}` }}>
-                <span className="size-2 rounded-full" style={{ background: statusVar[c.status] }} />
-                <span className="font-mono text-xs font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{c.endpoints.toLocaleString()}</span>
-              </span>
-              <span className="rounded px-1 text-[10px] font-medium" style={{ color: "var(--fg-neutral-muted)" }}>{c.name}</span>
-            </button>
-          ))}
+          {!country && cs.map((c) => {
+            const cSev = countrySeverity(c.id)
+            return (
+              <button key={c.id} type="button" onClick={() => onEnterCountry(c.id)} aria-label={c.name}
+                className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 focus:outline-none"
+                style={{ left: `${c.x}%`, top: `${c.y}%` }}>
+                <span className="flex items-center gap-1.5 rounded-full px-2 py-1 shadow-md transition-transform hover:scale-105"
+                  style={{ background: "var(--bg-card)", border: `2px solid ${statusVar[cSev]}` }}>
+                  <span className="size-2 rounded-full" style={{ background: statusVar[cSev] }} />
+                  <span className="font-mono text-xs font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{c.endpoints.toLocaleString()}</span>
+                </span>
+                <span className="rounded px-1 text-[10px] font-medium" style={{ color: "var(--fg-neutral-muted)" }}>{c.name}</span>
+              </button>
+            )
+          })}
 
           {/* country view: city markers */}
           {country && cities.map((m) => {
             const isActive = m.id === selectedId
+            const mSev = locationSeverity(m.id)
             return (
               <button key={m.id} type="button" onClick={() => onSelect(m.id)} aria-label={m.name}
                 className="absolute -translate-x-1/2 -translate-y-1/2 focus:outline-none" style={{ left: `${m.x}%`, top: `${m.y}%` }}>
                 {isActive ? (
                   <span className="flex flex-col items-center gap-1.5">
-                    <span className="flex size-4 items-center justify-center rounded-full" style={{ border: `2px solid ${statusVar[m.status ?? "healthy"]}`, background: "var(--bg-card)" }}>
-                      <span className="size-2 rounded-full" style={{ background: statusVar[m.status ?? "healthy"] }} />
+                    <span className="flex size-4 items-center justify-center rounded-full" style={{ border: `2px solid ${statusVar[mSev]}`, background: "var(--bg-card)" }}>
+                      <span className="size-2 rounded-full" style={{ background: statusVar[mSev] }} />
                     </span>
                     <span className="whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium" style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)", boxShadow: "var(--shadow-md)" }}>
                       {m.name} · {m.endpoints}
                     </span>
                   </span>
                 ) : (
-                  <span className="block size-3 rounded-full transition-transform hover:scale-125" style={{ background: statusVar[m.status ?? "healthy"], border: "1px solid var(--bg-card)", boxShadow: "var(--shadow-xs)" }} />
+                  <span className="block size-3 rounded-full transition-transform hover:scale-125" style={{ background: statusVar[mSev], border: "1px solid var(--bg-card)", boxShadow: "var(--shadow-xs)" }} />
                 )}
               </button>
             )
