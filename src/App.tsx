@@ -6,7 +6,7 @@ import { OverviewPage } from "@/pages/OverviewPage"
 import { EndpointsPage } from "@/pages/EndpointsPage"
 import { PlaceholderPage } from "@/pages/PlaceholderPage"
 import { useStreaming } from "@/hooks/useStreaming"
-import { DEFAULT_LOCATION } from "@/data/dashboard"
+import { DEFAULT_LOCATION, locationById } from "@/data/dashboard"
 import { pageLabel, type PageId } from "@/nav"
 
 export default function App() {
