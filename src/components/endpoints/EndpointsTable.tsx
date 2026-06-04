@@ -1,0 +1,286 @@
+import { useMemo, useState, type ReactNode } from "react"
+import { Search, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight } from "lucide-react"
+import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { locations, type Status } from "@/data/dashboard"
+import { queryEndpoints, type Endpoint, type SortKey, type SortDir } from "@/data/endpoints"
+
+const statusVar: Record<Status, string> = {
+  healthy: "var(--status-healthy)",
+  warning: "var(--status-warning)",
+  critical: "var(--status-critical)",
+}
+const statusBadge: Record<Status, "success" | "warning" | "danger"> = {
+  healthy: "success", warning: "warning", critical: "danger",
+}
+const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
+const initials = (name: string) => name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
+
+function pageList(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const out: (number | "…")[] = [1]
+  const lo = Math.max(2, current - 1)
+  const hi = Math.min(total - 1, current + 1)
+  if (lo > 2) out.push("…")
+  for (let i = lo; i <= hi; i++) out.push(i)
+  if (hi < total - 1) out.push("…")
+  out.push(total)
+  return out
+}
+
+function SortHeader({
+  label, col, sortKey, sortDir, onSort, className, align = "left",
+}: {
+  label: string; col: SortKey; sortKey: SortKey; sortDir: SortDir
+  onSort: (c: SortKey) => void; className?: string; align?: "left" | "right"
+}) {
+  const active = sortKey === col
+  const Icon = !active ? ChevronsUpDown : sortDir === "asc" ? ChevronUp : ChevronDown
+  return (
+    <th className={"h-10 px-4 align-middle " + (className ?? "")}>
+      <button
+        type="button"
+        onClick={() => onSort(col)}
+        className={"inline-flex items-center gap-1 text-xs font-medium transition-colors hover:text-[var(--fg-neutral-emphasis)] " + (align === "right" ? "flex-row-reverse" : "")}
+        style={{ color: active ? "var(--fg-neutral-emphasis)" : "var(--fg-neutral-muted)" }}
+      >
+        {label}
+        <Icon className="size-3.5" style={{ color: active ? "var(--fg-neutral-muted)" : "var(--fg-neutral-subtle)" }} />
+      </button>
+    </th>
+  )
+}
+
+const PAGE_SIZES = [10, 15, 25, 50]
+
+export function EndpointsTable({
+  initialLocationId = "all",
+  onOpenEndpoint,
+}: {
+  initialLocationId?: string
+  onOpenEndpoint?: (e: Endpoint) => void
+}) {
+  const [search, setSearch] = useState("")
+  const [locationId, setLocationId] = useState(initialLocationId)
+  const [status, setStatus] = useState<Status | "all">("all")
+  const [sortKey, setSortKey] = useState<SortKey>("status")
+  const [sortDir, setSortDir] = useState<SortDir>("asc")
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(15)
+  const [selected, setSelected] = useState<string | null>(null)
+
+  const showLocation = locationId === "all"
+
+  const rows = useMemo(
+    () => queryEndpoints({ search, locationId, status, sortKey, sortDir }),
+    [search, locationId, status, sortKey, sortDir]
+  )
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize))
+  const safePage = Math.min(page, totalPages)
+  const pageRows = rows.slice((safePage - 1) * pageSize, safePage * pageSize)
+
+  const onSort = (c: SortKey) => {
+    if (c === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"))
+    else { setSortKey(c); setSortDir(c === "score" ? "asc" : "asc") }
+    setPage(1)
+  }
+  const resetPage = () => setPage(1)
+
+  return (
+    <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
+      {/* header */}
+      <div className="flex items-center gap-2 px-4 py-4">
+        <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Endpoints</h2>
+        <span
+          className="flex h-5 items-center rounded-full px-2 text-xs font-medium"
+          style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}
+        >
+          {rows.length.toLocaleString()} {rows.length === 1 ? "endpoint" : "endpoints"}
+        </span>
+      </div>
+
+      {/* toolbar */}
+      <div className="flex flex-col gap-2 px-4 pb-4 sm:flex-row sm:items-center">
+        <div
+          className="flex h-9 w-full items-center gap-1.5 rounded-lg px-2.5 sm:max-w-xs"
+          style={{ background: "var(--bg-input-default)", border: "1px solid var(--border-input-default)" }}
+        >
+          <Search className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
+          <input
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); resetPage() }}
+            placeholder="Search user or machine…"
+            className="min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]"
+            style={{ color: "var(--fg-neutral-emphasis)" }}
+          />
+        </div>
+        <div className="flex items-center gap-2 sm:ml-auto">
+          <Select value={locationId} onValueChange={(v) => { setLocationId(v); resetPage() }}>
+            <SelectTrigger className="h-9"><SelectValue placeholder="Location" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All locations</SelectItem>
+              {locations.map((l) => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={status} onValueChange={(v) => { setStatus(v as Status | "all"); resetPage() }}>
+            <SelectTrigger className="h-9"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="critical">Critical</SelectItem>
+              <SelectItem value="warning">Warning</SelectItem>
+              <SelectItem value="healthy">Healthy</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* table */}
+      <div className="w-full overflow-x-auto" style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr style={{ borderBottom: "1px solid var(--border-neutral-muted)", background: "var(--bg-neutral-subtle)" }}>
+              <SortHeader label="User / Machine" col="user" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
+              <SortHeader label="Status" col="status" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
+              {showLocation && <SortHeader label="Location" col="location" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />}
+              <SortHeader label="Clarity Score" col="score" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
+              <SortHeader label="Primary issue" col="issue" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
+              <th className="w-10" />
+            </tr>
+          </thead>
+          <tbody>
+            {pageRows.map((e) => {
+              const isSel = selected === e.id
+              return (
+                <tr
+                  key={e.id}
+                  onClick={() => { setSelected(e.id); onOpenEndpoint?.(e) }}
+                  className="group cursor-pointer transition-colors"
+                  style={{
+                    borderBottom: "1px solid var(--border-neutral-subtle)",
+                    background: isSel ? "var(--bg-selected-subtle)" : "transparent",
+                  }}
+                  onMouseEnter={(ev) => { if (!isSel) ev.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)" }}
+                  onMouseLeave={(ev) => { ev.currentTarget.style.background = isSel ? "var(--bg-selected-subtle)" : "transparent" }}
+                >
+                  {/* user / machine */}
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="size-8">
+                        <AvatarFallback>{initials(e.user)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex min-w-px flex-col">
+                        <span className="truncate text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{e.user}</span>
+                        <span className="truncate font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{e.machine}</span>
+                      </div>
+                    </div>
+                  </td>
+                  {/* status */}
+                  <td className="px-4 py-3">
+                    <Badge variant={statusBadge[e.status]} className="gap-1.5">
+                      <span className="size-1.5 rounded-full" style={{ background: statusVar[e.status] }} />
+                      {cap(e.status)}
+                    </Badge>
+                  </td>
+                  {/* location */}
+                  {showLocation && (
+                    <td className="px-4 py-3">
+                      <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>{e.locationName} · {e.site}</span>
+                    </td>
+                  )}
+                  {/* score */}
+                  <td className="px-4 py-3">
+                    <span
+                      className="font-mono text-sm font-medium"
+                      style={{ color: e.score === null ? "var(--fg-neutral-subtle)" : e.status === "critical" ? "var(--fg-danger)" : e.status === "warning" ? "var(--fg-warning)" : "var(--fg-neutral-emphasis)" }}
+                    >
+                      {e.score === null ? "—" : e.score.toFixed(1)}
+                    </span>
+                  </td>
+                  {/* primary issue */}
+                  <td className="px-4 py-3">
+                    {e.primaryIssue ? (
+                      <span className="inline-flex items-center gap-1.5 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
+                        <span className="size-1.5 rounded-full" style={{ background: statusVar[e.status] }} />
+                        {e.primaryIssue}
+                      </span>
+                    ) : (
+                      <span className="text-sm" style={{ color: "var(--fg-neutral-subtle)" }}>—</span>
+                    )}
+                  </td>
+                  {/* affordance */}
+                  <td className="pr-3">
+                    <ChevronRight className="size-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color: "var(--fg-neutral-subtle)" }} />
+                  </td>
+                </tr>
+              )
+            })}
+            {pageRows.length === 0 && (
+              <tr><td colSpan={6} className="px-4 py-16 text-center text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No endpoints match your filters.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* footer / pagination */}
+      <div className="flex flex-col items-center gap-3 px-4 py-3 sm:flex-row sm:justify-between" style={{ borderTop: "1px solid var(--border-neutral-muted)" }}>
+        <div className="flex items-center gap-3 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
+          <span>Page {safePage} of {totalPages}</span>
+          <span style={{ color: "var(--border-neutral-emphasis)" }}>·</span>
+          <span className="flex items-center gap-2">
+            Rows per page
+            <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1) }}>
+              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZES.map((s) => <SelectItem key={s} value={String(s)}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <PagerBtn disabled={safePage === 1} onClick={() => setPage(1)}><ChevronsLeft className="size-4" /></PagerBtn>
+          <PagerBtn disabled={safePage === 1} onClick={() => setPage(safePage - 1)}><ChevronLeft className="size-4" /></PagerBtn>
+          {pageList(safePage, totalPages).map((p, i) =>
+            p === "…" ? (
+              <span key={`e${i}`} className="px-1 text-sm" style={{ color: "var(--fg-neutral-subtle)" }}>…</span>
+            ) : (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPage(p)}
+                className="flex size-8 items-center justify-center rounded-md text-sm font-medium transition-colors"
+                style={p === safePage
+                  ? { background: "var(--bg-selected-subtle)", color: "var(--fg-primary-emphasis)" }
+                  : { color: "var(--fg-neutral-muted)" }}
+                onMouseEnter={(ev) => { if (p !== safePage) ev.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)" }}
+                onMouseLeave={(ev) => { if (p !== safePage) ev.currentTarget.style.background = "transparent" }}
+              >
+                {p}
+              </button>
+            )
+          )}
+          <PagerBtn disabled={safePage === totalPages} onClick={() => setPage(safePage + 1)}><ChevronRight className="size-4" /></PagerBtn>
+          <PagerBtn disabled={safePage === totalPages} onClick={() => setPage(totalPages)}><ChevronsRight className="size-4" /></PagerBtn>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function PagerBtn({ children, disabled, onClick }: { children: ReactNode; disabled?: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className="flex size-8 items-center justify-center rounded-md transition-colors disabled:opacity-40"
+      style={{ color: "var(--fg-neutral-muted)" }}
+      onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)" }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent" }}
+    >
+      {children}
+    </button>
+  )
+}

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react"
-import { Monitor, TriangleAlert, SlidersHorizontal } from "lucide-react"
+import { TriangleAlert, SlidersHorizontal } from "lucide-react"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { Topbar } from "@/components/dashboard/Topbar"
 import { OverviewPage } from "@/pages/OverviewPage"
+import { EndpointsPage } from "@/pages/EndpointsPage"
 import { PlaceholderPage } from "@/pages/PlaceholderPage"
 import { useStreaming } from "@/hooks/useStreaming"
 import { DEFAULT_LOCATION } from "@/data/dashboard"
@@ -12,12 +13,18 @@ export default function App() {
   const [dark, setDark] = useState(false)
   const [page, setPage] = useState<PageId>("overview")
   const [selectedId, setSelectedId] = useState<string>(DEFAULT_LOCATION)
+  const [endpointFilter, setEndpointFilter] = useState<string>("all")
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const live = useStreaming()
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark)
   }, [dark])
+
+  const handleViewEndpoints = () => {
+    setEndpointFilter(selectedId === "all" ? "all" : selectedId)
+    setPage("endpoints")
+  }
 
   return (
     <div className="flex h-screen w-full items-start overflow-hidden" style={{ background: "var(--bg-app)" }}>
@@ -47,14 +54,16 @@ export default function App() {
 
         <div className="flex flex-1 flex-col overflow-y-auto p-4">
           {page === "overview" && (
-            <OverviewPage live={live} selectedId={selectedId} onSelect={setSelectedId} onNavigate={setPage} />
+            <OverviewPage
+              live={live}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              onViewEndpoints={handleViewEndpoints}
+              onViewAllAlerts={() => setPage("alerts")}
+            />
           )}
           {page === "endpoints" && (
-            <PlaceholderPage
-              title="Endpoints"
-              icon={Monitor}
-              description="A searchable table of every monitored endpoint across your fleet — status, Clarity Network Score, jitter, latency and packet loss."
-            />
+            <EndpointsPage key={endpointFilter} initialLocationId={endpointFilter} />
           )}
           {page === "alerts" && (
             <PlaceholderPage

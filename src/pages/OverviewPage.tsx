@@ -2,18 +2,19 @@ import { StatsStrip } from "@/components/dashboard/StatsStrip"
 import { MapAndLocations } from "@/components/dashboard/MapAndLocations"
 import { ActiveAlertsCard } from "@/components/dashboard/ActiveAlertsCard"
 import type { LiveFleet } from "@/hooks/useStreaming"
-import type { PageId } from "@/nav"
 
 export function OverviewPage({
   live,
   selectedId,
   onSelect,
-  onNavigate,
+  onViewEndpoints,
+  onViewAllAlerts,
 }: {
   live: LiveFleet
   selectedId: string
   onSelect: (id: string) => void
-  onNavigate: (id: PageId) => void
+  onViewEndpoints: () => void
+  onViewAllAlerts: () => void
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -21,9 +22,9 @@ export function OverviewPage({
       <MapAndLocations
         selectedId={selectedId}
         onSelect={onSelect}
-        onViewEndpoints={() => onNavigate("endpoints")}
+        onViewEndpoints={onViewEndpoints}
       />
-      <ActiveAlertsCard selectedId={selectedId} onViewAll={() => onNavigate("alerts")} />
+      <ActiveAlertsCard selectedId={selectedId} onViewAll={onViewAllAlerts} />
     </div>
   )
 }
