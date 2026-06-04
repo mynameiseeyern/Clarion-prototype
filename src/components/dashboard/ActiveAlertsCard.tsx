@@ -2,7 +2,6 @@ import { ArrowRight, CircleCheck, Timer, Bot, ChevronRight, Siren, Wifi, Activit
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { KpiCard } from "./KpiCard"
-import { LegendItem } from "./primitives"
 import { locations, locationById, recentActivityFor, type RecentActivity, type Status } from "@/data/dashboard"
 import { rollupsForLocation, rollupsAll, type RollupCause, type Rollup } from "@/data/endpoints"
 
@@ -126,13 +125,7 @@ export function ActiveAlertsCard({
                 { id: "auto", label: "Auto-fixed", value: String(recent.autoFixed), icon: "auto" as const },
               ]
               return items.map((a) => (
-                <KpiCard key={a.id} title={a.label} icon={iconMap[a.icon]} value={a.value} fixedWidth>
-                  <div className="flex items-center gap-2">
-                    <LegendItem label="Healthy" muted showDot={false} />
-                    <LegendItem label="Warning" muted showDot={false} />
-                    <LegendItem label="Critical" muted showDot={false} />
-                  </div>
-                </KpiCard>
+                <KpiCard key={a.id} title={a.label} icon={iconMap[a.icon]} value={a.value} fixedWidth />
               ))
             })()}
           </div>

@@ -357,3 +357,27 @@ export function rollupsAll(): Rollup[] {
     .flatMap((l) => rollupsForLocation(l.id))
     .sort((a, b) => sev[a.severity] - sev[b.severity] || b.affected - a.affected)
 }
+
+// ---- derived display status (so a location's dot always matches its issues) --
+
+export function locationIssueCount(locId: string): number {
+  return rollupsForLocation(locId).length
+}
+
+export function locationSeverity(locId: string): Status {
+  const rs = rollupsForLocation(locId)
+  if (rs.some((r) => r.severity === "critical")) return "critical"
+  if (rs.some((r) => r.severity === "warning")) return "warning"
+  return "healthy"
+}
+
+export function countryIssueCount(countryId: string): number {
+  return locations.filter((l) => l.countryId === countryId).reduce((s, l) => s + locationIssueCount(l.id), 0)
+}
+
+export function countrySeverity(countryId: string): Status {
+  const cities = locations.filter((l) => l.countryId === countryId)
+  if (cities.some((l) => locationSeverity(l.id) === "critical")) return "critical"
+  if (cities.some((l) => locationSeverity(l.id) === "warning")) return "warning"
+  return "healthy"
+}
