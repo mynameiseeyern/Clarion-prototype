@@ -17,7 +17,7 @@ function MapPanel({
 }: {
   selectedId: string
   onSelect: (id: string) => void
-  onViewEndpoints: () => void
+  onViewEndpoints: (locId?: string) => void
 }) {
   const selected = locationById(selectedId)
   return (
@@ -184,7 +184,7 @@ export function MapAndLocations({
 }: {
   selectedId: string
   onSelect: (id: string) => void
-  onViewEndpoints: () => void
+  onViewEndpoints: (locId?: string) => void
 }) {
   // map markers don't include "all"; fall back to a sensible marker target
   const mapSelected = selectedId === "all" ? "sydney" : selectedId
@@ -192,7 +192,7 @@ export function MapAndLocations({
     <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
       <div className="flex flex-col lg:flex-row">
         <MapPanel selectedId={mapSelected} onSelect={onSelect} onViewEndpoints={onViewEndpoints} />
-        <LocationsPanel selectedId={selectedId} onSelect={onSelect} />
+        <LocationsPanel selectedId={selectedId} onSelect={onSelect} onViewEndpoints={onViewEndpoints} />
       </div>
     </Card>
   )

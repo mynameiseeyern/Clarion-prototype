@@ -38,8 +38,9 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey)
   }, [])
 
-  const handleViewEndpoints = () => {
-    setEndpointFilter(selectedId === "all" ? "all" : selectedId)
+  const handleViewEndpoints = (locId?: string) => {
+    const id = locId ?? selectedId
+    setEndpointFilter(id === "all" ? "all" : id)
     setPage("endpoints")
   }
 
