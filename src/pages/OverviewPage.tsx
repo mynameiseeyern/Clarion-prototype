@@ -17,7 +17,7 @@ export function OverviewPage({
   onSelect: (id: string) => void
   onViewEndpoints: () => void
   onViewAllAlerts: () => void
-  onOpenAlert: (r: Rollup) => void
+  onOpenAlert: (rollups: Rollup[], index: number) => void
 }) {
   return (
     <div className="flex flex-col gap-4">

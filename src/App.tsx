@@ -22,8 +22,8 @@ export default function App() {
   const [alertFilter, setAlertFilter] = useState<string>("all")
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [drawer, setDrawer] = useState<{ rows: Endpoint[]; index: number } | null>(null)
-  const [alertDrawer, setAlertDrawer] = useState<Rollup | null>(null)
-  const [backRollup, setBackRollup] = useState<Rollup | null>(null)
+  const [alertDrawer, setAlertDrawer] = useState<{ rows: Rollup[]; index: number } | null>(null)
+  const [backAlert, setBackAlert] = useState<{ rows: Rollup[]; index: number } | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const live = useStreaming()
 
@@ -55,6 +55,7 @@ export default function App() {
   }
 
   const openEndpointId = drawer ? drawer.rows[drawer.index]?.id ?? null : null
+  const openAlertId = alertDrawer ? alertDrawer.rows[alertDrawer.index]?.id ?? null : null
 
   return (
     <div className="flex h-screen w-full items-start overflow-hidden" style={{ background: "var(--bg-app)" }}>
@@ -98,7 +99,7 @@ export default function App() {
               onSelect={setSelectedId}
               onViewEndpoints={handleViewEndpoints}
               onViewAllAlerts={handleViewAllAlerts}
-              onOpenAlert={setAlertDrawer}
+              onOpenAlert={(rollups, index) => setAlertDrawer({ rows: rollups, index })}
             />
           )}
           {page === "endpoints" && (
@@ -113,8 +114,8 @@ export default function App() {
             <AlertsPage
               locationId={alertFilter}
               onLocationChange={setAlertFilter}
-              onOpenAlert={setAlertDrawer}
-              openAlertId={alertDrawer?.id ?? null}
+              onOpenAlert={(rollups, index) => setAlertDrawer({ rows: rollups, index })}
+              openAlertId={openAlertId}
             />
           )}
           {page === "thresholds" && (
@@ -133,17 +134,19 @@ export default function App() {
         index={drawer?.index ?? 0}
         open={drawer !== null}
         onIndexChange={(i) => setDrawer((d) => (d ? { ...d, index: i } : d))}
-        onOpenChange={(o) => { if (!o) { setDrawer(null); setBackRollup(null) } }}
-        backLabel={backRollup ? backRollup.title : undefined}
-        onBack={backRollup ? () => { setDrawer(null); setAlertDrawer(backRollup); setBackRollup(null) } : undefined}
+        onOpenChange={(o) => { if (!o) { setDrawer(null); setBackAlert(null) } }}
+        backLabel={backAlert ? backAlert.rows[backAlert.index]?.title : undefined}
+        onBack={backAlert ? () => { setDrawer(null); setAlertDrawer(backAlert); setBackAlert(null) } : undefined}
       />
 
       {/* alert rollup drilldown */}
       <AlertDrawer
-        rollup={alertDrawer}
+        rows={alertDrawer?.rows ?? []}
+        index={alertDrawer?.index ?? 0}
         open={alertDrawer !== null}
+        onIndexChange={(i) => setAlertDrawer((d) => (d ? { ...d, index: i } : d))}
         onOpenChange={(o) => { if (!o) setAlertDrawer(null) }}
-        onOpenEndpoint={(rows, index) => { setBackRollup(alertDrawer); setAlertDrawer(null); setDrawer({ rows, index }) }}
+        onOpenEndpoint={(rows, index) => { setBackAlert(alertDrawer); setAlertDrawer(null); setDrawer({ rows, index }) }}
       />
 
       {/* global command palette */}

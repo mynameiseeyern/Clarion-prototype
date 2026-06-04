@@ -9,7 +9,7 @@ export function AlertsPage({
 }: {
   locationId: string
   onLocationChange: (id: string) => void
-  onOpenAlert: (r: Rollup) => void
+  onOpenAlert: (rollups: Rollup[], index: number) => void
   openAlertId?: string | null
 }) {
   return (

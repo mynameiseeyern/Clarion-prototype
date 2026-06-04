@@ -31,7 +31,7 @@ export function ActiveAlertsCard({
 }: {
   selectedId: string
   onViewAll: () => void
-  onOpenAlert: (r: Rollup) => void
+  onOpenAlert: (rollups: Rollup[], index: number) => void
 }) {
   const isAll = selectedId === "all"
   const loc = locationById(selectedId)
@@ -62,14 +62,14 @@ export function ActiveAlertsCard({
             {rollups.length} alert{rollups.length === 1 ? "" : "s"} · {totalAffected.toLocaleString()} endpoints affected in {name}
           </div>
           <div className="flex flex-col p-2">
-            {rollups.map((r) => {
+            {rollups.map((r, i) => {
               const Icon = causeIcon[r.cause]
               const tone = sevTone[r.severity]
               return (
                 <button
                   key={r.id}
                   type="button"
-                  onClick={() => onOpenAlert(r)}
+                  onClick={() => onOpenAlert(rollups, i)}
                   className="group flex items-center gap-3 rounded-lg px-2 py-3 text-left transition-colors"
                   onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}

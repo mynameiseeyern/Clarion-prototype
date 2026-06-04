@@ -1,5 +1,6 @@
+import { useEffect } from "react"
 import * as Dialog from "@radix-ui/react-dialog"
-import { X, MapPin, Clock, Users, Siren, Wifi, Activity, Gauge, ChevronRight, type LucideIcon } from "lucide-react"
+import { X, MapPin, Clock, Users, Siren, Wifi, Activity, Gauge, ChevronRight, ChevronUp, ChevronDown, type LucideIcon } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import type { Status } from "@/data/dashboard"
 import type { Rollup, RollupCause, Endpoint } from "@/data/endpoints"
@@ -25,14 +26,46 @@ function Meta({ icon: Icon, children }: { icon: LucideIcon; children: React.Reac
   )
 }
 
+function IconBtn({ children, label, onClick, disabled }: { children: React.ReactNode; label: string; onClick: () => void; disabled?: boolean }) {
+  return (
+    <button
+      type="button" aria-label={label} onClick={onClick} disabled={disabled}
+      className="flex size-8 items-center justify-center rounded-md transition-colors disabled:opacity-40"
+      style={{ color: "var(--fg-neutral-muted)" }}
+      onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)" }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent" }}
+    >
+      {children}
+    </button>
+  )
+}
+
 export function AlertDrawer({
-  rollup, open, onOpenChange, onOpenEndpoint,
+  rows, index, onIndexChange, open, onOpenChange, onOpenEndpoint,
 }: {
-  rollup: Rollup | null
+  rows: Rollup[]
+  index: number
+  onIndexChange: (i: number) => void
   open: boolean
   onOpenChange: (o: boolean) => void
   onOpenEndpoint: (rows: Endpoint[], index: number) => void
 }) {
+  const go = (delta: number) => {
+    const next = index + delta
+    if (next >= 0 && next < rows.length) onIndexChange(next)
+  }
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "ArrowDown") { ev.preventDefault(); go(1) }
+      if (ev.key === "ArrowUp") { ev.preventDefault(); go(-1) }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [open, index, rows.length])
+
+  const rollup = rows[index]
   if (!rollup) return null
   const Icon = causeIcon[rollup.cause]
   const tone = sevTone[rollup.severity]
@@ -47,10 +80,14 @@ export function AlertDrawer({
         >
           {/* utility bar */}
           <div className="flex shrink-0 items-center justify-between px-3 py-2" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
-            <span className="inline-flex items-center gap-1.5 pl-1 text-xs font-medium uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>
-              <Siren className="size-3.5" /> Active alert
-            </span>
-            <button type="button" aria-label="Close" onClick={() => onOpenChange(false)} className="flex size-8 items-center justify-center rounded-md transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }}><X className="size-4" /></button>
+            <div className="flex items-center gap-1">
+              <IconBtn label="Previous alert" onClick={() => go(-1)} disabled={index === 0}><ChevronUp className="size-4" /></IconBtn>
+              <IconBtn label="Next alert" onClick={() => go(1)} disabled={index === rows.length - 1}><ChevronDown className="size-4" /></IconBtn>
+              <span className="ml-1 inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--fg-neutral-subtle)" }}>
+                <Siren className="size-3.5" /> Alert {index + 1} <span style={{ color: "var(--fg-neutral-subtle)" }}>of {rows.length}</span>
+              </span>
+            </div>
+            <IconBtn label="Close" onClick={() => onOpenChange(false)}><X className="size-4" /></IconBtn>
           </div>
 
           {/* header */}

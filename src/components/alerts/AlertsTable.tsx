@@ -23,7 +23,7 @@ export function AlertsTable({
 }: {
   locationId: string
   onLocationChange: (id: string) => void
-  onOpenAlert: (r: Rollup) => void
+  onOpenAlert: (rollups: Rollup[], index: number) => void
   openAlertId?: string | null
 }) {
   const [search, setSearch] = useState("")
@@ -94,12 +94,12 @@ export function AlertsTable({
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => {
+            {rows.map((r, i) => {
               const Icon = causeIcon[r.cause]
               const tone = sevTone[r.severity]
               const isSel = openAlertId === r.id
               return (
-                <tr key={r.id} onClick={() => onOpenAlert(r)} className="group cursor-pointer transition-colors"
+                <tr key={r.id} onClick={() => onOpenAlert(rows, i)} className="group cursor-pointer transition-colors"
                   style={{ borderBottom: "1px solid var(--border-neutral-subtle)", background: isSel ? "var(--bg-selected-subtle)" : "transparent" }}
                   onMouseEnter={(e) => { if (!isSel) e.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)" }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = isSel ? "var(--bg-selected-subtle)" : "transparent" }}>
