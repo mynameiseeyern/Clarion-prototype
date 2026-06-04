@@ -82,7 +82,7 @@ export function EndpointDrawer({
 
   const contentClass = expanded
     ? "fixed left-1/2 top-1/2 z-50 flex h-[94vh] w-[1120px] max-w-[96vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
-    : "fixed right-0 top-0 z-50 flex h-full w-[640px] max-w-[95vw] flex-col overflow-hidden shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right"
+    : "fixed right-0 top-0 z-50 flex h-full w-full flex-col overflow-hidden shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right sm:w-[640px] sm:max-w-[95vw]"
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>

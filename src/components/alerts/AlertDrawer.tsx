@@ -42,23 +42,28 @@ export function AlertDrawer({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 data-[state=open]:animate-in data-[state=open]:fade-in-0" style={{ background: "var(--bg-scrim)" }} />
         <Dialog.Content
-          className="fixed right-0 top-0 z-50 flex h-full w-[600px] max-w-[95vw] flex-col overflow-hidden shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-right"
+          className="fixed right-0 top-0 z-50 flex h-full w-full flex-col overflow-hidden shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:w-[600px] sm:max-w-[95vw]"
           style={{ background: "var(--bg-card)", borderLeft: "1px solid var(--border-neutral-muted)" }}
         >
+          {/* utility bar */}
+          <div className="flex shrink-0 items-center justify-between px-3 py-2" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
+            <span className="inline-flex items-center gap-1.5 pl-1 text-xs font-medium uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>
+              <Siren className="size-3.5" /> Active alert
+            </span>
+            <button type="button" aria-label="Close" onClick={() => onOpenChange(false)} className="flex size-8 items-center justify-center rounded-md transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }}><X className="size-4" /></button>
+          </div>
+
           {/* header */}
           <div className="shrink-0 px-5 pt-4" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl" style={{ background: tone.bg, color: tone.fg }}><Icon className="size-5" /></span>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <Dialog.Title className="text-lg font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{rollup.title}</Dialog.Title>
-                    <span className="rounded-md px-2 py-0.5 text-xs font-semibold uppercase" style={{ background: tone.bg, color: tone.fg }}>{cap(rollup.severity)}</span>
-                  </div>
-                  <Dialog.Description className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Alert rollup · {rollup.affected} endpoints affected</Dialog.Description>
+            <div className="flex items-center gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl" style={{ background: tone.bg, color: tone.fg }}><Icon className="size-5" /></span>
+              <div className="flex min-w-px flex-col">
+                <div className="flex items-center gap-2">
+                  <Dialog.Title className="truncate text-lg font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{rollup.title}</Dialog.Title>
+                  <span className="shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold uppercase" style={{ background: tone.bg, color: tone.fg }}>{cap(rollup.severity)}</span>
                 </div>
+                <Dialog.Description className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Alert rollup · {rollup.affected} endpoints affected</Dialog.Description>
               </div>
-              <button type="button" aria-label="Close" onClick={() => onOpenChange(false)} className="flex size-8 items-center justify-center rounded-md transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }}><X className="size-4" /></button>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 pb-4 text-sm">
               <Meta icon={MapPin}>{rollup.locationName}</Meta>
