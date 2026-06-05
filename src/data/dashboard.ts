@@ -112,6 +112,10 @@ export interface CountryStats extends Country {
   endpoints: number
   issues: number
   activeAlerts: number
+  healthy: number
+  warning: number
+  critical: number
+  offline: number
   status: Status
   cityCount: number
 }
@@ -132,6 +136,10 @@ export function countryStats(countryId: string): CountryStats | undefined {
     endpoints: cities.reduce((s, l) => s + l.endpoints, 0),
     issues: cities.reduce((s, l) => s + l.issues, 0),
     activeAlerts: cities.reduce((s, l) => s + l.activeAlerts, 0),
+    healthy: cities.reduce((s, l) => s + l.healthy, 0),
+    warning: cities.reduce((s, l) => s + l.warning, 0),
+    critical: cities.reduce((s, l) => s + l.critical, 0),
+    offline: cities.reduce((s, l) => s + l.offline, 0),
     status: worstStatus(cities),
     cityCount: cities.length,
   }

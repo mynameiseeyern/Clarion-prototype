@@ -15,6 +15,34 @@ const statusVar: Record<Status, string> = {
   critical: "var(--status-critical)",
 }
 
+/* Hover tooltip shown on a map pin: name + endpoint count, then the
+   healthy / warning / critical breakdown by number. */
+function PinTooltip({
+  name, endpoints, healthy, warning, critical,
+}: {
+  name: string
+  endpoints: number
+  healthy: number
+  warning: number
+  critical: number
+}) {
+  return (
+    <span
+      className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md px-2.5 py-1.5 text-left group-hover:block group-focus-visible:block"
+      style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)", boxShadow: "var(--shadow-md)" }}
+    >
+      <span className="block text-xs font-medium">
+        {name} · {endpoints.toLocaleString()} endpoints
+      </span>
+      <span className="mt-1 flex items-center gap-2.5 font-mono text-[11px]">
+        <span className="flex items-center gap-1"><span className="size-1.5 rounded-full" style={{ background: "var(--status-healthy)" }} />{healthy.toLocaleString()}</span>
+        <span className="flex items-center gap-1"><span className="size-1.5 rounded-full" style={{ background: "var(--status-warning)" }} />{warning.toLocaleString()}</span>
+        <span className="flex items-center gap-1"><span className="size-1.5 rounded-full" style={{ background: "var(--status-critical)" }} />{critical.toLocaleString()}</span>
+      </span>
+    </span>
+  )
+}
+
 /* ---------------- Map ---------------- */
 function MapPanel({
   country, onEnterCountry, onBack, selectedId, onSelect, onViewEndpoints,
@@ -52,7 +80,7 @@ function MapPanel({
       </div>
 
       <div className="flex flex-1 flex-col gap-2 px-4 pb-4">
-        <div className="relative h-[272px] w-full overflow-hidden rounded-md" style={{ background: "var(--bg-canvas)" }}>
+        <div className="relative h-[272px] w-full overflow-visible rounded-md" style={{ background: "var(--bg-canvas)" }}>
           <svg viewBox="0 0 654 272" className="absolute inset-0 size-full" preserveAspectRatio="xMidYMid slice" aria-hidden>
             <g fill="var(--bg-neutral-subtle-pressed)" opacity="0.7">
               <path d="M70 120 Q120 70 200 90 Q230 130 180 170 Q120 190 80 160 Z" />
@@ -68,8 +96,9 @@ function MapPanel({
             const cSev = countrySeverity(c.id)
             return (
               <button key={c.id} type="button" onClick={() => onEnterCountry(c.id)} aria-label={c.name}
-                className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 focus:outline-none"
+                className="group absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 hover:z-20 focus:z-20 focus:outline-none"
                 style={{ left: `${c.x}%`, top: `${c.y}%` }}>
+                <PinTooltip name={c.name} endpoints={c.endpoints} healthy={c.healthy} warning={c.warning} critical={c.critical} />
                 <span className="flex items-center gap-1.5 rounded-full px-2 py-1 shadow-md transition-transform hover:scale-105"
                   style={{ background: "var(--bg-card)", border: `2px solid ${statusVar[cSev]}` }}>
                   <span className="size-2 rounded-full" style={{ background: statusVar[cSev] }} />
@@ -86,7 +115,8 @@ function MapPanel({
             const mSev = locationSeverity(m.id)
             return (
               <button key={m.id} type="button" onClick={() => onSelect(m.id)} aria-label={m.name}
-                className="absolute -translate-x-1/2 -translate-y-1/2 focus:outline-none" style={{ left: `${m.x}%`, top: `${m.y}%` }}>
+                className="group absolute -translate-x-1/2 -translate-y-1/2 hover:z-20 focus:z-20 focus:outline-none" style={{ left: `${m.x}%`, top: `${m.y}%` }}>
+                <PinTooltip name={m.name} endpoints={m.endpoints} healthy={m.healthy} warning={m.warning} critical={m.critical} />
                 {isActive ? (
                   <span className="flex flex-col items-center gap-1.5">
                     <span className="flex size-4 items-center justify-center rounded-full" style={{ border: `2px solid ${statusVar[mSev]}`, background: "var(--bg-card)" }}>
