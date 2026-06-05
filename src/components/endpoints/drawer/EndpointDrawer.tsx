@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import * as Dialog from "@radix-ui/react-dialog"
-import { Monitor, MapPin, Globe, User, ChevronUp, ChevronDown, Maximize2, Minimize2, X, ArrowLeft } from "lucide-react"
+import { Monitor, MapPin, Globe, User, ChevronUp, ChevronDown, Maximize2, Minimize2, X, ArrowLeft, CloudOff } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getEndpointDetail } from "@/data/endpointDetail"
@@ -46,6 +46,20 @@ const TABS = [
   { id: "system", label: "System" },
 ]
 
+/* Shown in place of a tab's content when telemetry is older than 5 minutes,
+   so we never present stale readings as if they were live. */
+function StaleBanner({ mins }: { mins: number }) {
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-xl px-6 py-12 text-center" style={{ background: "var(--bg-warning-subtle)", border: "1px solid var(--border-warning-muted)" }}>
+      <CloudOff className="size-6" style={{ color: "var(--fg-warning-emphasis)" }} />
+      <span className="text-sm font-semibold" style={{ color: "var(--fg-on-warning-subtle)" }}>Last data {mins}m ago</span>
+      <span className="max-w-sm text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
+        Telemetry hasn’t arrived in over 5 minutes. Showing no live readings to avoid presenting stale data as current.
+      </span>
+    </div>
+  )
+}
+
 export function EndpointDrawer({
   rows, index, onIndexChange, open, onOpenChange, onBack, backLabel,
 }: {
@@ -69,12 +83,16 @@ export function EndpointDrawer({
     const next = index + delta
     if (next >= 0 && next < rows.length) onIndexChange(next)
   }
+  const cycleTab = (delta: number) =>
+    setTab((cur) => TABS[(TABS.findIndex((t) => t.id === cur) + delta + TABS.length) % TABS.length].id)
 
   useEffect(() => {
     if (!open) return
     const onKey = (ev: KeyboardEvent) => {
       if (ev.key === "ArrowDown") { ev.preventDefault(); go(1) }
       if (ev.key === "ArrowUp") { ev.preventDefault(); go(-1) }
+      if (ev.key === "ArrowRight") { ev.preventDefault(); cycleTab(1) }
+      if (ev.key === "ArrowLeft") { ev.preventDefault(); cycleTab(-1) }
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
@@ -82,6 +100,7 @@ export function EndpointDrawer({
 
   if (!e || !detail) return null
   const tone = statusTone[e.status]
+  const stale = e.lastSeenMinAgo > 5
 
   const contentClass = expanded
     ? "fixed left-1/2 top-1/2 z-50 flex h-[94vh] w-[1120px] max-w-[96vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
@@ -164,10 +183,10 @@ export function EndpointDrawer({
           {/* body */}
           <div className="min-h-px flex-1 overflow-y-auto px-5 py-5" style={{ background: "var(--bg-app)" }}>
             <Tabs value={tab} onValueChange={setTab}>
-              <TabsContent value="network"><NetworkTab d={detail} /></TabsContent>
-              <TabsContent value="platforms"><PlatformsTab d={detail} /></TabsContent>
-              <TabsContent value="devices"><DevicesTab d={detail} /></TabsContent>
-              <TabsContent value="system"><SystemTab d={detail} /></TabsContent>
+              <TabsContent value="network">{stale ? <StaleBanner mins={e.lastSeenMinAgo} /> : <NetworkTab d={detail} />}</TabsContent>
+              <TabsContent value="platforms">{stale ? <StaleBanner mins={e.lastSeenMinAgo} /> : <PlatformsTab d={detail} />}</TabsContent>
+              <TabsContent value="devices">{stale ? <StaleBanner mins={e.lastSeenMinAgo} /> : <DevicesTab d={detail} />}</TabsContent>
+              <TabsContent value="system">{stale ? <StaleBanner mins={e.lastSeenMinAgo} /> : <SystemTab d={detail} />}</TabsContent>
             </Tabs>
           </div>
         </Dialog.Content>

@@ -30,9 +30,8 @@ export interface DeviceRow {
   meta: string
   state: string
   stateTone: "good" | "muted"
-  kind: "audio-out" | "audio-in" | "video" | "bt"
+  kind: "audio-out" | "audio-in" | "video" | "bt" | "usb"
 }
-export interface UsbEvent { time: string; text: string }
 export interface SysMetric { label: string; value: string; unit: string; fill: number; meta: string }
 
 export interface EndpointDetail {
@@ -45,7 +44,7 @@ export interface EndpointDetail {
     ispNetwork: { name: string; detail: string }
   }
   platforms: { rows: PlatformRow[]; why: string }
-  devices: { audio: DeviceRow[]; video: DeviceRow[]; bluetooth: DeviceRow[]; usb: UsbEvent[] }
+  devices: { audio: DeviceRow[]; video: DeviceRow[]; bluetooth: DeviceRow[]; usb: DeviceRow[] }
   system: { cpu: SysMetric; memory: SysMetric; disk: SysMetric; battery: { value: string; detail: string }; os: { name: string; detail: string }; agent: { name: string; detail: string } }
 }
 
@@ -61,6 +60,7 @@ const platformMeta: Record<Platform, { key: string; color: string }> = {
   "Microsoft Teams": { key: "T", color: "#5059C9" },
   "Zoom": { key: "Z", color: "#2D8CFF" },
   "Webex": { key: "W", color: "#15B8A6" },
+  "Nice CXone": { key: "N", color: "#0B6BCB" },
 }
 const pods = ["Floor 2, Pod A", "Floor 3, Pod C", "Floor 4, Pod B", "Floor 1, Pod D", "Floor 5, Pod A"]
 
@@ -78,11 +78,11 @@ export function getEndpointDetail(e: Endpoint): EndpointDetail {
     { label: "Latency", value: String(e.latency), unit: "ms", fill: Math.min(1, e.latency / 200), status: metricStatus(e.latency, 80, 150), threshold: "warn ≥ 80ms · crit ≥ 150ms" },
     { label: "Packet loss", value: String(e.packetLoss), unit: "%", fill: Math.min(1, e.packetLoss / 6), status: metricStatus(e.packetLoss, 1, 3), threshold: "warn ≥ 1% · crit ≥ 3%" },
     { label: "Jitter", value: String(e.jitter), unit: "ms", fill: Math.min(1, e.jitter / 70), status: metricStatus(e.jitter, 30, 50), threshold: "warn ≥ 30ms · crit ≥ 50ms" },
-    { label: "MOS score", value: e.score === null ? "—" : e.score.toFixed(1), unit: "/ 5.0", fill: e.score === null ? 0 : e.score / 5, status: e.score === null ? "crit" : metricStatus(e.score, 3.6, 3.0, true), threshold: "warn < 3.6 · crit < 3.0" },
+    { label: "Clarity Network Score", value: e.score === null ? "—" : e.score.toFixed(1), unit: "/ 5.0", fill: e.score === null ? 0 : e.score / 5, status: e.score === null ? "crit" : metricStatus(e.score, 3.6, 3.0, true), threshold: "warn < 3.6 · crit < 3.0" },
   ]
 
   // platforms: the endpoint's primary platform reflects its issue; others mostly OK
-  const all: Platform[] = ["Genesys Cloud", "Microsoft Teams", "Zoom", "Webex"]
+  const all: Platform[] = ["Genesys Cloud", "Microsoft Teams", "Zoom", "Webex", "Nice CXone"]
   const downName = e.primaryIssue?.endsWith("down") ? e.primaryPlatform : null
   const rows: PlatformRow[] = all.map((name) => {
     const m = platformMeta[name]
@@ -124,9 +124,9 @@ export function getEndpointDetail(e: Endpoint): EndpointDetail {
       video: [{ name: pick(cams), meta: "USB · 1080p · Driver up-to-date", state: "Active", stateTone: "good", kind: "video" }],
       bluetooth: [{ name: "Bluetooth radio (Intel AX211)", meta: `${r(1, 3)} devices paired · Driver 22.180.0`, state: "On", stateTone: "good", kind: "bt" }],
       usb: [
-        { time: "14:42:18", text: "Headset reconnected (Bluetooth)" },
-        { time: "14:38:02", text: "Webcam USB enumerated on hub 2, port 3" },
-        { time: "14:21:40", text: "USB hub power-cycle event detected" },
+        { name: "USB-C Dock (DK3120)", meta: `Hub 2 · ${r(3, 6)} downstream ports · Bus-powered`, state: "Connected", stateTone: "good", kind: "usb" },
+        { name: "Kingston DataTraveler 64GB", meta: "Hub 2, port 3 · Mass storage", state: "Connected", stateTone: "good", kind: "usb" },
+        { name: "Logitech Unifying Receiver", meta: "Port 1 · Keyboard & mouse", state: "Active", stateTone: "good", kind: "usb" },
       ],
     },
     system: {

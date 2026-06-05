@@ -6,7 +6,7 @@ import { locations, type Status } from "./dashboard"
 
 export type Connection = "Ethernet" | "Wi-Fi"
 export type Site = "Office" | "Remote"
-export type Platform = "Genesys Cloud" | "Microsoft Teams" | "Zoom" | "Webex"
+export type Platform = "Genesys Cloud" | "Microsoft Teams" | "Zoom" | "Webex" | "Nice CXone"
 /** endpoint health, plus "offline" (not reporting) */
 export type EndpointStatus = Status | "offline"
 
@@ -46,6 +46,8 @@ export interface Endpoint {
   eventCount: number
   /** minutesAgo of the shown event (for the "most recent" display) */
   eventAgo: number | null
+  /** minutes since last telemetry; > 5 → drilldown tabs show a staleness banner */
+  lastSeenMinAgo: number
 }
 
 // ---- generation inputs -----------------------------------------------------
@@ -69,7 +71,7 @@ const teams = [
   "Customer Support · Tier 1", "Customer Support · Tier 2", "Customer Support · Tier 3",
   "Sales", "Technical Support", "Retentions", "Onboarding",
 ]
-const platforms: Platform[] = ["Genesys Cloud", "Microsoft Teams", "Zoom", "Webex"]
+const platforms: Platform[] = ["Genesys Cloud", "Microsoft Teams", "Zoom", "Webex", "Nice CXone"]
 // Device-level critical events that can occur alongside network/platform ones.
 const deviceCriticalEvents = [
   "Audio device driver failed", "Headset disconnected mid-call", "Camera not detected", "USB audio device removed",
@@ -211,6 +213,7 @@ function makeEndpoint(locId: string, locName: string, status: EndpointStatus, n:
     event,
     eventCount,
     eventAgo,
+    lastSeenMinAgo: status === "offline" ? round(between(6, 240)) : round(between(0, 4)),
   }
 }
 

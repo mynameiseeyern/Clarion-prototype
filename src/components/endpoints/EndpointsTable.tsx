@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react"
+import { useMemo, useState, useEffect, type ReactNode } from "react"
 import { Search, X, Check, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, CircleCheck } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -160,6 +160,16 @@ export function EndpointsTable({
     if (issuesActive) r = r.filter((e) => e.status === "critical" || e.status === "warning")
     return r
   }, [search, locationIds, status, sortKey, sortDir, issuesActive])
+
+  // keep the table page in sync with the row open in the drawer (so flicking
+  // ↑/↓ past a page boundary keeps the in-view row visible & highlighted)
+  useEffect(() => {
+    if (!openEndpointId) return
+    const idx = rows.findIndex((e) => e.id === openEndpointId)
+    if (idx < 0) return
+    const target = Math.floor(idx / pageSize) + 1
+    setPage((p) => (p === target ? p : target))
+  }, [openEndpointId, rows, pageSize])
 
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize))
   const safePage = Math.min(page, totalPages)
