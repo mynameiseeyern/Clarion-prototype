@@ -18,18 +18,18 @@ const sevPill = (label: string, bg: string, fg: string) => (
 
 interface IssueType { icon: LucideIcon; name: string; tone: string; detect: string; sev: string; eg: string }
 const issueTypes: IssueType[] = [
-  { icon: Siren, name: "Platform outage", tone: "var(--status-critical)", detect: "A UC/CC platform (Genesys, Teams, Zoom, Webex) unreachable from affected endpoints.", sev: "Always critical", eg: "Genesys Cloud unreachable · Manila CC" },
+  { icon: Siren, name: "Platform outage", tone: "var(--status-critical)", detect: "A UC/CC platform (Genesys, Teams, Zoom, Webex) unreachable from affected users.", sev: "Always critical", eg: "Genesys Cloud unreachable · Manila CC" },
   { icon: Activity, name: "Elevated packet loss", tone: "var(--status-warning)", detect: "Packet loss over threshold — warn ≥ 1%, crit ≥ 3%.", sev: "Warning or critical", eg: "Packet loss 7.2%" },
   { icon: Gauge, name: "High latency", tone: "var(--status-warning)", detect: "Round-trip latency over threshold — warn ≥ 80ms, crit ≥ 150ms.", sev: "Warning or critical", eg: "Latency 212ms" },
   { icon: Wifi, name: "Network jitter", tone: "var(--status-warning)", detect: "Latency variation over threshold — warn ≥ 30ms, crit ≥ 50ms.", sev: "Warning or critical", eg: "Wi-Fi · jitter 81ms" },
-  { icon: Cpu, name: "Isolated endpoint issue", tone: "var(--status-unknown)", detect: "A device-specific problem that doesn't pertain to other endpoints. Affects 1 endpoint.", sev: "Per endpoint", eg: "High CPU · Headset disconnected · Agent app crash" },
+  { icon: Cpu, name: "Isolated user issue", tone: "var(--status-unknown)", detect: "A device-specific problem that doesn't pertain to other users. Affects 1 user.", sev: "Per user", eg: "High CPU · Headset disconnected · Agent app crash" },
 ]
 
 interface AlertType { label: string; bg: string; fg: string; desc: string }
 const alertTypes: AlertType[] = [
   { label: "Critical", bg: "var(--bg-danger-subtle)", fg: "var(--fg-on-danger-subtle)", desc: "A severe, real-time event — opens or escalates a critical Issue." },
   { label: "Warning", bg: "var(--bg-warning-subtle)", fg: "var(--fg-on-warning-subtle)", desc: "A degradation crossing a warning threshold — opens or updates a warning Issue." },
-  { label: "Info", bg: "var(--bg-info-subtle)", fg: "var(--fg-on-info-subtle)", desc: "An informational event, e.g. recovery (“endpoint back online”) — can resolve an Issue." },
+  { label: "Info", bg: "var(--bg-info-subtle)", fg: "var(--fg-on-info-subtle)", desc: "An informational event, e.g. recovery (“user back online”) — can resolve an Issue." },
 ]
 
 function FlowBox({ icon: Icon, title, sub }: { icon: LucideIcon; title: string; sub: string }) {
@@ -52,7 +52,7 @@ export function IssuesDocPage() {
         </div>
         <h2 className="mt-3 text-heading-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>Issues model</h2>
         <p className="mt-1 text-body-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          How real-time alerts become issues, the types of each, and how an issue's severity is calculated from the endpoints it rolls up.
+          How real-time alerts become issues, the types of each, and how an issue's severity is calculated from the users it rolls up.
         </p>
       </Card>
 
@@ -63,7 +63,7 @@ export function IssuesDocPage() {
           <ArrowRight className="mx-auto size-4 rotate-90 sm:rotate-0" style={{ color: "var(--fg-neutral-subtle)" }} />
           <FlowBox icon={Siren} title="Issue" sub="persistent rollup" />
           <ArrowRight className="mx-auto size-4 rotate-90 sm:rotate-0" style={{ color: "var(--fg-neutral-subtle)" }} />
-          <FlowBox icon={Activity} title="Endpoints" sub="affected, each w/ a symptom" />
+          <FlowBox icon={Activity} title="Users" sub="affected, each w/ a symptom" />
           <ArrowRight className="mx-auto size-4 rotate-90 sm:rotate-0" style={{ color: "var(--fg-neutral-subtle)" }} />
           <FlowBox icon={Info} title="Ticket" sub="ITSM (future)" />
         </div>
@@ -109,14 +109,14 @@ export function IssuesDocPage() {
       {/* Status & rollup */}
       <SectionCard title="Status & rollup calculation">
         <p className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          Every endpoint has a <strong style={{ color: "var(--fg-neutral-emphasis)" }}>status</strong> — {sevPill("Critical", "var(--bg-danger-subtle)", "var(--fg-on-danger-subtle)")} {sevPill("Warning", "var(--bg-warning-subtle)", "var(--fg-on-warning-subtle)")} <span className="rounded-md px-1.5 py-0.5 text-xs font-semibold uppercase" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>Offline</span> Healthy — set by its worst metric vs. thresholds.
+          Every user has a <strong style={{ color: "var(--fg-neutral-emphasis)" }}>status</strong> — {sevPill("Critical", "var(--bg-danger-subtle)", "var(--fg-on-danger-subtle)")} {sevPill("Warning", "var(--bg-warning-subtle)", "var(--fg-on-warning-subtle)")} <span className="rounded-md px-1.5 py-0.5 text-xs font-semibold uppercase" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>Offline</span> Healthy — set by its worst metric vs. thresholds.
         </p>
         <p className="mt-3 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          Unhealthy endpoints (warning + critical) sharing the same <strong style={{ color: "var(--fg-neutral-emphasis)" }}>cause</strong> at the same <strong style={{ color: "var(--fg-neutral-emphasis)" }}>location</strong> are grouped into one issue — a <strong style={{ color: "var(--fg-neutral-emphasis)" }}>rollup</strong> with an affected-endpoint count. Offline endpoints are excluded from rollups.
+          Unhealthy users (warning + critical) sharing the same <strong style={{ color: "var(--fg-neutral-emphasis)" }}>cause</strong> at the same <strong style={{ color: "var(--fg-neutral-emphasis)" }}>location</strong> are grouped into one issue — a <strong style={{ color: "var(--fg-neutral-emphasis)" }}>rollup</strong> with an affected-user count. Offline users are excluded from rollups.
         </p>
 
         <div className="mt-4 rounded-xl p-4 font-mono text-sm" style={{ background: "var(--bg-neutral-subtle)", border: "1px solid var(--border-neutral-subtle)", color: "var(--fg-neutral-emphasis)" }}>
-          issue.severity = <span style={{ color: "var(--fg-danger)" }}>CRITICAL</span> if (platform outage) OR (critical endpoints ≥ 50% of affected)<br />
+          issue.severity = <span style={{ color: "var(--fg-danger)" }}>CRITICAL</span> if (platform outage) OR (critical users ≥ 50% of affected)<br />
           <span className="pl-[7.2em]" />else <span style={{ color: "var(--fg-warning)" }}>WARNING</span>
         </div>
 
@@ -130,7 +130,7 @@ export function IssuesDocPage() {
         </div>
 
         <p className="mt-4 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          Issues are ordered <strong style={{ color: "var(--fg-neutral-emphasis)" }}>worst-first</strong> (critical → warning), then by most endpoints affected.
+          Issues are ordered <strong style={{ color: "var(--fg-neutral-emphasis)" }}>worst-first</strong> (critical → warning), then by most users affected.
         </p>
       </SectionCard>
     </div>

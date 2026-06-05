@@ -110,7 +110,7 @@ export default function App() {
           <h1 className="text-xl font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
             {page === "endpoints" && endpointFilter !== "all" ? (
               <>
-                Endpoints{" "}
+                Users{" "}
                 <span style={{ color: "var(--fg-neutral-subtle)" }}>— {locationById(endpointFilter)?.name}</span>
               </>
             ) : (

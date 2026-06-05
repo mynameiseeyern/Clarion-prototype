@@ -80,9 +80,9 @@ export function CommandPalette({
           <span className="flex size-8 items-center justify-center rounded-lg" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}><MapPin className="size-4" /></span>
           <div className="flex min-w-px flex-1 flex-col">
             <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{it.name}</span>
-            <span className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{it.count.toLocaleString()} endpoints</span>
+            <span className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{it.count.toLocaleString()} users</span>
           </div>
-          <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>Filter endpoints</span>
+          <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>Filter users</span>
           {isActive && <CornerDownLeft className="size-3.5" style={{ color: "var(--fg-neutral-subtle)" }} />}
         </div>
       )
@@ -114,12 +114,12 @@ export function CommandPalette({
           style={{ background: "var(--bg-overlay)", border: "1px solid var(--border-neutral-muted)" }}
         >
           <Dialog.Title className="sr-only">Search</Dialog.Title>
-          <Dialog.Description className="sr-only">Search endpoints and locations</Dialog.Description>
+          <Dialog.Description className="sr-only">Search users and locations</Dialog.Description>
           <div className="flex items-center gap-2.5 px-4" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
             <Search className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
             <input
               autoFocus value={q} onChange={(e) => setQ(e.target.value)}
-              placeholder="Search endpoints, users, locations…"
+              placeholder="Search users, locations…"
               className="h-12 min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]"
               style={{ color: "var(--fg-neutral-emphasis)" }}
             />
@@ -136,7 +136,7 @@ export function CommandPalette({
             {locMatches.map(Row)}
             {epMatches.length > 0 && (
               <div className="px-2 pb-1 pt-3 text-xs font-medium uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>
-                {q.trim() ? "Endpoints" : "Needs attention"}
+                {q.trim() ? "Users" : "Needs attention"}
               </div>
             )}
             {epMatches.map(Row)}

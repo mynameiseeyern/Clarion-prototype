@@ -72,7 +72,7 @@ export function Topbar({
         >
           <Search className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
           <span className="min-w-px flex-1 truncate text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-            Search endpoints, users, locations...
+            Search users, locations...
           </span>
           <kbd
             className="flex h-5 min-w-5 items-center justify-center gap-1 rounded-sm px-1 text-xs font-medium"

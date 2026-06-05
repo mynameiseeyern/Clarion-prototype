@@ -104,12 +104,12 @@ export function EndpointsTable({
     <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
       {/* header */}
       <div className="flex items-center gap-2 px-4 py-4">
-        <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Endpoints</h2>
+        <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Users</h2>
         <span
           className="flex h-5 items-center rounded-full px-2 text-xs font-medium"
           style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}
         >
-          {rows.length.toLocaleString()} {issuesActive ? "with issues" : rows.length === 1 ? "endpoint" : "endpoints"}
+          {rows.length.toLocaleString()} {issuesActive ? "with issues" : rows.length === 1 ? "user" : "users"}
         </span>
       </div>
 
@@ -169,7 +169,7 @@ export function EndpointsTable({
               <SortHeader label="User / Machine" col="user" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
               <SortHeader label="Status" col="status" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
               {showLocation && <SortHeader label="Location" col="location" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />}
-              <SortHeader label="Clarity Score" col="score" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
+              <SortHeader label="Clarity Network Score" col="score" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
               {showIssue && <SortHeader label="Symptom" col="issue" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />}
               <th className="w-10" />
             </tr>
@@ -244,10 +244,10 @@ export function EndpointsTable({
                       <>
                         <CircleCheck className="size-6" style={{ color: "var(--fg-success)" }} />
                         <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>All clear</span>
-                        <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No endpoints with issues here. Turn off “Issues only” to see all.</span>
+                        <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No users with issues here. Turn off “Issues only” to see all.</span>
                       </>
                     ) : (
-                      <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No endpoints match your filters.</span>
+                      <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No users match your filters.</span>
                     )}
                   </div>
                 </td>

@@ -35,7 +35,7 @@ function PinTooltip({
       style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)", boxShadow: "var(--shadow-md)" }}
     >
       <span className="block text-xs font-medium">
-        {name} · {endpoints.toLocaleString()} endpoints
+        {name} · {endpoints.toLocaleString()} users
       </span>
       <span className="mt-1 flex items-center gap-2.5 font-mono text-[11px]">
         <span className="flex items-center gap-1"><span className="size-1.5 rounded-full" style={{ background: "var(--status-healthy)" }} />{healthy.toLocaleString()}</span>
@@ -70,14 +70,14 @@ function MapPanel({
               <button type="button" onClick={onBack} className="rounded p-0.5 transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }} aria-label="Back to world">
                 <ArrowLeft className="size-4" />
               </button>
-              Endpoints in <span style={{ color: "var(--fg-link-default)" }}>{ctry.name}</span>
+              Users in <span style={{ color: "var(--fg-link-default)" }}>{ctry.name}</span>
             </>
           ) : (
-            <>Endpoints <span style={{ color: "var(--fg-neutral-muted)" }}>· worldwide</span></>
+            <>Users <span style={{ color: "var(--fg-neutral-muted)" }}>· worldwide</span></>
           )}
         </h2>
         <Button variant="outline" size="sm" className="gap-1.5" onClick={() => onViewEndpoints(country ? undefined : "all")}>
-          View endpoints
+          View users
           <ArrowRight className="size-4" />
         </Button>
       </div>
@@ -191,7 +191,7 @@ function LocationsPanel({
                   <span className="shrink-0 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{c.cityCount} cities</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-2 whitespace-nowrap font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
-                  <span>{c.endpoints.toLocaleString()} endpoints</span>
+                  <span>{c.endpoints.toLocaleString()} users</span>
                   <ChevronRight className="size-4 opacity-40 transition-opacity group-hover:opacity-100" />
                 </span>
               </button>
@@ -211,13 +211,13 @@ function LocationsPanel({
                     </span>
                     <span className="flex shrink-0 items-center gap-1 whitespace-nowrap font-mono text-xs" style={{ color: isSelected ? "var(--fg-neutral-emphasis)" : "var(--fg-neutral-muted)" }}>
                       {(() => { const n = locationIssueCount(loc.id); return (<>
-                        <span>{loc.endpoints.toLocaleString()} endpoints</span>
+                        <span>{loc.endpoints.toLocaleString()} users</span>
                         <span>·</span>
                         <span>{n === 0 ? "No issues" : `${n} issue${n === 1 ? "" : "s"}`}</span>
                       </>) })()}
                     </span>
                   </button>
-                  <button type="button" aria-label={`View ${loc.name} endpoints`} onClick={() => onViewEndpoints(loc.id)}
+                  <button type="button" aria-label={`View ${loc.name} users`} onClick={() => onViewEndpoints(loc.id)}
                     className="flex w-10 shrink-0 items-center justify-center transition-colors hover:bg-[var(--bg-neutral-subtle-pressed)]">
                     <ChevronRight className="size-4 opacity-40 transition-opacity group-hover:opacity-100" style={{ color: "var(--fg-neutral-muted)" }} />
                   </button>

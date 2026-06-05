@@ -7,10 +7,10 @@ const groups: Group[] = [
   {
     title: "Core objects",
     terms: [
-      { term: "Endpoint", def: "A single monitored device/agent (a person's machine). Identified by user + machine name.", eg: "Anna Reyes · DESKTOP-MNL-0428" },
-      { term: "Location", def: "A centre / city where endpoints are based.", eg: "Manila CC, Cebu, New York" },
-      { term: "Country (cluster)", def: "A grouping of one or more locations. The Overview map clusters endpoints by country, then drills down to its cities.", eg: "Philippines → Manila CC, Cebu" },
-      { term: "Issue", def: "A persistent, trackable problem the system has identified, affecting one or more endpoints. The feature formerly labelled 'Alerts'. Has a severity, affected endpoints, and (later) a lifecycle and ticket.", eg: "Elevated packet loss · 52 endpoints · Manila CC" },
+      { term: "User", def: "A single monitored user — a person's machine/agent (formerly 'Endpoint'). Identified by user + machine name.", eg: "Anna Reyes · DESKTOP-MNL-0428" },
+      { term: "Location", def: "A centre / city where users are based.", eg: "Manila CC, Cebu, New York" },
+      { term: "Country (cluster)", def: "A grouping of one or more locations. The Overview map clusters users by country, then drills down to its cities.", eg: "Philippines → Manila CC, Cebu" },
+      { term: "Issue", def: "A persistent, trackable problem the system has identified, affecting one or more users. The feature formerly labelled 'Alerts'. Has a severity, affected users, and (later) a lifecycle and ticket.", eg: "Elevated packet loss · 52 users · Manila CC" },
       { term: "Alert (notification)", def: "An ephemeral, real-time event that raises or updates an Issue. Surfaces on the bell. NOT the same as an Issue.", eg: "“Latency spike detected — New York” on the bell" },
       { term: "Ticket (future / ITSM)", def: "An Issue handed off to an external ITSM system (ServiceNow, Jira) for resolution. Issue → Ticket is the escalation bridge.", eg: "Not built yet" },
     ],
@@ -18,18 +18,18 @@ const groups: Group[] = [
   {
     title: "Status & health",
     terms: [
-      { term: "Status", def: "The health of a single endpoint.", eg: "Healthy · Warning · Critical · Offline" },
+      { term: "Status", def: "The health of a single user.", eg: "Healthy · Warning · Critical · Offline" },
       { term: "Healthy", def: "Reporting normally, all metrics within threshold." },
       { term: "Warning", def: "At least one metric in the warning band (e.g. latency ≥ 80ms)." },
       { term: "Critical", def: "At least one metric in the critical band, or a platform unreachable (e.g. latency ≥ 150ms, packet loss ≥ 3%)." },
       { term: "Offline", def: "Not reporting / unreachable. No live metrics. Lowest priority in sorts and filters; excluded from the online count and from Issue rollups." },
-      { term: "Online endpoints", def: "Endpoints currently reporting = total − offline. Can never exceed total endpoints." },
+      { term: "Online users", def: "Users currently reporting = total − offline. Can never exceed total users." },
     ],
   },
   {
     title: "Metrics",
     terms: [
-      { term: "Clarity™ Network Score", def: "The headline 1.0–5.0 network-quality score for an endpoint or aggregate (formerly 'MOS / Average MOS score'). Acceptable > 3.6, Good > 4.", eg: "3.97" },
+      { term: "Clarity™ Network Score", def: "The headline 1.0–5.0 network-quality score for a user or aggregate (formerly 'MOS / Average MOS score'). Acceptable > 3.6, Good > 4.", eg: "3.97" },
       { term: "Latency", def: "Round-trip time in ms. Threshold: warn ≥ 80ms · crit ≥ 150ms." },
       { term: "Jitter", def: "Variation in latency in ms. Threshold: warn ≥ 30ms · crit ≥ 50ms." },
       { term: "Packet loss", def: "% of packets lost. Threshold: warn ≥ 1% · crit ≥ 3%." },
@@ -38,10 +38,10 @@ const groups: Group[] = [
   {
     title: "Concepts & behaviours",
     terms: [
-      { term: "Symptom", def: "The single worst-breaching condition observed on an endpoint — the 'why' shown in the Endpoints table (formerly 'Primary issue'). A symptom rolls up into an Issue.", eg: "Packet loss 7.2% · Wi-Fi · jitter 81ms · Offline" },
-      { term: "Rollup", def: "How an Issue groups many affected endpoints by shared cause, shown as one row with an affected-endpoint count instead of one row per endpoint.", eg: "High latency · 38 endpoints" },
-      { term: "Affected endpoints", def: "The set of endpoints an Issue covers." },
-      { term: "Issues only", def: "Endpoints-table toggle (default on) that hides healthy endpoints to focus on what needs attention." },
+      { term: "Symptom", def: "The single worst-breaching condition observed on a user — the 'why' shown in the Users table (formerly 'Primary issue'). A symptom rolls up into an Issue.", eg: "Packet loss 7.2% · Wi-Fi · jitter 81ms · Offline" },
+      { term: "Rollup", def: "How an Issue groups many affected users by shared cause, shown as one row with an affected-user count instead of one row per user.", eg: "High latency · 38 users" },
+      { term: "Affected users", def: "The set of users an Issue covers." },
+      { term: "Issues only", def: "Users-table toggle (default on) that hides healthy users to focus on what needs attention." },
       { term: "Mute (alert type)", def: "Silences a type of real-time alert for a chosen period (1 / 8 / 24 hours) from the bell." },
       { term: "Streaming", def: "The 'live' feel — fleet figures refresh on an interval and the sidebar shows 'Streaming Xs ago'." },
     ],

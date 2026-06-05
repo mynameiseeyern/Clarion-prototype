@@ -114,7 +114,7 @@ export function AlertDrawer({
                   <Dialog.Title className="truncate text-lg font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{rollup.title}</Dialog.Title>
                   <span className="shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold uppercase" style={{ background: tone.bg, color: tone.fg }}>{cap(rollup.severity)}</span>
                 </div>
-                <Dialog.Description className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Issue · {rollup.affected} endpoints affected</Dialog.Description>
+                <Dialog.Description className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Issue · {rollup.affected} users affected</Dialog.Description>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 pb-4 text-sm">
@@ -126,7 +126,7 @@ export function AlertDrawer({
 
           {/* impacted endpoints */}
           <div className="min-h-px flex-1 overflow-y-auto" style={{ background: "var(--bg-app)" }}>
-            <div className="px-5 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Impacted endpoints</div>
+            <div className="px-5 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Impacted users</div>
             <div className="flex flex-col px-2 pb-4">
               {rollup.endpoints.map((e, i) => (
                 <button key={e.id} type="button" onClick={() => onOpenEndpoint(rollup.endpoints, i)}
