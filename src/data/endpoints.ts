@@ -10,6 +10,14 @@ export type Platform = "Genesys Cloud" | "Microsoft Teams" | "Zoom" | "Webex"
 /** endpoint health, plus "offline" (not reporting) */
 export type EndpointStatus = Status | "offline"
 
+/** A discrete event observed on a user (shown in the Users table "Event" column). */
+export interface EndpointEvent {
+  severity: Exclude<Status, "healthy">
+  label: string
+  /** how long ago it fired — used to pick the most recent when several criticals exist */
+  minutesAgo: number
+}
+
 export interface Endpoint {
   id: string
   user: string
@@ -28,8 +36,16 @@ export interface Endpoint {
   ip: string
   team: string
   primaryPlatform: Platform
-  /** derived one-line "why" for the table; null when healthy */
+  /** derived worst-condition (internal: rollups, drilldown, alerts); null when healthy */
   primaryIssue: string | null
+  /** discrete events for this user (critical/warning) */
+  events: EndpointEvent[]
+  /** event shown in the Users table: highest priority (critical→warning), most recent among criticals; null = healthy */
+  event: string | null
+  /** number of events sharing the shown priority (≥1 when an event is shown) */
+  eventCount: number
+  /** minutesAgo of the shown event (for the "most recent" display) */
+  eventAgo: number | null
 }
 
 // ---- generation inputs -----------------------------------------------------
@@ -54,6 +70,10 @@ const teams = [
   "Sales", "Technical Support", "Retentions", "Onboarding",
 ]
 const platforms: Platform[] = ["Genesys Cloud", "Microsoft Teams", "Zoom", "Webex"]
+// Device-level critical events that can occur alongside network/platform ones.
+const deviceCriticalEvents = [
+  "Audio device driver failed", "Headset disconnected mid-call", "Camera not detected", "USB audio device removed",
+]
 // Per-location dominant critical metric (0 = latency, 1 = jitter, 2 = packet loss),
 // so criticals concentrate on one cause → that issue reads critical, others warning.
 const critBias: Record<string, number> = {
@@ -140,6 +160,35 @@ function makeEndpoint(locId: string, locName: string, status: EndpointStatus, n:
 
   const first = pick(firstNames)
   const last = pick(lastNames)
+
+  // ---- discrete events for the Users-table "Event" column ----
+  const events: EndpointEvent[] = []
+  if (status === "warning") {
+    const label = deriveIssue(status, connection, latency, jitter, loss, downPlatform) ?? "Degraded performance"
+    events.push({ severity: "warning", label, minutesAgo: round(between(2, 90)) })
+  } else if (status === "critical") {
+    const crit: string[] = []
+    if (downPlatform) crit.push(`${downPlatform} unreachable`)
+    if (loss >= 3) crit.push(`Packet loss ${loss}%`)
+    if (latency >= 150) crit.push(`High latency ${latency}ms`)
+    if (jitter >= 50) crit.push(connection === "Wi-Fi" ? `Wi-Fi · jitter ${jitter}ms` : `Jitter ${jitter}ms`)
+    if (rand() < 0.35) crit.push(pick(deviceCriticalEvents))
+    if (crit.length === 0) crit.push(deriveIssue(status, connection, latency, jitter, loss, downPlatform) ?? "Degraded performance")
+    for (const label of [...new Set(crit)]) events.push({ severity: "critical", label, minutesAgo: round(between(1, 180)) })
+  }
+  // shown event: criticals take priority; pick the most recent within the chosen priority
+  let event: string | null = null, eventCount = 0, eventAgo: number | null = null
+  if (status === "offline") {
+    event = "Offline"
+  } else {
+    const crit = events.filter((ev) => ev.severity === "critical")
+    const pool = crit.length ? crit : events
+    if (pool.length) {
+      const chosen = pool.reduce((a, b) => (b.minutesAgo < a.minutesAgo ? b : a))
+      event = chosen.label; eventCount = pool.length; eventAgo = chosen.minutesAgo
+    }
+  }
+
   return {
     id: `${locId}-${n}`,
     user: `${first} ${last}`,
@@ -158,6 +207,10 @@ function makeEndpoint(locId: string, locName: string, status: EndpointStatus, n:
     team: pick(teams),
     primaryPlatform: downPlatform ?? pick(platforms),
     primaryIssue: status === "offline" ? "Offline" : deriveIssue(status, connection, latency, jitter, loss, downPlatform),
+    events,
+    event,
+    eventCount,
+    eventAgo,
   }
 }
 
@@ -180,8 +233,19 @@ export const endpoints: Endpoint[] = generate()
 
 // ---- selectors -------------------------------------------------------------
 
-export type SortKey = "status" | "user" | "location" | "score" | "issue"
+export type SortKey = "status" | "user" | "location" | "score" | "event"
 export type SortDir = "asc" | "desc"
+
+/** Lightweight fuzzy match: every token must appear as an in-order subsequence. */
+function fuzzy(hay: string, needle: string): boolean {
+  let hi = 0
+  for (const ch of needle) {
+    hi = hay.indexOf(ch, hi)
+    if (hi === -1) return false
+    hi++
+  }
+  return true
+}
 
 const severity: Record<EndpointStatus, number> = { critical: 0, warning: 1, healthy: 2, offline: 3 }
 
@@ -195,10 +259,15 @@ export interface EndpointQuery {
 
 export function queryEndpoints(q: EndpointQuery): Endpoint[] {
   const search = (q.search ?? "").trim().toLowerCase()
+  const tokens = search ? search.split(/\s+/) : []
   let rows = endpoints.filter((e) => {
     if (q.locationId && q.locationId !== "all" && e.locationId !== q.locationId) return false
     if (q.status && q.status !== "all" && e.status !== q.status) return false
-    if (search && !(`${e.user} ${e.machine}`.toLowerCase().includes(search))) return false
+    if (tokens.length) {
+      // fuzzy match across User / Machine / Event
+      const hay = `${e.user} ${e.machine} ${e.event ?? ""}`.toLowerCase()
+      if (!tokens.every((t) => fuzzy(hay, t))) return false
+    }
     return true
   })
 
@@ -210,7 +279,7 @@ export function queryEndpoints(q: EndpointQuery): Endpoint[] {
       case "user": return mul * a.user.localeCompare(b.user)
       case "location": return mul * a.locationName.localeCompare(b.locationName)
       case "score": return mul * ((a.score ?? -1) - (b.score ?? -1))
-      case "issue": return mul * (a.primaryIssue ?? "").localeCompare(b.primaryIssue ?? "")
+      case "event": return mul * (a.event ?? "").localeCompare(b.event ?? "")
       case "status":
       default: {
         // worst-first: severity, then lowest score

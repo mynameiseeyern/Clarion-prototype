@@ -38,7 +38,7 @@ const groups: Group[] = [
   {
     title: "Concepts & behaviours",
     terms: [
-      { term: "Symptom", def: "The single worst-breaching condition observed on a user — the 'why' shown in the Users table (formerly 'Primary issue'). A symptom rolls up into an Issue.", eg: "Packet loss 7.2% · Wi-Fi · jitter 81ms · Offline" },
+      { term: "Event", def: "A discrete condition observed on a user — the 'why' shown in the Users table (formerly 'Symptom' / 'Primary issue'). The table shows the highest-priority event (critical before warning); when a user has several critical events, the most recent is shown. Events roll up into an Issue.", eg: "Genesys Cloud unreachable · Packet loss 7.2% · Audio device driver failed" },
       { term: "Rollup", def: "How an Issue groups many affected users by shared cause, shown as one row with an affected-user count instead of one row per user.", eg: "High latency · 38 users" },
       { term: "Affected users", def: "The set of users an Issue covers." },
       { term: "Issues only", def: "Users-table toggle (default on) that hides healthy users to focus on what needs attention." },

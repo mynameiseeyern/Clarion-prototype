@@ -3,9 +3,14 @@ import { Search, X, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, Chevro
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-import { locations } from "@/data/dashboard"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel } from "@/components/ui/select"
+import { countries, citiesInCountry } from "@/data/dashboard"
 import { queryEndpoints, type Endpoint, type EndpointStatus, type SortKey, type SortDir } from "@/data/endpoints"
+
+// Locations grouped under their country (label only — cities are selectable), all alphabetical.
+const countryGroups = [...countries]
+  .sort((a, b) => a.name.localeCompare(b.name))
+  .map((c) => ({ name: c.name, cities: [...citiesInCountry(c.id)].sort((a, b) => a.name.localeCompare(b.name)) }))
 
 const statusVar: Record<EndpointStatus, string> = {
   healthy: "var(--status-healthy)",
@@ -81,17 +86,15 @@ export function EndpointsTable({
 
   const rows = useMemo(() => {
     let r = queryEndpoints({ search, locationId, status, sortKey, sortDir })
-    if (issuesActive) r = r.filter((e) => e.status !== "healthy")
+    // "Issues only" = critical + warning (offline is not an issue)
+    if (issuesActive) r = r.filter((e) => e.status === "critical" || e.status === "warning")
     return r
   }, [search, locationId, status, sortKey, sortDir, issuesActive])
-
-  // adaptive: only show the Primary issue column when something is actually wrong
-  const showIssue = useMemo(() => rows.some((e) => e.primaryIssue !== null), [rows])
 
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize))
   const safePage = Math.min(page, totalPages)
   const pageRows = rows.slice((safePage - 1) * pageSize, safePage * pageSize)
-  const colCount = 2 + (showLocation ? 1 : 0) + 1 + (showIssue ? 1 : 0) + 1
+  const colCount = 2 + (showLocation ? 1 : 0) + 1 + 1 + 1
 
   const onSort = (c: SortKey) => {
     if (c === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"))
@@ -145,7 +148,12 @@ export function EndpointsTable({
             <SelectTrigger className="h-9"><SelectValue placeholder="Location" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All locations</SelectItem>
-              {locations.map((l) => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+              {countryGroups.map((g) => (
+                <SelectGroup key={g.name}>
+                  <SelectLabel>{g.name}</SelectLabel>
+                  {g.cities.map((l) => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+                </SelectGroup>
+              ))}
             </SelectContent>
           </Select>
           <Select value={status} onValueChange={(v) => { const s = v as EndpointStatus | "all"; setStatus(s); if (s !== "all") setIssuesOnly(false); resetPage() }}>
@@ -170,7 +178,7 @@ export function EndpointsTable({
               <SortHeader label="Status" col="status" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
               {showLocation && <SortHeader label="Location" col="location" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />}
               <SortHeader label="Clarity Network Score" col="score" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
-              {showIssue && <SortHeader label="Symptom" col="issue" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />}
+              <SortHeader label="Event" col="event" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
               <th className="w-10" />
             </tr>
           </thead>
@@ -218,18 +226,19 @@ export function EndpointsTable({
                       {e.score === null ? "—" : e.score.toFixed(1)}
                     </span>
                   </td>
-                  {showIssue && (
-                    <td className="px-4 py-3">
-                      {e.primaryIssue ? (
-                        <span className="inline-flex items-center gap-1.5 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-                          <span className="size-1.5 rounded-full" style={{ background: statusVar[e.status] }} />
-                          {e.primaryIssue}
-                        </span>
-                      ) : (
-                        <span className="text-sm" style={{ color: "var(--fg-neutral-subtle)" }}>—</span>
-                      )}
-                    </td>
-                  )}
+                  <td className="px-4 py-3">
+                    {e.event ? (
+                      <span className="inline-flex items-center gap-1.5 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
+                        <span className="size-1.5 shrink-0 rounded-full" style={{ background: statusVar[e.status] }} />
+                        {e.event}
+                        {e.eventCount > 1 && e.eventAgo !== null && (
+                          <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>· {e.eventAgo}m ago · +{e.eventCount - 1}</span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="text-sm" style={{ color: "var(--fg-neutral-subtle)" }}>—</span>
+                    )}
+                  </td>
                   <td className="pr-3">
                     <ChevronRight className="size-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color: "var(--fg-neutral-subtle)" }} />
                   </td>

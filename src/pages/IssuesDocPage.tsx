@@ -63,7 +63,7 @@ export function IssuesDocPage() {
           <ArrowRight className="mx-auto size-4 rotate-90 sm:rotate-0" style={{ color: "var(--fg-neutral-subtle)" }} />
           <FlowBox icon={Siren} title="Issue" sub="persistent rollup" />
           <ArrowRight className="mx-auto size-4 rotate-90 sm:rotate-0" style={{ color: "var(--fg-neutral-subtle)" }} />
-          <FlowBox icon={Activity} title="Users" sub="affected, each w/ a symptom" />
+          <FlowBox icon={Activity} title="Users" sub="affected, each w/ an event" />
           <ArrowRight className="mx-auto size-4 rotate-90 sm:rotate-0" style={{ color: "var(--fg-neutral-subtle)" }} />
           <FlowBox icon={Info} title="Ticket" sub="ITSM (future)" />
         </div>
