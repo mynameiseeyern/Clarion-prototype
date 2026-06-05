@@ -2,20 +2,20 @@ import { EndpointsTable } from "@/components/endpoints/EndpointsTable"
 import type { Endpoint } from "@/data/endpoints"
 
 export function EndpointsPage({
-  locationId,
-  onLocationChange,
+  locationIds,
+  onLocationsChange,
   onOpenEndpoint,
   openEndpointId,
 }: {
-  locationId: string
-  onLocationChange: (id: string) => void
+  locationIds: string[]
+  onLocationsChange: (ids: string[]) => void
   onOpenEndpoint: (rows: Endpoint[], index: number) => void
   openEndpointId?: string | null
 }) {
   return (
     <EndpointsTable
-      locationId={locationId}
-      onLocationChange={onLocationChange}
+      locationIds={locationIds}
+      onLocationsChange={onLocationsChange}
       onOpenEndpoint={onOpenEndpoint}
       openEndpointId={openEndpointId}
     />

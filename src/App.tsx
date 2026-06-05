@@ -29,7 +29,7 @@ export default function App() {
   const [dark, setDark] = useState(false)
   const [page, setPage] = useState<PageId>("overview")
   const [selectedId, setSelectedId] = useState<string>(DEFAULT_LOCATION)
-  const [endpointFilter, setEndpointFilter] = useState<string>("all")
+  const [endpointFilters, setEndpointFilters] = useState<string[]>([])
   const [alertFilter, setAlertFilter] = useState<string>("all")
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [drawer, setDrawer] = useState<{ rows: Endpoint[]; index: number } | null>(null)
@@ -56,7 +56,7 @@ export default function App() {
 
   const handleViewEndpoints = (locId?: string) => {
     const id = locId ?? selectedId
-    setEndpointFilter(id === "all" ? "all" : id)
+    setEndpointFilters(id === "all" ? [] : [id])
     setPage("endpoints")
   }
 
@@ -90,7 +90,7 @@ export default function App() {
           onViewIssues={() => { setAlertFilter("all"); setPage("alerts") }}
           onAlertNavigate={(a) => {
             if (a.navTo === "endpoints") {
-              setEndpointFilter(a.locationId ?? "all")
+              setEndpointFilters(a.locationId ? [a.locationId] : [])
               setPage("endpoints")
               return
             }
@@ -108,10 +108,12 @@ export default function App() {
 
         <div className="shrink-0 p-5" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
           <h1 className="text-xl font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
-            {page === "endpoints" && endpointFilter !== "all" ? (
+            {page === "endpoints" && endpointFilters.length > 0 ? (
               <>
                 Users{" "}
-                <span style={{ color: "var(--fg-neutral-subtle)" }}>— {locationById(endpointFilter)?.name}</span>
+                <span style={{ color: "var(--fg-neutral-subtle)" }}>
+                  — {endpointFilters.length === 1 ? locationById(endpointFilters[0])?.name : `${endpointFilters.length} locations`}
+                </span>
               </>
             ) : (
               pageLabel(page)
@@ -132,8 +134,8 @@ export default function App() {
           )}
           {page === "endpoints" && (
             <EndpointsPage
-              locationId={endpointFilter}
-              onLocationChange={setEndpointFilter}
+              locationIds={endpointFilters}
+              onLocationsChange={setEndpointFilters}
               onOpenEndpoint={(rows, index) => setDrawer({ rows, index })}
               openEndpointId={openEndpointId}
             />
@@ -185,7 +187,7 @@ export default function App() {
         open={searchOpen}
         onOpenChange={setSearchOpen}
         onPickEndpoint={(e) => setDrawer({ rows: [e], index: 0 })}
-        onPickLocation={(id) => { setEndpointFilter(id); setPage("endpoints") }}
+        onPickLocation={(id) => { setEndpointFilters([id]); setPage("endpoints") }}
       />
     </div>
   )

@@ -251,7 +251,7 @@ const severity: Record<EndpointStatus, number> = { critical: 0, warning: 1, heal
 
 export interface EndpointQuery {
   search?: string
-  locationId?: string // "all" or a location id
+  locationIds?: string[] // empty/undefined = all locations
   status?: EndpointStatus | "all"
   sortKey?: SortKey
   sortDir?: SortDir
@@ -261,7 +261,7 @@ export function queryEndpoints(q: EndpointQuery): Endpoint[] {
   const search = (q.search ?? "").trim().toLowerCase()
   const tokens = search ? search.split(/\s+/) : []
   let rows = endpoints.filter((e) => {
-    if (q.locationId && q.locationId !== "all" && e.locationId !== q.locationId) return false
+    if (q.locationIds && q.locationIds.length && !q.locationIds.includes(e.locationId)) return false
     if (q.status && q.status !== "all" && e.status !== q.status) return false
     if (tokens.length) {
       // fuzzy match across User / Machine / Event

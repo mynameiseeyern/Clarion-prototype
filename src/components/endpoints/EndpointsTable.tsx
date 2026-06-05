@@ -1,9 +1,10 @@
 import { useMemo, useState, type ReactNode } from "react"
-import { Search, X, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, CircleCheck } from "lucide-react"
+import { Search, X, Check, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, CircleCheck } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel } from "@/components/ui/select"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { countries, citiesInCountry } from "@/data/dashboard"
 import { queryEndpoints, type Endpoint, type EndpointStatus, type SortKey, type SortDir } from "@/data/endpoints"
 
@@ -11,6 +12,74 @@ import { queryEndpoints, type Endpoint, type EndpointStatus, type SortKey, type 
 const countryGroups = [...countries]
   .sort((a, b) => a.name.localeCompare(b.name))
   .map((c) => ({ name: c.name, cities: [...citiesInCountry(c.id)].sort((a, b) => a.name.localeCompare(b.name)) }))
+const allCities = countryGroups.flatMap((g) => g.cities)
+
+/** Multi-select location filter: country headings are labels, cities are checkboxes. */
+function LocationFilter({ value, onChange }: { value: string[]; onChange: (ids: string[]) => void }) {
+  const [open, setOpen] = useState(false)
+  const label =
+    value.length === 0
+      ? "All locations"
+      : value.length === 1
+        ? allCities.find((c) => c.id === value[0])?.name ?? "1 location"
+        : `${value.length} locations`
+  const toggle = (id: string) =>
+    onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id])
+
+  const Box = ({ on }: { on: boolean }) => (
+    <span
+      className="flex size-4 shrink-0 items-center justify-center rounded"
+      style={{
+        background: on ? "var(--bg-primary-emphasis)" : "var(--bg-input-default)",
+        border: `1px solid ${on ? "var(--bg-primary-emphasis)" : "var(--border-input-default)"}`,
+      }}
+    >
+      {on && <Check className="size-3" style={{ color: "var(--fg-on-primary-emphasis)" }} />}
+    </span>
+  )
+  const rowCls = "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]"
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm transition-colors"
+          style={{ background: "var(--bg-input-default)", border: "1px solid var(--border-input-default)", color: "var(--fg-neutral-emphasis)" }}
+        >
+          <span>{label}</span>
+          <ChevronDown className="size-4" style={{ color: "var(--fg-neutral-muted)" }} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-60 p-1">
+        <div className="max-h-72 overflow-y-auto">
+          <button type="button" onClick={() => onChange([])} className={rowCls} style={{ color: "var(--fg-neutral-emphasis)" }}>
+            <Box on={value.length === 0} />
+            <span>All locations</span>
+          </button>
+          {countryGroups.map((g) => (
+            <div key={g.name}>
+              <div className="px-2 pb-1 pt-2 text-xs font-medium uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>{g.name}</div>
+              {g.cities.map((c) => (
+                <button key={c.id} type="button" onClick={() => toggle(c.id)} className={rowCls} style={{ color: "var(--fg-neutral-emphasis)" }}>
+                  <Box on={value.includes(c.id)} />
+                  <span>{c.name}</span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+        {value.length > 0 && (
+          <div className="mt-1 pt-1" style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
+            <button type="button" onClick={() => onChange([])} className={rowCls} style={{ color: "var(--fg-link-default)" }}>
+              Clear selection
+            </button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  )
+}
 
 const statusVar: Record<EndpointStatus, string> = {
   healthy: "var(--status-healthy)",
@@ -62,13 +131,13 @@ function SortHeader({
 const PAGE_SIZES = [10, 15, 25, 50]
 
 export function EndpointsTable({
-  locationId,
-  onLocationChange,
+  locationIds,
+  onLocationsChange,
   onOpenEndpoint,
   openEndpointId,
 }: {
-  locationId: string
-  onLocationChange: (id: string) => void
+  locationIds: string[]
+  onLocationsChange: (ids: string[]) => void
   onOpenEndpoint: (rows: Endpoint[], index: number) => void
   openEndpointId?: string | null
 }) {
@@ -80,16 +149,17 @@ export function EndpointsTable({
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(15)
 
-  const showLocation = locationId === "all"
+  // hide the Location column only when exactly one city is selected
+  const showLocation = locationIds.length !== 1
   // "Issues only" applies unless the user has picked an explicit status
   const issuesActive = issuesOnly && status === "all"
 
   const rows = useMemo(() => {
-    let r = queryEndpoints({ search, locationId, status, sortKey, sortDir })
+    let r = queryEndpoints({ search, locationIds, status, sortKey, sortDir })
     // "Issues only" = critical + warning (offline is not an issue)
     if (issuesActive) r = r.filter((e) => e.status === "critical" || e.status === "warning")
     return r
-  }, [search, locationId, status, sortKey, sortDir, issuesActive])
+  }, [search, locationIds, status, sortKey, sortDir, issuesActive])
 
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize))
   const safePage = Math.min(page, totalPages)
@@ -144,18 +214,7 @@ export function EndpointsTable({
           >
             Issues only
           </button>
-          <Select value={locationId} onValueChange={(v) => { onLocationChange(v); resetPage() }}>
-            <SelectTrigger className="h-9"><SelectValue placeholder="Location" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All locations</SelectItem>
-              {countryGroups.map((g) => (
-                <SelectGroup key={g.name}>
-                  <SelectLabel>{g.name}</SelectLabel>
-                  {g.cities.map((l) => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
-                </SelectGroup>
-              ))}
-            </SelectContent>
-          </Select>
+          <LocationFilter value={locationIds} onChange={(ids) => { onLocationsChange(ids); resetPage() }} />
           <Select value={status} onValueChange={(v) => { const s = v as EndpointStatus | "all"; setStatus(s); if (s !== "all") setIssuesOnly(false); resetPage() }}>
             <SelectTrigger className="h-9"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
