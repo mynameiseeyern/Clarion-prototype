@@ -193,7 +193,7 @@ export function EndpointsTable({
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); resetPage() }}
-            placeholder="Search user or machine…"
+            placeholder="Search user, machine or event…"
             className="min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]"
             style={{ color: "var(--fg-neutral-emphasis)" }}
           />
