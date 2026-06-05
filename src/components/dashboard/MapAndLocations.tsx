@@ -18,17 +18,20 @@ const statusVar: Record<Status, string> = {
 /* Hover tooltip shown on a map pin: name + endpoint count, then the
    healthy / warning / critical breakdown by number. */
 function PinTooltip({
-  name, endpoints, healthy, warning, critical,
+  name, endpoints, healthy, warning, critical, pinned = false,
 }: {
   name: string
   endpoints: number
   healthy: number
   warning: number
   critical: number
+  /** when true the tooltip is shown persistently (used for the selected pin) */
+  pinned?: boolean
 }) {
+  const visibility = pinned ? "block z-20" : "hidden z-30 group-hover:block group-focus-visible:block"
   return (
     <span
-      className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md px-2.5 py-1.5 text-left group-hover:block group-focus-visible:block"
+      className={`pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md px-2.5 py-1.5 text-left ${visibility}`}
       style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)", boxShadow: "var(--shadow-md)" }}
     >
       <span className="block text-xs font-medium">
@@ -116,15 +119,10 @@ function MapPanel({
             return (
               <button key={m.id} type="button" onClick={() => onSelect(m.id)} aria-label={m.name}
                 className="group absolute -translate-x-1/2 -translate-y-1/2 hover:z-20 focus:z-20 focus:outline-none" style={{ left: `${m.x}%`, top: `${m.y}%` }}>
-                <PinTooltip name={m.name} endpoints={m.endpoints} healthy={m.healthy} warning={m.warning} critical={m.critical} />
+                <PinTooltip name={m.name} endpoints={m.endpoints} healthy={m.healthy} warning={m.warning} critical={m.critical} pinned={isActive} />
                 {isActive ? (
-                  <span className="flex flex-col items-center gap-1.5">
-                    <span className="flex size-4 items-center justify-center rounded-full" style={{ border: `2px solid ${statusVar[mSev]}`, background: "var(--bg-card)" }}>
-                      <span className="size-2 rounded-full" style={{ background: statusVar[mSev] }} />
-                    </span>
-                    <span className="whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium" style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)", boxShadow: "var(--shadow-md)" }}>
-                      {m.name} · {m.endpoints}
-                    </span>
+                  <span className="flex size-4 items-center justify-center rounded-full" style={{ border: `2px solid ${statusVar[mSev]}`, background: "var(--bg-card)" }}>
+                    <span className="size-2 rounded-full" style={{ background: statusVar[mSev] }} />
                   </span>
                 ) : (
                   <span className="block size-3 rounded-full transition-transform hover:scale-125" style={{ background: statusVar[mSev], border: "1px solid var(--bg-card)", boxShadow: "var(--shadow-xs)" }} />
