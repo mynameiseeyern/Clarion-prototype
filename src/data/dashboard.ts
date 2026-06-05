@@ -54,10 +54,10 @@ export const locations: LocationRow[] = [
   // United States
   { id: "newyork", name: "New York", countryId: "us", status: "warning", endpoints: 240, issues: 2, activeAlerts: 1, healthy: 211, warning: 20, critical: 6, offline: 3, score: 3.98, x: 30, y: 36 },
   { id: "austin", name: "Austin", countryId: "us", status: "warning", endpoints: 140, issues: 1, activeAlerts: 1, healthy: 128, warning: 8, critical: 2, offline: 2, score: 4.08, x: 23, y: 42 },
-  { id: "denver", name: "Denver", countryId: "us", status: "healthy", endpoints: 107, issues: 0, activeAlerts: 0, healthy: 96, warning: 10, critical: 0, offline: 1, score: 4.05, x: 21, y: 38 },
+  { id: "denver", name: "Denver", countryId: "us", status: "warning", endpoints: 107, issues: 1, activeAlerts: 1, healthy: 96, warning: 10, critical: 0, offline: 1, score: 4.05, x: 21, y: 38 },
   // India
   { id: "bangalore", name: "Bangalore", countryId: "in", status: "warning", endpoints: 220, issues: 1, activeAlerts: 1, healthy: 199, warning: 15, critical: 3, offline: 3, score: 4.10, x: 66, y: 54 },
-  { id: "hyderabad", name: "Hyderabad", countryId: "in", status: "warning", endpoints: 126, issues: 1, activeAlerts: 0, healthy: 114, warning: 9, critical: 1, offline: 2, score: 4.13, x: 66, y: 50 },
+  { id: "hyderabad", name: "Hyderabad", countryId: "in", status: "critical", endpoints: 126, issues: 1, activeAlerts: 1, healthy: 114, warning: 9, critical: 1, offline: 2, score: 4.13, x: 66, y: 50 },
   // Australia
   { id: "sydney", name: "Sydney", countryId: "au", status: "healthy", endpoints: 218, issues: 0, activeAlerts: 0, healthy: 216, warning: 0, critical: 0, offline: 2, score: 4.36, x: 84, y: 80 },
 ]

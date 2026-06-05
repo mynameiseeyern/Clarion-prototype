@@ -56,24 +56,48 @@ export function LegendItem({
   )
 }
 
-/** Horizontal segmented bar (healthy / warning / critical proportions). */
+const statusLabel: Record<Status, string> = {
+  healthy: "Healthy",
+  warning: "Warning",
+  critical: "Critical",
+}
+
+/** Horizontal segmented bar (healthy / warning / critical proportions).
+ *  When a segment carries a `count`, hovering it reveals a tooltip with the
+ *  status + quantity so the admin can read the number behind each colour. */
 export function SegmentedBar({
   segments,
   className,
 }: {
-  segments: { status: Status; flex: number }[]
+  segments: { status: Status; flex: number; count?: number; label?: string }[]
   className?: string
 }) {
   return (
-    <div
-      className={cn("flex h-1 w-full items-center overflow-hidden rounded-full", className)}
-    >
+    <div className={cn("flex h-1 w-full items-center rounded-full", className)}>
       {segments.map((s, i) => (
-        <span
+        <div
           key={i}
-          className="h-full min-w-px"
-          style={{ flex: `${s.flex} 0 0`, backgroundColor: statusVar[s.status] }}
-        />
+          className="group/seg relative h-full min-w-px first:rounded-l-full last:rounded-r-full"
+          style={{ flex: `${s.flex} 0 0` }}
+        >
+          <span
+            className="block size-full first:rounded-l-full last:rounded-r-full"
+            style={{ backgroundColor: statusVar[s.status] }}
+          />
+          {/* enlarged, invisible hit area so the thin bar is easy to hover */}
+          {s.count != null && <span className="absolute inset-x-0 -top-2 -bottom-2" />}
+          {s.count != null && (
+            <span
+              className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-medium group-hover/seg:block"
+              style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)", boxShadow: "var(--shadow-md)" }}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span className="size-1.5 rounded-full" style={{ background: statusVar[s.status] }} />
+                {s.label ?? statusLabel[s.status]} · {s.count.toLocaleString()}
+              </span>
+            </span>
+          )}
+        </div>
       ))}
     </div>
   )

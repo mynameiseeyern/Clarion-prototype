@@ -364,10 +364,15 @@ export function locationIssueCount(locId: string): number {
   return rollupsForLocation(locId).length
 }
 
+// Pin / dot colour reflects the worst-case real endpoint status at the location
+// (matches the pin tooltip's H/W/C breakdown and AC2): any critical endpoint →
+// critical, otherwise any warning → warning, else healthy. The data is kept
+// consistent so a coloured location always also has ≥1 open issue.
 export function locationSeverity(locId: string): Status {
-  const rs = rollupsForLocation(locId)
-  if (rs.some((r) => r.severity === "critical")) return "critical"
-  if (rs.some((r) => r.severity === "warning")) return "warning"
+  const loc = locations.find((l) => l.id === locId)
+  if (!loc) return "healthy"
+  if (loc.critical > 0) return "critical"
+  if (loc.warning > 0) return "warning"
   return "healthy"
 }
 

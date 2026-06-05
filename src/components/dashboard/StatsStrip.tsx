@@ -1,9 +1,18 @@
 import { Monitor, Siren, Tally5 } from "lucide-react"
 import { KpiCard } from "./KpiCard"
 import { SegmentedBar, LegendItem } from "./primitives"
+import { rollupsAll } from "@/data/endpoints"
 import type { LiveFleet } from "@/hooks/useStreaming"
 
 export function StatsStrip({ live }: { live: LiveFleet }) {
+  const issues = rollupsAll()
+  const warnIssues = issues.filter((r) => r.severity === "warning").length
+  const critIssues = issues.filter((r) => r.severity === "critical").length
+  const issueSegments = [
+    { status: "warning" as const, flex: warnIssues, count: warnIssues, label: "Warning" },
+    { status: "critical" as const, flex: critIssues, count: critIssues, label: "Critical" },
+  ].filter((s) => s.count > 0)
+
   return (
     <section className="flex w-full flex-col gap-2">
       <div className="flex items-center gap-2.5">
@@ -22,9 +31,9 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
         <KpiCard title="Online endpoints" icon={Monitor} value={live.online.toLocaleString()}>
           <SegmentedBar
             segments={[
-              { status: "healthy", flex: live.healthy },
-              { status: "warning", flex: live.warning },
-              { status: "critical", flex: live.critical },
+              { status: "healthy", flex: live.healthy, count: live.healthy },
+              { status: "warning", flex: live.warning, count: live.warning },
+              { status: "critical", flex: live.critical, count: live.critical },
             ]}
           />
           <div className="flex items-center gap-2">
@@ -34,13 +43,8 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
           </div>
         </KpiCard>
 
-        <KpiCard title="Open issues" icon={Siren} value={String(live.activeAlerts)}>
-          <SegmentedBar
-            segments={[
-              { status: "warning", flex: 5 },
-              { status: "critical", flex: 2 },
-            ]}
-          />
+        <KpiCard title="Open issues" icon={Siren} value={String(issues.length)}>
+          <SegmentedBar segments={issueSegments} />
           <div className="flex items-center gap-2">
             <LegendItem status="warning" label="Warning" />
             <LegendItem status="critical" label="Critical" />
