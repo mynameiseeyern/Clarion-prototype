@@ -18,20 +18,23 @@ const statusVar: Record<Status, string> = {
 /* Hover tooltip shown on a map pin: name + endpoint count, then the
    healthy / warning / critical breakdown by number. */
 function PinTooltip({
-  name, endpoints, healthy, warning, critical, pinned = false,
+  name, endpoints, healthy, warning, critical, show,
 }: {
   name: string
   endpoints: number
   healthy: number
   warning: number
   critical: number
-  /** when true the tooltip is shown persistently (used for the selected pin) */
-  pinned?: boolean
+  /** controlled visibility: true = shown, false = hidden, undefined = CSS hover */
+  show?: boolean
 }) {
-  const visibility = pinned ? "block z-20" : "hidden z-30 group-hover:block group-focus-visible:block"
+  const visibility =
+    show === undefined
+      ? "hidden group-hover:block group-focus-visible:block"
+      : show ? "block" : "hidden"
   return (
     <span
-      className={`pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md px-2.5 py-1.5 text-left ${visibility}`}
+      className={`pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md px-2.5 py-1.5 text-left ${visibility}`}
       style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)", boxShadow: "var(--shadow-md)" }}
     >
       <span className="block text-xs font-medium">
@@ -55,11 +58,12 @@ function MapPanel({
   onBack: () => void
   selectedId: string
   onSelect: (id: string) => void
-  onViewEndpoints: (locId?: string) => void
+  onViewEndpoints: (loc?: string | string[]) => void
 }) {
   const cs = countriesWithStats()
   const ctry = country ? countryById(country) : null
   const cities = country ? citiesInCountry(country) : []
+  const [hoveredCity, setHoveredCity] = useState<string | null>(null)
 
   return (
     <div className="flex w-full flex-col lg:w-[654px] lg:shrink-0" style={{ borderRight: "1px solid var(--border-neutral-subtle)" }}>
@@ -76,7 +80,13 @@ function MapPanel({
             <>Users <span style={{ color: "var(--fg-neutral-muted)" }}>· worldwide</span></>
           )}
         </h2>
-        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => onViewEndpoints(country ? undefined : "all")}>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+          if (!country) { onViewEndpoints("all"); return }
+          const cityIds = cities.map((c) => c.id)
+          // a specific city selected → just that city; otherwise the whole country (all its cities)
+          if (selectedId !== "all" && cityIds.includes(selectedId)) onViewEndpoints(selectedId)
+          else onViewEndpoints(cityIds)
+        }}>
           View users
           <ArrowRight className="size-4" />
         </Button>
@@ -116,10 +126,13 @@ function MapPanel({
           {country && cities.map((m) => {
             const isActive = m.id === selectedId
             const mSev = locationSeverity(m.id)
+            // selected pin's tooltip stays pinned, but hovering ANY other pin hides it
+            const show = isActive ? hoveredCity === null || hoveredCity === m.id : hoveredCity === m.id
             return (
               <button key={m.id} type="button" onClick={() => onSelect(m.id)} aria-label={m.name}
+                onMouseEnter={() => setHoveredCity(m.id)} onMouseLeave={() => setHoveredCity(null)}
                 className="group absolute -translate-x-1/2 -translate-y-1/2 hover:z-20 focus:z-20 focus:outline-none" style={{ left: `${m.x}%`, top: `${m.y}%` }}>
-                <PinTooltip name={m.name} endpoints={m.endpoints} healthy={m.healthy} warning={m.warning} critical={m.critical} pinned={isActive} />
+                <PinTooltip name={m.name} endpoints={m.endpoints} healthy={m.healthy} warning={m.warning} critical={m.critical} show={show} />
                 {isActive ? (
                   <span className="flex size-4 items-center justify-center rounded-full" style={{ border: `2px solid ${statusVar[mSev]}`, background: "var(--bg-card)" }}>
                     <span className="size-2 rounded-full" style={{ background: statusVar[mSev] }} />
@@ -151,7 +164,7 @@ function LocationsPanel({
   onEnterCountry: (id: string) => void
   selectedId: string
   onSelect: (id: string) => void
-  onViewEndpoints: (locId?: string) => void
+  onViewEndpoints: (loc?: string | string[]) => void
   onAllLocations: () => void
 }) {
   const cs = countriesWithStats()
@@ -236,7 +249,7 @@ export function MapAndLocations({
 }: {
   selectedId: string
   onSelect: (id: string) => void
-  onViewEndpoints: (locId?: string) => void
+  onViewEndpoints: (loc?: string | string[]) => void
 }) {
   // derive the initial drilled country from a selected city, else world view
   const initialCountry = (() => {

@@ -15,7 +15,7 @@ export function OverviewPage({
   live: LiveFleet
   selectedId: string
   onSelect: (id: string) => void
-  onViewEndpoints: () => void
+  onViewEndpoints: (loc?: string | string[]) => void
   onViewAllAlerts: () => void
   onOpenAlert: (rollups: Rollup[], index: number) => void
 }) {
