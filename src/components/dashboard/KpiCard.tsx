@@ -7,6 +7,7 @@ export function KpiCard({
   title,
   icon: Icon,
   value,
+  delta,
   children,
   className,
   fixedWidth = false,
@@ -14,6 +15,7 @@ export function KpiCard({
   title: ReactNode
   icon: LucideIcon
   value: string
+  delta?: ReactNode
   children?: ReactNode
   className?: string
   fixedWidth?: boolean
@@ -36,11 +38,14 @@ export function KpiCard({
         <Icon className="size-4 shrink-0" style={{ color: "var(--fg-neutral-subtle)" }} />
       </div>
       <div className="flex flex-col gap-2 px-4 pb-4">
-        <div
-          className="text-metric-xl"
-          style={{ color: "var(--fg-neutral-emphasis)" }}
-        >
-          {value}
+        <div className="flex items-baseline gap-2">
+          <div
+            className="text-metric-xl"
+            style={{ color: "var(--fg-neutral-emphasis)" }}
+          >
+            {value}
+          </div>
+          {delta}
         </div>
         {children}
       </div>

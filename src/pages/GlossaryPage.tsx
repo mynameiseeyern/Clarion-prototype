@@ -23,7 +23,7 @@ const groups: Group[] = [
       { term: "Warning", def: "At least one metric in the warning band (e.g. latency ≥ 80ms)." },
       { term: "Critical", def: "At least one metric in the critical band, or a platform unreachable (e.g. latency ≥ 150ms, packet loss ≥ 3%)." },
       { term: "Offline", def: "Not reporting / unreachable. No live metrics. Lowest priority in sorts and filters; excluded from the online count and from Issue rollups." },
-      { term: "Online users", def: "Users currently reporting = total − offline. Can never exceed total users." },
+      { term: "Active users", def: "Users currently reporting (active) = total − offline. Can never exceed total users." },
     ],
   },
   {

@@ -4,6 +4,22 @@ import { SegmentedBar, LegendItem } from "./primitives"
 import { rollupsAll } from "@/data/endpoints"
 import type { LiveFleet } from "@/hooks/useStreaming"
 
+// Net change in open issues vs. ~24h ago (deterministic dummy).
+const ISSUES_24H_AGO = 6
+
+function IssueDelta({ delta }: { delta: number }) {
+  if (delta === 0) return <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>no change today</span>
+  // more open issues than yesterday is a regression → danger; fewer → success
+  const up = delta > 0
+  const color = up ? "var(--fg-danger-emphasis)" : "var(--fg-success-emphasis)"
+  return (
+    <span className="text-sm font-medium" style={{ color }}>
+      {up ? "+" : "−"}{Math.abs(delta)}
+      <span className="font-normal" style={{ color: "var(--fg-neutral-muted)" }}> today</span>
+    </span>
+  )
+}
+
 export function StatsStrip({ live }: { live: LiveFleet }) {
   const issues = rollupsAll()
   const warnIssues = issues.filter((r) => r.severity === "warning").length
@@ -12,6 +28,7 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
     { status: "warning" as const, flex: warnIssues, count: warnIssues, label: "Warning" },
     { status: "critical" as const, flex: critIssues, count: critIssues, label: "Critical" },
   ].filter((s) => s.count > 0)
+  const issuesDelta = issues.length - ISSUES_24H_AGO
 
   return (
     <section className="flex w-full flex-col gap-2">
@@ -28,7 +45,7 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
       </div>
 
       <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-stretch">
-        <KpiCard title="Online users" icon={Monitor} value={live.online.toLocaleString()}>
+        <KpiCard title="Active users" icon={Monitor} value={live.online.toLocaleString()}>
           <SegmentedBar
             segments={[
               { status: "healthy", flex: live.healthy, count: live.healthy },
@@ -43,7 +60,7 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
           </div>
         </KpiCard>
 
-        <KpiCard title="Open issues" icon={Siren} value={String(issues.length)}>
+        <KpiCard title="Open issues" icon={Siren} value={String(issues.length)} delta={<IssueDelta delta={issuesDelta} />}>
           <SegmentedBar segments={issueSegments} />
           <div className="flex items-center gap-2">
             <LegendItem status="warning" label="Warning" />

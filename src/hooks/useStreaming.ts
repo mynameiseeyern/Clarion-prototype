@@ -6,7 +6,7 @@ export interface LiveFleet extends FleetTotals {
   secondsAgo: number
 }
 
-const REFRESH_EVERY = 5 // seconds
+const REFRESH_EVERY = 30 // seconds
 
 /**
  * Simulates a live data stream: every REFRESH_EVERY seconds the online-endpoint
