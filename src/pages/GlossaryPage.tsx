@@ -40,10 +40,10 @@ const groups: Group[] = [
   {
     title: "Concepts & behaviours",
     terms: [
-      { term: "Event", def: "A discrete condition observed on a user — the 'why' shown in the Users table (formerly 'Symptom' / 'Primary issue'). The table shows the highest-priority event (critical before warning); when a user has several critical events, the most recent is shown. Events roll up into an Issue.", eg: "Genesys Cloud unreachable · Packet loss 7.2% · Audio device driver failed" },
-      { term: "Rollup", def: "How an Issue groups many affected users by shared cause, shown as one row with an affected-user count instead of one row per user.", eg: "High latency · 38 users" },
-      { term: "Affected users", def: "The set of users an Issue covers." },
-      { term: "Issues only", def: "Users-table toggle (default on) that hides healthy users to focus on what needs attention." },
+      { term: "Event", def: "A discrete condition observed on a device — the 'why' shown in the Devices table (formerly 'Symptom' / 'Primary issue'). The table shows the highest-priority event (critical before warning); when a device has several critical events, the most recent is shown. Events roll up into an Issue.", eg: "Genesys Cloud unreachable · Packet loss 7.2% · Audio device driver failed" },
+      { term: "Rollup", def: "How an Issue groups many affected devices by shared cause, shown as one row with an affected-device count instead of one row per device.", eg: "High latency · 38 devices" },
+      { term: "Affected devices", def: "The set of devices an Issue covers." },
+      { term: "Issues only", def: "Devices-table toggle (default on) that hides healthy devices to focus on what needs attention." },
       { term: "Mute (alert type)", def: "Silences a type of real-time alert for a chosen period (1 / 8 / 24 hours) from the bell." },
       { term: "Streaming", def: "The 'live' feel — fleet figures refresh on an interval and the sidebar shows 'Streaming Xs ago'." },
     ],
