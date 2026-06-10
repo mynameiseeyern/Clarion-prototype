@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, type ReactNode } from "react"
-import { Search, X, Check, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, CircleCheck } from "lucide-react"
+import { Search, X, Check, Monitor, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, CircleCheck } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -269,11 +269,24 @@ export function EndpointsTable({
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <Avatar className="size-8"><AvatarFallback>{initials(e.user)}</AvatarFallback></Avatar>
-                      <div className="flex min-w-px flex-col">
-                        <span className="truncate text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{e.user}</span>
-                        <span className="truncate font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{e.machine}</span>
-                      </div>
+                      {e.status === "offline" ? (
+                        <>
+                          <span className="flex size-8 shrink-0 items-center justify-center rounded-full" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>
+                            <Monitor className="size-4" />
+                          </span>
+                          <span className="truncate font-mono text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{e.machine}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Avatar className="size-8"><AvatarFallback>{initials(e.user)}</AvatarFallback></Avatar>
+                          <div className="flex min-w-px flex-col">
+                            <span className="truncate text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
+                              {e.user}{e.users.length > 1 && <span className="font-normal" style={{ color: "var(--fg-neutral-subtle)" }}> +{e.users.length - 1}</span>}
+                            </span>
+                            <span className="truncate font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{e.machine}</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-3">

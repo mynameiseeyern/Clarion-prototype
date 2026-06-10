@@ -149,19 +149,22 @@ export function EndpointDrawer({
           {/* identity header */}
           <div className="shrink-0 px-5 pt-4" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
             <div className="flex items-center gap-3">
-              <Avatar className="size-10"><AvatarFallback>{initials(e.user)}</AvatarFallback></Avatar>
+              <Avatar className="size-10"><AvatarFallback>{offline ? <Monitor className="size-5" /> : initials(e.user)}</AvatarFallback></Avatar>
               <div className="flex min-w-px flex-1 flex-col">
                 <div className="flex items-center gap-2.5">
-                  <Dialog.Title className="truncate text-lg font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{e.user}</Dialog.Title>
+                  <Dialog.Title className={`truncate text-lg font-semibold ${offline ? "font-mono" : ""}`} style={{ color: "var(--fg-neutral-emphasis)" }}>{offline ? e.machine : e.user}</Dialog.Title>
                   <span className="shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold uppercase" style={{ background: tone.bg, color: tone.fg }}>{cap(e.status)}</span>
                 </div>
-                <span className="truncate font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{e.machine}</span>
+                {!offline && <span className="truncate font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{e.machine}</span>}
               </div>
             </div>
-            <Dialog.Description className="sr-only">User details for {e.user}, {e.machine}</Dialog.Description>
+            <Dialog.Description className="sr-only">Device details for {e.machine}</Dialog.Description>
 
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
               <MetaItem icon={MapPin}>{detail.locationDetail}</MetaItem>
+              {(offline || e.users.length > 1) && (
+                <MetaItem icon={Users}>{e.users.join(", ")}{!offline && e.users.length > 1 ? " · shared" : ""}</MetaItem>
+              )}
               <MetaItem icon={Globe}>{e.isp} · <span className="font-mono text-xs">{e.ip}</span></MetaItem>
               <MetaItem icon={User}>{e.team}</MetaItem>
               <MetaItem icon={Monitor}>{e.connection}</MetaItem>
