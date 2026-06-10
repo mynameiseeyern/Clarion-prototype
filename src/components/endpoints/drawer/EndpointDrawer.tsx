@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import * as Dialog from "@radix-ui/react-dialog"
-import { Monitor, MapPin, Globe, User, ChevronUp, ChevronDown, Maximize2, Minimize2, X, ArrowLeft, CloudOff } from "lucide-react"
+import { Monitor, MapPin, Globe, User, Users, ChevronUp, ChevronDown, Maximize2, Minimize2, X, ArrowLeft, CloudOff } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getEndpointDetail } from "@/data/endpointDetail"
@@ -42,7 +42,7 @@ function IconBtn({ children, label, onClick, disabled }: { children: React.React
 const TABS = [
   { id: "network", label: "Network" },
   { id: "platforms", label: "UC/CC platforms" },
-  { id: "devices", label: "Devices" },
+  { id: "devices", label: "Peripherals" },
   { id: "system", label: "System" },
 ]
 
@@ -101,6 +101,7 @@ export function EndpointDrawer({
   if (!e || !detail) return null
   const tone = statusTone[e.status]
   const stale = e.lastSeenMinAgo > 5
+  const offline = e.status === "offline"
 
   const contentClass = expanded
     ? "fixed left-1/2 top-1/2 z-50 flex h-[94vh] w-[1120px] max-w-[96vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
