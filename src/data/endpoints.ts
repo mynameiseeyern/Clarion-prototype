@@ -276,8 +276,8 @@ export function queryEndpoints(q: EndpointQuery): Endpoint[] {
     if (q.locationIds && q.locationIds.length && !q.locationIds.includes(e.locationId)) return false
     if (q.status && q.status !== "all" && e.status !== q.status) return false
     if (tokens.length) {
-      // fuzzy match across User / Machine / Event
-      const hay = `${e.user} ${e.machine} ${e.event ?? ""}`.toLowerCase()
+      // fuzzy match across Device (users + machine) / Event
+      const hay = `${e.users.join(" ")} ${e.machine} ${e.event ?? ""}`.toLowerCase()
       if (!tokens.every((t) => fuzzy(hay, t))) return false
     }
     return true
