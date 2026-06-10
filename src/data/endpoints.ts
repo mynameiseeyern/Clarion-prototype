@@ -20,7 +20,10 @@ export interface EndpointEvent {
 
 export interface Endpoint {
   id: string
+  /** primary user on the device (= users[0]) */
   user: string
+  /** all users that share this device (1–N) */
+  users: string[]
   machine: string
   locationId: string
   locationName: string
@@ -160,10 +163,15 @@ function makeEndpoint(locId: string, locName: string, status: EndpointStatus, n:
     }
   }
 
-  const first = pick(firstNames)
-  const last = pick(lastNames)
+  // a device can be shared by several users (hot-desking)
+  const nUsers = rand() < 0.7 ? 1 : rand() < 0.92 ? 2 : 3
+  const users: string[] = []
+  while (users.length < nUsers) {
+    const name = `${pick(firstNames)} ${pick(lastNames)}`
+    if (!users.includes(name)) users.push(name)
+  }
 
-  // ---- discrete events for the Users-table "Event" column ----
+  // ---- discrete events for the Devices-table "Event" column ----
   const events: EndpointEvent[] = []
   if (status === "warning") {
     const label = deriveIssue(status, connection, latency, jitter, loss, downPlatform) ?? "Degraded performance"
