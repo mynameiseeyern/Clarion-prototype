@@ -31,3 +31,19 @@ export const devNavItems: NavItem[] = [
 
 export const pageLabel = (id: PageId) =>
   [...navItems, ...devNavItems].find((n) => n.id === id)?.label ?? "Overview"
+
+// ---- URL routing (shareable per-page links) --------------------------------
+
+export const pagePath: Record<PageId, string> = {
+  overview: "/",
+  endpoints: "/users",
+  alerts: "/issues",
+  thresholds: "/thresholds",
+  glossary: "/glossary",
+  issuesdoc: "/issues-model",
+}
+
+export const pageFromPath = (path: string): PageId => {
+  const clean = path.replace(/\/+$/, "") || "/"
+  return (Object.keys(pagePath) as PageId[]).find((id) => pagePath[id] === clean) ?? "overview"
+}

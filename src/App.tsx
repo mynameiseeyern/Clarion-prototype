@@ -15,7 +15,7 @@ import { useStreaming } from "@/hooks/useStreaming"
 import { DEFAULT_LOCATION, locationById } from "@/data/dashboard"
 import type { Endpoint, Rollup, RollupCause } from "@/data/endpoints"
 import { rollupsForLocation, rollupsAll } from "@/data/endpoints"
-import { pageLabel, type PageId } from "@/nav"
+import { pageLabel, pagePath, pageFromPath, type PageId } from "@/nav"
 
 // map a real-time alert type to the issue cause it belongs to
 const alertTypeToCause: Record<string, RollupCause> = {
@@ -27,7 +27,7 @@ const alertTypeToCause: Record<string, RollupCause> = {
 
 export default function App() {
   const [dark, setDark] = useState(false)
-  const [page, setPage] = useState<PageId>("overview")
+  const [page, setPage] = useState<PageId>(() => pageFromPath(window.location.pathname))
   const [selectedId, setSelectedId] = useState<string>(DEFAULT_LOCATION)
   const [endpointFilters, setEndpointFilters] = useState<string[]>([])
   const [alertFilter, setAlertFilter] = useState<string>("all")
@@ -41,6 +41,19 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark)
   }, [dark])
+
+  // keep the URL in sync with the current page (shareable per-page links)
+  useEffect(() => {
+    const path = pagePath[page]
+    if (window.location.pathname !== path) window.history.pushState(null, "", path)
+  }, [page])
+
+  // back/forward buttons → restore the page from the URL
+  useEffect(() => {
+    const onPop = () => setPage(pageFromPath(window.location.pathname))
+    window.addEventListener("popstate", onPop)
+    return () => window.removeEventListener("popstate", onPop)
+  }, [])
 
   // ⌘K / Ctrl-K opens the command palette
   useEffect(() => {
