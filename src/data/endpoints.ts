@@ -201,7 +201,8 @@ function makeEndpoint(locId: string, locName: string, status: EndpointStatus, n:
 
   return {
     id: `${locId}-${n}`,
-    user: `${first} ${last}`,
+    user: users[0],
+    users,
     machine: `DESKTOP-${prefix[locId]}-${String(n).padStart(4, "0")}`,
     locationId: locId,
     locationName: locName,
