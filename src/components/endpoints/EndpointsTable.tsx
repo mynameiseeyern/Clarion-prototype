@@ -280,9 +280,7 @@ export function EndpointsTable({
                         <>
                           <Avatar className="size-8"><AvatarFallback>{initials(e.user)}</AvatarFallback></Avatar>
                           <div className="flex min-w-px flex-col">
-                            <span className="truncate text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
-                              {e.user}{e.users.length > 1 && <span className="font-normal" style={{ color: "var(--fg-neutral-subtle)" }}> +{e.users.length - 1}</span>}
-                            </span>
+                            <span className="truncate text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{e.user}</span>
                             <span className="truncate font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{e.machine}</span>
                           </div>
                         </>
