@@ -7,10 +7,12 @@ const groups: Group[] = [
   {
     title: "Core objects",
     terms: [
-      { term: "User", def: "A single monitored user — a person's machine/agent (formerly 'Endpoint'). Identified by user + machine name.", eg: "Anna Reyes · DESKTOP-MNL-0428" },
-      { term: "Location", def: "A centre / city where users are based.", eg: "Manila CC, Cebu, New York" },
-      { term: "Country (cluster)", def: "A grouping of one or more locations. The Overview map clusters users by country, then drills down to its cities.", eg: "Philippines → Manila CC, Cebu" },
-      { term: "Issue", def: "A persistent, trackable problem the system has identified, affecting one or more users. The feature formerly labelled 'Alerts'. Has a severity, affected users, and (later) a lifecycle and ticket.", eg: "Elevated packet loss · 52 users · Manila CC" },
+      { term: "Device", def: "A single monitored machine/agent (formerly 'Endpoint' / 'User'). A device can be shared by several users (hot-desking); identified by its machine name.", eg: "DESKTOP-MNL-0428 · Anna Reyes" },
+      { term: "User", def: "A person who signs in to a device. One device can have multiple users.", eg: "Anna Reyes, Luis Mendoza" },
+      { term: "Peripheral", def: "Hardware attached to a device — audio / video / Bluetooth / USB — shown in the drilldown's Peripherals tab.", eg: "Jabra Evolve2 75 · Logitech Brio" },
+      { term: "Location", def: "A centre / city where devices are based.", eg: "Manila CC, Cebu, New York" },
+      { term: "Country (cluster)", def: "A grouping of one or more locations. The Overview map clusters devices by country, then drills down to its cities.", eg: "Philippines → Manila CC, Cebu" },
+      { term: "Issue", def: "A persistent, trackable problem the system has identified, affecting one or more devices. The feature formerly labelled 'Alerts'. Has a severity, affected devices, and (later) a lifecycle and ticket.", eg: "Elevated packet loss · 52 devices · Manila CC" },
       { term: "Alert (notification)", def: "An ephemeral, real-time event that raises or updates an Issue. Surfaces on the bell. NOT the same as an Issue.", eg: "“Latency spike detected — New York” on the bell" },
       { term: "Ticket (future / ITSM)", def: "An Issue handed off to an external ITSM system (ServiceNow, Jira) for resolution. Issue → Ticket is the escalation bridge.", eg: "Not built yet" },
     ],
@@ -18,7 +20,7 @@ const groups: Group[] = [
   {
     title: "Status & health",
     terms: [
-      { term: "Status", def: "The health of a single user.", eg: "Healthy · Warning · Critical · Offline" },
+      { term: "Status", def: "The health of a single device.", eg: "Healthy · Warning · Critical · Offline" },
       { term: "Healthy", def: "Reporting normally, all metrics within threshold." },
       { term: "Warning", def: "At least one metric in the warning band (e.g. latency ≥ 80ms)." },
       { term: "Critical", def: "At least one metric in the critical band, or a platform unreachable (e.g. latency ≥ 150ms, packet loss ≥ 3%)." },
