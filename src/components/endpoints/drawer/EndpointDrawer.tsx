@@ -46,6 +46,16 @@ const TABS = [
   { id: "system", label: "System" },
 ]
 
+// Open the drilldown on the tab that gives the device's event its context.
+function eventTab(e?: Endpoint): string {
+  const s = (e?.event ?? e?.primaryIssue ?? "").toLowerCase()
+  if (!s) return "network"
+  if (/(unreachable|genesys|teams|zoom|webex|cxone|platform)/.test(s)) return "platforms"
+  if (/(audio|headset|camera|usb|driver|bluetooth|mic|speaker|peripheral|device)/.test(s)) return "devices"
+  if (/(cpu|memory|disk|battery)/.test(s)) return "system"
+  return "network" // latency / packet loss / jitter / Wi-Fi
+}
+
 /* Shown in place of a tab's content when telemetry is older than 5 minutes,
    so we never present stale readings as if they were live. */
 function StaleBanner({ mins }: { mins: number }) {
@@ -76,8 +86,8 @@ export function EndpointDrawer({
   const e = rows[index]
   const detail = useMemo(() => (e ? getEndpointDetail(e) : null), [e])
 
-  // always open as the side drawer (never persist a previous expanded view)
-  useEffect(() => { if (open) setExpanded(false) }, [open])
+  // on open: reset to the side drawer and land on the tab that explains the event
+  useEffect(() => { if (open) { setExpanded(false); setTab(eventTab(rows[index])) } }, [open])
 
   const go = (delta: number) => {
     const next = index + delta
