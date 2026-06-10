@@ -187,12 +187,12 @@ export function EndpointsTable({
     <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
       {/* header */}
       <div className="flex items-center gap-2 px-4 py-4">
-        <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Users</h2>
+        <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Devices</h2>
         <span
           className="flex h-5 items-center rounded-full px-2 text-xs font-medium"
           style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}
         >
-          {rows.length.toLocaleString()} {issuesActive ? "with issues" : rows.length === 1 ? "user" : "users"}
+          {rows.length.toLocaleString()} {issuesActive ? "with issues" : rows.length === 1 ? "device" : "devices"}
         </span>
       </div>
 
@@ -203,7 +203,7 @@ export function EndpointsTable({
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); resetPage() }}
-            placeholder="Search user, machine or event…"
+            placeholder="Search device, user or event…"
             className="min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]"
             style={{ color: "var(--fg-neutral-emphasis)" }}
           />
@@ -322,10 +322,10 @@ export function EndpointsTable({
                       <>
                         <CircleCheck className="size-6" style={{ color: "var(--fg-success)" }} />
                         <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>All clear</span>
-                        <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No users with issues here. Turn off “Issues only” to see all.</span>
+                        <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No devices with issues here. Turn off “Issues only” to see all.</span>
                       </>
                     ) : (
-                      <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No users match your filters.</span>
+                      <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No devices match your filters.</span>
                     )}
                   </div>
                 </td>

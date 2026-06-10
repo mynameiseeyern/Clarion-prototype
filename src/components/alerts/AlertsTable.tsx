@@ -46,7 +46,7 @@ export function AlertsTable({
       <div className="flex items-center gap-2 px-4 py-4">
         <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Issues</h2>
         <span className="flex h-5 items-center rounded-full px-2 text-xs font-medium" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>
-          {rows.length} open · {totalAffected.toLocaleString()} users
+          {rows.length} open · {totalAffected.toLocaleString()} devices
         </span>
       </div>
 

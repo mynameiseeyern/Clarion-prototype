@@ -58,7 +58,7 @@ export function ActiveAlertsCard({
       {rollups.length > 0 ? (
         <>
           <div className="px-4 pt-3 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
-            {rollups.length} issue{rollups.length === 1 ? "" : "s"} · {totalAffected.toLocaleString()} users affected in {name}
+            {rollups.length} issue{rollups.length === 1 ? "" : "s"} · {totalAffected.toLocaleString()} devices affected in {name}
           </div>
           <div className="flex flex-col p-2">
             {rollups.map((r, i) => {
@@ -80,7 +80,7 @@ export function ActiveAlertsCard({
                     <span className="flex items-center gap-2">
                       <span className="truncate text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{r.title}</span>
                       <span className="shrink-0 rounded-full px-1.5 text-xs font-medium" style={{ background: tone.bg, color: tone.fg }}>
-                        {r.affected} user{r.affected === 1 ? "" : "s"}
+                        {r.affected} device{r.affected === 1 ? "" : "s"}
                       </span>
                     </span>
                     <span className="truncate text-xs" style={{ color: "var(--fg-neutral-muted)" }}>

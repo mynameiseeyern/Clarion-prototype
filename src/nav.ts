@@ -18,7 +18,7 @@ export interface NavItem {
 
 export const navItems: NavItem[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "endpoints", label: "Users", icon: Monitor },
+  { id: "endpoints", label: "Devices", icon: Monitor },
   { id: "alerts", label: "Issues", icon: TriangleAlert },
   { id: "thresholds", label: "Thresholds", icon: SlidersHorizontal },
 ]

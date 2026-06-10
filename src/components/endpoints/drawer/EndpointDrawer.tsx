@@ -131,8 +131,8 @@ export function EndpointDrawer({
                   <span className="max-w-[160px] truncate">{backLabel ?? "Back"}</span>
                 </button>
               )}
-              <IconBtn label="Previous user" onClick={() => go(-1)} disabled={index === 0}><ChevronUp className="size-4" /></IconBtn>
-              <IconBtn label="Next user" onClick={() => go(1)} disabled={index === rows.length - 1}><ChevronDown className="size-4" /></IconBtn>
+              <IconBtn label="Previous device" onClick={() => go(-1)} disabled={index === 0}><ChevronUp className="size-4" /></IconBtn>
+              <IconBtn label="Next device" onClick={() => go(1)} disabled={index === rows.length - 1}><ChevronDown className="size-4" /></IconBtn>
               <span className="ml-1 text-xs font-medium tabular-nums" style={{ color: "var(--fg-neutral-muted)" }}>
                 {index + 1} <span style={{ color: "var(--fg-neutral-subtle)" }}>of {rows.length.toLocaleString()}</span>
               </span>
