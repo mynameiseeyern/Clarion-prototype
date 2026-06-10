@@ -25,13 +25,13 @@ const groups: Group[] = [
       { term: "Warning", def: "At least one metric in the warning band (e.g. latency ≥ 80ms)." },
       { term: "Critical", def: "At least one metric in the critical band, or a platform unreachable (e.g. latency ≥ 150ms, packet loss ≥ 3%)." },
       { term: "Offline", def: "Not reporting / unreachable. No live metrics. Lowest priority in sorts and filters; excluded from the online count and from Issue rollups." },
-      { term: "Active users", def: "Users currently reporting (active) = total − offline. Can never exceed total users." },
+      { term: "Active devices", def: "Devices currently reporting (active) = total − offline. Can never exceed total devices." },
     ],
   },
   {
     title: "Metrics",
     terms: [
-      { term: "Clarity™ Network Score", def: "The headline 1.0–5.0 network-quality score for a user or aggregate (formerly 'MOS / Average MOS score'). Acceptable > 3.6, Good > 4.", eg: "3.97" },
+      { term: "Clarity™ Network Score", def: "The headline 1.0–5.0 network-quality score for a device or aggregate (formerly 'MOS / Average MOS score'). Acceptable > 3.6, Good > 4.", eg: "3.97" },
       { term: "Latency", def: "Round-trip time in ms. Threshold: warn ≥ 80ms · crit ≥ 150ms." },
       { term: "Jitter", def: "Variation in latency in ms. Threshold: warn ≥ 30ms · crit ≥ 50ms." },
       { term: "Packet loss", def: "% of packets lost. Threshold: warn ≥ 1% · crit ≥ 3%." },
