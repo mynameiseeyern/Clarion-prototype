@@ -6,10 +6,11 @@ import {
   BookOpen,
   Workflow,
   Laptop,
+  Component,
   type LucideIcon,
 } from "lucide-react"
 
-export type PageId = "overview" | "endpoints" | "alerts" | "thresholds" | "glossary" | "issuesdoc" | "devicesdoc"
+export type PageId = "overview" | "endpoints" | "alerts" | "thresholds" | "glossary" | "issuesdoc" | "devicesdoc" | "components"
 
 export interface NavItem {
   id: PageId
@@ -26,6 +27,7 @@ export const navItems: NavItem[] = [
 
 // Internal — not shipped in the built product.
 export const devNavItems: NavItem[] = [
+  { id: "components", label: "Components", icon: Component },
   { id: "glossary", label: "Glossary", icon: BookOpen },
   { id: "devicesdoc", label: "Devices model", icon: Laptop },
   { id: "issuesdoc", label: "Issues model", icon: Workflow },
@@ -44,6 +46,7 @@ export const pagePath: Record<PageId, string> = {
   glossary: "/glossary",
   devicesdoc: "/devices-model",
   issuesdoc: "/issues-model",
+  components: "/components",
 }
 
 export const pageFromPath = (path: string): PageId => {
