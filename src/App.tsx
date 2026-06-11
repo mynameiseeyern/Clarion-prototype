@@ -8,6 +8,7 @@ import { AlertsPage } from "@/pages/AlertsPage"
 import { PlaceholderPage } from "@/pages/PlaceholderPage"
 import { GlossaryPage } from "@/pages/GlossaryPage"
 import { IssuesDocPage } from "@/pages/IssuesDocPage"
+import { DevicesModelPage } from "@/pages/DevicesModelPage"
 import { EndpointDrawer } from "@/components/endpoints/drawer/EndpointDrawer"
 import { AlertDrawer } from "@/components/alerts/AlertDrawer"
 import { CommandPalette } from "@/components/search/CommandPalette"
@@ -172,6 +173,7 @@ export default function App() {
             />
           )}
           {page === "glossary" && <GlossaryPage />}
+          {page === "devicesdoc" && <DevicesModelPage />}
           {page === "issuesdoc" && <IssuesDocPage />}
         </div>
       </div>

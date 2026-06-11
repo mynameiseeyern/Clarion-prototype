@@ -5,10 +5,11 @@ import {
   SlidersHorizontal,
   BookOpen,
   Workflow,
+  Laptop,
   type LucideIcon,
 } from "lucide-react"
 
-export type PageId = "overview" | "endpoints" | "alerts" | "thresholds" | "glossary" | "issuesdoc"
+export type PageId = "overview" | "endpoints" | "alerts" | "thresholds" | "glossary" | "issuesdoc" | "devicesdoc"
 
 export interface NavItem {
   id: PageId
@@ -26,6 +27,7 @@ export const navItems: NavItem[] = [
 // Internal — not shipped in the built product.
 export const devNavItems: NavItem[] = [
   { id: "glossary", label: "Glossary", icon: BookOpen },
+  { id: "devicesdoc", label: "Devices model", icon: Laptop },
   { id: "issuesdoc", label: "Issues model", icon: Workflow },
 ]
 
@@ -40,6 +42,7 @@ export const pagePath: Record<PageId, string> = {
   alerts: "/issues",
   thresholds: "/thresholds",
   glossary: "/glossary",
+  devicesdoc: "/devices-model",
   issuesdoc: "/issues-model",
 }
 
