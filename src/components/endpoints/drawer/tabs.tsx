@@ -4,14 +4,14 @@ import type { EndpointDetail, PlatformStatus } from "@/data/endpointDetail"
 import { SegBar, Panel, SectionLabel, MetricBlock } from "./bits"
 
 /* ---------------- Network ---------------- */
-export function NetworkTab({ d }: { d: EndpointDetail }) {
+export function NetworkTab({ d, focus }: { d: EndpointDetail; focus?: string }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
         <SectionLabel>Internet health</SectionLabel>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {d.network.health.map((m) => (
-            <MetricBlock key={m.label} label={m.label} value={m.value} unit={m.unit}>
+            <MetricBlock key={m.label} label={m.label} value={m.value} unit={m.unit} highlight={m.label.toLowerCase() === focus}>
               <SegBar fill={m.fill} status={m.status} />
               <div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>Threshold: {m.threshold}</div>
             </MetricBlock>
@@ -47,7 +47,7 @@ const platTone: Record<PlatformStatus, { bg: string; fg: string; label: string }
 }
 const fmt = (v: number | null, u: string) => (v === null ? "—" : `${v}${u}`)
 
-export function PlatformsTab({ d }: { d: EndpointDetail }) {
+export function PlatformsTab({ d, focus }: { d: EndpointDetail; focus?: string }) {
   return (
     <div className="flex flex-col gap-4">
       <SectionLabel>UC/CC platforms in use</SectionLabel>
@@ -68,8 +68,9 @@ export function PlatformsTab({ d }: { d: EndpointDetail }) {
               const tone = platTone[p.status]
               const dim = p.status === "down"
               const col = dim ? "var(--fg-neutral-subtle)" : p.status === "degraded" ? "var(--fg-warning)" : "var(--fg-neutral-emphasis)"
+              const hi = focus === "platform" && p.status !== "ok"
               return (
-                <tr key={p.name} style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
+                <tr key={p.name} style={{ borderTop: "1px solid var(--border-neutral-subtle)", background: hi ? "var(--bg-selected-subtle)" : undefined, boxShadow: hi ? "inset 2px 0 0 0 var(--border-focused)" : undefined }}>
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-2.5">
                       <span className="flex size-7 items-center justify-center rounded-md text-xs font-bold text-white" style={{ background: p.color }}>{p.key}</span>
@@ -102,11 +103,13 @@ export function PlatformsTab({ d }: { d: EndpointDetail }) {
 /* ---------------- Devices ---------------- */
 const deviceIcon = { "audio-out": Headphones, "audio-in": Mic, video: Video, bt: Bluetooth, usb: Usb }
 
-export function DevicesTab({ d }: { d: EndpointDetail }) {
+const kindFocus = (k: string) => (k === "audio-out" || k === "audio-in" ? "audio" : k === "bt" ? "bluetooth" : k)
+
+export function DevicesTab({ d, focus }: { d: EndpointDetail; focus?: string }) {
   const Row = ({ r }: { r: EndpointDetail["devices"]["audio"][number] }) => {
     const Icon = deviceIcon[r.kind]
     return (
-      <Panel className="flex items-center gap-3">
+      <Panel highlight={!!focus && kindFocus(r.kind) === focus} className="flex items-center gap-3">
         <span className="flex size-9 items-center justify-center rounded-lg" style={{ background: "var(--bg-neutral-muted)", color: "var(--fg-neutral-muted)" }}><Icon className="size-4" /></span>
         <div className="flex min-w-px flex-1 flex-col">
           <span className="truncate text-sm font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{r.name}</span>
@@ -127,7 +130,7 @@ export function DevicesTab({ d }: { d: EndpointDetail }) {
 }
 
 /* ---------------- System ---------------- */
-export function SystemTab({ d }: { d: EndpointDetail }) {
+export function SystemTab({ d, focus }: { d: EndpointDetail; focus?: string }) {
   const { system: s } = d
   const Bar = ({ fill }: { fill: number }) => (
     <div className="flex items-center gap-1">
@@ -141,10 +144,10 @@ export function SystemTab({ d }: { d: EndpointDetail }) {
       <div>
         <SectionLabel>Compute &amp; storage</SectionLabel>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <MetricBlock label={s.cpu.label} value={s.cpu.value} unit={s.cpu.unit}><Bar fill={Number(s.cpu.value) / 100} /><div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.cpu.meta}</div></MetricBlock>
-          <MetricBlock label={s.memory.label} value={s.memory.value} unit={s.memory.unit}><Bar fill={s.memory.fill} /><div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.memory.meta}</div></MetricBlock>
-          <MetricBlock label={s.disk.label} value={s.disk.value} unit={s.disk.unit}><Bar fill={s.disk.fill} /><div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.disk.meta}</div></MetricBlock>
-          <Panel>
+          <MetricBlock label={s.cpu.label} value={s.cpu.value} unit={s.cpu.unit} highlight={focus === "cpu"}><Bar fill={Number(s.cpu.value) / 100} /><div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.cpu.meta}</div></MetricBlock>
+          <MetricBlock label={s.memory.label} value={s.memory.value} unit={s.memory.unit} highlight={focus === "memory"}><Bar fill={s.memory.fill} /><div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.memory.meta}</div></MetricBlock>
+          <MetricBlock label={s.disk.label} value={s.disk.value} unit={s.disk.unit} highlight={focus === "disk"}><Bar fill={s.disk.fill} /><div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.disk.meta}</div></MetricBlock>
+          <Panel highlight={focus === "battery"}>
             <div className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Battery</div>
             <div className="text-2xl font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{s.battery.value}</div>
             <div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.battery.detail}</div>

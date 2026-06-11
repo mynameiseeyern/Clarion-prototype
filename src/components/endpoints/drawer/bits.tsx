@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import { useEffect, useRef, type ReactNode } from "react"
 import type { MetricStatus } from "@/data/endpointDetail"
 
 const statusColor: Record<MetricStatus, string> = {
@@ -23,11 +23,19 @@ export function SegBar({ fill, status, segments = 10 }: { fill: number; status: 
   )
 }
 
-export function Panel({ children, className }: { children: ReactNode; className?: string }) {
+export function Panel({ children, className, highlight = false }: { children: ReactNode; className?: string; highlight?: boolean }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (highlight) ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
+  }, [highlight])
   return (
     <div
+      ref={ref}
       className={"rounded-xl p-4 " + (className ?? "")}
-      style={{ background: "var(--bg-neutral-subtle)", border: "1px solid var(--border-neutral-subtle)" }}
+      style={{
+        background: highlight ? "var(--bg-selected-subtle)" : "var(--bg-neutral-subtle)",
+        border: `1px solid ${highlight ? "var(--border-focused)" : "var(--border-neutral-subtle)"}`,
+      }}
     >
       {children}
     </div>
@@ -43,9 +51,9 @@ export function SectionLabel({ children }: { children: ReactNode }) {
   )
 }
 
-export function MetricBlock({ label, value, unit, children }: { label: string; value: string; unit: string; children?: ReactNode }) {
+export function MetricBlock({ label, value, unit, children, highlight = false }: { label: string; value: string; unit: string; children?: ReactNode; highlight?: boolean }) {
   return (
-    <Panel>
+    <Panel highlight={highlight}>
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>{label}</div>
       <div className="mb-3 flex items-baseline gap-1">
         <span className="text-2xl font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{value}</span>

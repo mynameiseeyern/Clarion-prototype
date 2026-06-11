@@ -66,7 +66,7 @@ function MapPanel({
   const [hoveredCity, setHoveredCity] = useState<string | null>(null)
 
   return (
-    <div className="flex w-full flex-col lg:w-[654px] lg:shrink-0" style={{ borderRight: "1px solid var(--border-neutral-subtle)" }}>
+    <div className="flex w-full flex-col lg:min-w-0 lg:flex-1" style={{ borderRight: "1px solid var(--border-neutral-subtle)" }}>
       <div className="flex items-center justify-between p-4">
         <h2 className="flex items-center gap-1.5 text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
           {ctry ? (
@@ -172,7 +172,7 @@ function LocationsPanel({
   const ctry = country ? countryById(country) : null
 
   return (
-    <div className="flex min-w-px flex-1 flex-col">
+    <div className="flex w-full flex-col lg:w-[400px] lg:shrink-0">
       {/* header */}
       {ctry ? (
         <button type="button" onClick={onAllLocations}
