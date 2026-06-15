@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react"
-import { SlidersHorizontal } from "lucide-react"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { Topbar } from "@/components/dashboard/Topbar"
 import { OverviewPage } from "@/pages/OverviewPage"
 import { EndpointsPage } from "@/pages/EndpointsPage"
 import { AlertsPage } from "@/pages/AlertsPage"
-import { PlaceholderPage } from "@/pages/PlaceholderPage"
+import { ThresholdsPage } from "@/pages/ThresholdsPage"
 import { GlossaryPage } from "@/pages/GlossaryPage"
 import { IssuesDocPage } from "@/pages/IssuesDocPage"
 import { DevicesModelPage } from "@/pages/DevicesModelPage"
@@ -166,13 +165,7 @@ export default function App() {
               openAlertId={openAlertId}
             />
           )}
-          {page === "thresholds" && (
-            <PlaceholderPage
-              title="Thresholds"
-              icon={SlidersHorizontal}
-              description="Configure the warning and critical limits that drive alerting for each network quality metric."
-            />
-          )}
+          {page === "thresholds" && <ThresholdsPage />}
           {page === "glossary" && <GlossaryPage />}
           {page === "devicesdoc" && <DevicesModelPage />}
           {page === "issuesdoc" && <IssuesDocPage />}
