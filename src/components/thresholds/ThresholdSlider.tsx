@@ -24,9 +24,10 @@ export function ThresholdSlider({
   const lp = Math.min(pct(warn), pct(crit))
   const hp = Math.max(pct(warn), pct(crit))
 
+  // bands use the status namespace (consistent hue in light + dark); softened via the track opacity below
   const bands = inverted
-    ? ["var(--bg-danger-subtle)", "var(--bg-warning-subtle)", "var(--bg-success-subtle)"]
-    : ["var(--bg-success-subtle)", "var(--bg-warning-subtle)", "var(--bg-danger-subtle)"]
+    ? ["var(--status-critical)", "var(--status-warning)", "var(--status-healthy)"]
+    : ["var(--status-healthy)", "var(--status-warning)", "var(--status-critical)"]
 
   const snap = (v: number) => Math.min(max, Math.max(min, Number((Math.round(v / step) * step).toFixed(4))))
   const setWarn = (v: number) => { v = snap(v); onChange(inverted ? Math.max(v, crit) : Math.min(v, crit), crit) }
@@ -112,7 +113,7 @@ export function ThresholdSlider({
       {/* Drag slider — sm and up */}
       <div className="hidden pt-9 sm:block">
         <div className="relative h-4" ref={trackRef}>
-          <div className="absolute inset-x-0 top-1/2 flex h-2 -translate-y-1/2 overflow-hidden rounded-full">
+          <div className="absolute inset-x-0 top-1/2 flex h-2 -translate-y-1/2 overflow-hidden rounded-full" style={{ opacity: 0.45 }}>
             <span className="h-full" style={{ width: `${lp}%`, background: bands[0] }} />
             <span className="h-full" style={{ width: `${hp - lp}%`, background: bands[1] }} />
             <span className="h-full" style={{ flex: 1, background: bands[2] }} />
@@ -128,7 +129,7 @@ export function ThresholdSlider({
 
       {/* Numeric fields — below sm (precise + touch-friendly), with a read-only band bar for context */}
       <div className="flex flex-col gap-2.5 sm:hidden">
-        <div className="flex h-1.5 w-full overflow-hidden rounded-full" aria-hidden>
+        <div className="flex h-1.5 w-full overflow-hidden rounded-full" aria-hidden style={{ opacity: 0.45 }}>
           <span className="h-full" style={{ width: `${lp}%`, background: bands[0] }} />
           <span className="h-full" style={{ width: `${hp - lp}%`, background: bands[1] }} />
           <span className="h-full" style={{ flex: 1, background: bands[2] }} />
