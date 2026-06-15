@@ -22,7 +22,7 @@ const emptyDraft = (): Draft => ({ name: "", scopes: [], overrides: {} })
 const draftFromRule = (r: ThresholdRule): Draft => JSON.parse(JSON.stringify({ name: r.name, scopes: r.scopes, overrides: r.overrides }))
 
 /* ---------------- scope multi-select ---------------- */
-function ScopePicker({ value, onChange, container }: { value: string[]; onChange: (v: string[]) => void; container?: HTMLElement | null }) {
+function ScopePicker({ value, onChange, claimed, container }: { value: string[]; onChange: (v: string[]) => void; claimed: Record<string, string>; container?: HTMLElement | null }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState("")
   const selected = value.map(scopeById).filter(Boolean) as ScopeOption[]
@@ -63,6 +63,17 @@ function ScopePicker({ value, onChange, container }: { value: string[]; onChange
           <div className="px-2 pb-1 pt-1.5 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>By region</div>
           {filtered.map((s) => {
             const on = value.includes(s.id)
+            const claimedBy = !on ? claimed[s.id] : undefined
+            if (claimedBy) {
+              // one rule per region: already governed by another custom rule
+              return (
+                <div key={s.id} aria-disabled className="flex w-full cursor-not-allowed items-center gap-2 rounded-md px-2 py-1.5 text-sm opacity-60" title={`In use by “${claimedBy}”`}>
+                  <span className="flex size-4 shrink-0 items-center justify-center rounded" style={{ background: "var(--bg-input-disabled)", border: "1px solid var(--border-input-default)" }} />
+                  <span className="flex-1 truncate" style={{ color: "var(--fg-neutral-muted)" }}>{s.name}</span>
+                  <span className="shrink-0 text-xs italic" style={{ color: "var(--fg-neutral-subtle)" }}>In use · {claimedBy}</span>
+                </div>
+              )
+            }
             return (
               <button key={s.id} type="button" role="option" aria-selected={on} onClick={() => toggle(s.id)}
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]">
@@ -126,11 +137,12 @@ function MetricPicker({ taken, onAdd, baseline, container }: { taken: string[]; 
 
 /* ---------------- panel ---------------- */
 export function RuleEditor({
-  open, rule, baseline, onOpenChange, onSave,
+  open, rule, baseline, claimedScopes, onOpenChange, onSave,
 }: {
   open: boolean
   rule: ThresholdRule | null
   baseline: ThresholdPolicy // current saved "Rules" values the custom rule inherits from
+  claimedScopes: Record<string, string> // region id → name of the rule that already owns it
   onOpenChange: (o: boolean) => void
   onSave: (rule: ThresholdRule) => void
 }) {
@@ -220,7 +232,7 @@ export function RuleEditor({
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>
                 Apply to<span aria-hidden style={{ color: "var(--fg-danger-emphasis)" }}> *</span>
               </span>
-              <ScopePicker value={scopes} onChange={setScopes} container={panelEl} />
+              <ScopePicker value={scopes} onChange={setScopes} claimed={claimedScopes} container={panelEl} />
             </div>
 
             {/* overrides */}

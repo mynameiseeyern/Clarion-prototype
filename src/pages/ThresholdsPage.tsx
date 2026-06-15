@@ -56,6 +56,13 @@ export function ThresholdsPage() {
     toast({ variant: "success", title: existed ? "Custom rule updated" : "Custom rule created", description: rule.name })
   }
 
+  // regions already governed by another custom rule (one rule per region) — disabled in the editor's scope picker
+  const claimedScopes: Record<string, string> = {}
+  for (const r of rules) {
+    if (editing && r.id === editing.id) continue
+    for (const sid of r.scopes) claimedScopes[sid] = r.name
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
       {/* Section 1 — Default thresholds */}
@@ -170,7 +177,7 @@ export function ThresholdsPage() {
         </button>
       </Card>
 
-      <RuleEditor open={editorOpen} rule={editing} baseline={savedPolicy} onOpenChange={setEditorOpen} onSave={saveRule} />
+      <RuleEditor open={editorOpen} rule={editing} baseline={savedPolicy} claimedScopes={claimedScopes} onOpenChange={setEditorOpen} onSave={saveRule} />
     </div>
   )
 }
