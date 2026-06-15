@@ -22,7 +22,7 @@ const emptyDraft = (): Draft => ({ name: "", scopes: [], overrides: {} })
 const draftFromRule = (r: ThresholdRule): Draft => JSON.parse(JSON.stringify({ name: r.name, scopes: r.scopes, overrides: r.overrides }))
 
 /* ---------------- scope multi-select ---------------- */
-function ScopePicker({ value, onChange, claimed, container }: { value: string[]; onChange: (v: string[]) => void; claimed: Record<string, string>; container?: HTMLElement | null }) {
+function ScopePicker({ value, onChange, claims, selectedMetrics, container }: { value: string[]; onChange: (v: string[]) => void; claims: Record<string, Record<string, string>>; selectedMetrics: string[]; container?: HTMLElement | null }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState("")
   const selected = value.map(scopeById).filter(Boolean) as ScopeOption[]
@@ -63,14 +63,17 @@ function ScopePicker({ value, onChange, claimed, container }: { value: string[];
           <div className="px-2 pb-1 pt-1.5 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>By region</div>
           {filtered.map((s) => {
             const on = value.includes(s.id)
-            const claimedBy = !on ? claimed[s.id] : undefined
-            if (claimedBy) {
-              // one rule per region: already governed by another custom rule
+            // only a conflict if one of THIS rule's chosen metrics is already set for this region by another rule
+            const regionClaims = claims[s.id]
+            const conflictMetric = !on && regionClaims ? selectedMetrics.find((mid) => regionClaims[mid]) : undefined
+            if (conflictMetric) {
+              const ruleName = regionClaims![conflictMetric]
+              const metricName = metricById(conflictMetric)?.name ?? conflictMetric
               return (
-                <div key={s.id} aria-disabled className="flex w-full cursor-not-allowed items-center gap-2 rounded-md px-2 py-1.5 text-sm opacity-60" title={`In use by “${claimedBy}”`}>
+                <div key={s.id} aria-disabled className="flex w-full cursor-not-allowed items-center gap-2 rounded-md px-2 py-1.5 text-sm opacity-60" title={`${metricName} is already set for ${s.name} by “${ruleName}”`}>
                   <span className="flex size-4 shrink-0 items-center justify-center rounded" style={{ background: "var(--bg-input-disabled)", border: "1px solid var(--border-input-default)" }} />
                   <span className="flex-1 truncate" style={{ color: "var(--fg-neutral-muted)" }}>{s.name}</span>
-                  <span className="shrink-0 text-xs italic" style={{ color: "var(--fg-neutral-subtle)" }}>In use · {claimedBy}</span>
+                  <span className="shrink-0 text-xs italic" style={{ color: "var(--fg-neutral-subtle)" }}>{metricName} · {ruleName}</span>
                 </div>
               )
             }
@@ -96,7 +99,7 @@ function ScopePicker({ value, onChange, claimed, container }: { value: string[];
 }
 
 /* ---------------- metric override picker (additive) ---------------- */
-function MetricPicker({ taken, onAdd, baseline, container }: { taken: string[]; onAdd: (id: string) => void; baseline: ThresholdPolicy; container?: HTMLElement | null }) {
+function MetricPicker({ taken, onAdd, baseline, claims, selectedScopes, container }: { taken: string[]; onAdd: (id: string) => void; baseline: ThresholdPolicy; claims: Record<string, Record<string, string>>; selectedScopes: string[]; container?: HTMLElement | null }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState("")
   const available = METRICS.filter((m) => !taken.includes(m.id) && m.name.toLowerCase().includes(q.trim().toLowerCase()))
@@ -120,14 +123,29 @@ function MetricPicker({ taken, onAdd, baseline, container }: { taken: string[]; 
             className="min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]" style={{ color: "var(--fg-neutral-emphasis)" }} />
         </div>
         <div className="max-h-64 overflow-y-auto p-1">
-          {available.map((m) => (
-            <button key={m.id} type="button" role="option" onClick={() => { onAdd(m.id); setOpen(false); setQ("") }}
-              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]">
-              <m.icon className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
-              <span className="flex-1" style={{ color: "var(--fg-neutral-emphasis)" }}>{m.name}</span>
-              <span className="font-mono text-xs font-semibold" style={{ color: "var(--fg-neutral-muted)" }}>{fmtRange(m, bandOf(baseline, m.id).warn, bandOf(baseline, m.id).crit)}</span>
-            </button>
-          ))}
+          {available.map((m) => {
+            // disable if this metric is already governed for one of the regions this rule targets
+            let claimedBy: string | undefined, claimedRegion: string | undefined
+            for (const sid of selectedScopes) { const c = claims[sid]?.[m.id]; if (c) { claimedBy = c; claimedRegion = sid; break } }
+            if (claimedBy) {
+              const regionName = scopeById(claimedRegion!)?.name ?? claimedRegion
+              return (
+                <div key={m.id} aria-disabled className="flex w-full cursor-not-allowed items-center gap-2 rounded-md px-2 py-1.5 text-sm opacity-60" title={`${m.name} is already set for ${regionName} by “${claimedBy}”`}>
+                  <m.icon className="size-4 shrink-0" style={{ color: "var(--fg-neutral-subtle)" }} />
+                  <span className="flex-1" style={{ color: "var(--fg-neutral-muted)" }}>{m.name}</span>
+                  <span className="shrink-0 text-xs italic" style={{ color: "var(--fg-neutral-subtle)" }}>In use · {claimedBy}</span>
+                </div>
+              )
+            }
+            return (
+              <button key={m.id} type="button" role="option" onClick={() => { onAdd(m.id); setOpen(false); setQ("") }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]">
+                <m.icon className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
+                <span className="flex-1" style={{ color: "var(--fg-neutral-emphasis)" }}>{m.name}</span>
+                <span className="font-mono text-xs font-semibold" style={{ color: "var(--fg-neutral-muted)" }}>{fmtRange(m, bandOf(baseline, m.id).warn, bandOf(baseline, m.id).crit)}</span>
+              </button>
+            )
+          })}
           {available.length === 0 && <div className="px-2 py-3 text-center text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No metrics match.</div>}
         </div>
       </PopoverContent>
@@ -137,12 +155,12 @@ function MetricPicker({ taken, onAdd, baseline, container }: { taken: string[]; 
 
 /* ---------------- panel ---------------- */
 export function RuleEditor({
-  open, rule, baseline, claimedScopes, onOpenChange, onSave,
+  open, rule, baseline, claims, onOpenChange, onSave,
 }: {
   open: boolean
   rule: ThresholdRule | null
   baseline: ThresholdPolicy // current saved "Rules" values the custom rule inherits from
-  claimedScopes: Record<string, string> // region id → name of the rule that already owns it
+  claims: Record<string, Record<string, string>> // region id → metric id → name of the rule that already governs it
   onOpenChange: (o: boolean) => void
   onSave: (rule: ThresholdRule) => void
 }) {
@@ -227,20 +245,12 @@ export function RuleEditor({
               {nameError && <span id="rule-name-error" className="text-xs" style={{ color: "var(--fg-danger-emphasis)" }}>Name is required.</span>}
             </div>
 
-            {/* scope */}
-            <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>
-                Apply to<span aria-hidden style={{ color: "var(--fg-danger-emphasis)" }}> *</span>
-              </span>
-              <ScopePicker value={scopes} onChange={setScopes} claimed={claimedScopes} container={panelEl} />
-            </div>
-
-            {/* overrides */}
+            {/* overrides — chosen first so the scope picker can disable only the regions that conflict on these metrics */}
             <div className="flex flex-col gap-2.5">
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>
                 Threshold overrides<span aria-hidden style={{ color: "var(--fg-danger-emphasis)" }}> *</span>
               </span>
-              <MetricPicker taken={overriddenIds} onAdd={addMetric} baseline={baseline} container={panelEl} />
+              <MetricPicker taken={overriddenIds} onAdd={addMetric} baseline={baseline} claims={claims} selectedScopes={scopes} container={panelEl} />
 
               {overriddenIds.length === 0 ? (
                 <div className="flex flex-col items-center gap-1 rounded-xl px-6 py-10 text-center" style={{ border: "1px dashed var(--border-neutral-emphasis)" }}>
@@ -277,6 +287,14 @@ export function RuleEditor({
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* scope — a region is disabled only where one of the chosen metrics is already governed by another rule */}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>
+                Apply to<span aria-hidden style={{ color: "var(--fg-danger-emphasis)" }}> *</span>
+              </span>
+              <ScopePicker value={scopes} onChange={setScopes} claims={claims} selectedMetrics={overriddenIds} container={panelEl} />
             </div>
           </div>
 

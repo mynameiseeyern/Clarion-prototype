@@ -56,11 +56,16 @@ export function ThresholdsPage() {
     toast({ variant: "success", title: existed ? "Custom rule updated" : "Custom rule created", description: rule.name })
   }
 
-  // regions already governed by another custom rule (one rule per region) — disabled in the editor's scope picker
-  const claimedScopes: Record<string, string> = {}
+  // which (region × metric) pairs another rule already governs — a region+metric can
+  // only live in one rule, but a region may appear in several rules for *different* metrics.
+  // claims[regionId][metricId] = owning rule name. Used to disable only conflicting choices.
+  const claims: Record<string, Record<string, string>> = {}
   for (const r of rules) {
     if (editing && r.id === editing.id) continue
-    for (const sid of r.scopes) claimedScopes[sid] = r.name
+    for (const sid of r.scopes) {
+      claims[sid] = claims[sid] ?? {}
+      for (const mid of Object.keys(r.overrides)) claims[sid][mid] = r.name
+    }
   }
 
   return (
@@ -104,7 +109,7 @@ export function ThresholdsPage() {
               </span>
               <div className="flex flex-col">
                 <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{m.name}</span>
-                <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{m.direction === "higher" ? "Higher is worse" : "Lower is worse"}</span>
+                <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{m.direction === "higher" ? "Lower is better" : "Higher is better"}</span>
               </div>
             </div>
             <div className="min-w-px flex-1">
@@ -177,7 +182,7 @@ export function ThresholdsPage() {
         </button>
       </Card>
 
-      <RuleEditor open={editorOpen} rule={editing} baseline={savedPolicy} claimedScopes={claimedScopes} onOpenChange={setEditorOpen} onSave={saveRule} />
+      <RuleEditor open={editorOpen} rule={editing} baseline={savedPolicy} claims={claims} onOpenChange={setEditorOpen} onSave={saveRule} />
     </div>
   )
 }
