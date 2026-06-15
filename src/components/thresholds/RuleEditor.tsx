@@ -138,17 +138,21 @@ export function RuleEditor({
   const [scopes, setScopes] = useState<string[]>([])
   const [overrides, setOverrides] = useState<ThresholdPolicy>({})
   const [panelEl, setPanelEl] = useState<HTMLDivElement | null>(null)
+  const [nameTouched, setNameTouched] = useState(false)
   const initialRef = useRef("")
 
   useEffect(() => {
     if (!open) return
     const d = rule ? draftFromRule(rule) : emptyDraft()
     setName(d.name); setScopes(d.scopes); setOverrides(d.overrides)
+    setNameTouched(false)
     initialRef.current = JSON.stringify(d)
   }, [open, rule])
 
   const dirty = JSON.stringify({ name, scopes, overrides }) !== initialRef.current
-  const canSave = name.trim().length > 0 && scopes.length > 0
+  // required to save: a name, at least one region, and at least one override
+  const nameError = nameTouched && name.trim().length === 0
+  const canSave = name.trim().length > 0 && scopes.length > 0 && Object.keys(overrides).length > 0
 
   const requestClose = (next: boolean) => {
     if (!next && dirty && !window.confirm("Discard unsaved changes to this rule?")) return
@@ -202,19 +206,28 @@ export function RuleEditor({
           <div className="flex min-h-px flex-1 flex-col gap-6 overflow-y-auto px-5 py-5">
             {/* name */}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="rule-name" className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Name</label>
-              <Input id="rule-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Manila remote workers" />
+              <label htmlFor="rule-name" className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>
+                Name<span aria-hidden style={{ color: "var(--fg-danger-emphasis)" }}> *</span>
+              </label>
+              <Input id="rule-name" value={name} onChange={(e) => setName(e.target.value)} onBlur={() => setNameTouched(true)}
+                placeholder="e.g. Manila remote workers" required aria-required aria-invalid={nameError || undefined}
+                aria-describedby={nameError ? "rule-name-error" : undefined} />
+              {nameError && <span id="rule-name-error" className="text-xs" style={{ color: "var(--fg-danger-emphasis)" }}>Name is required.</span>}
             </div>
 
             {/* scope */}
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Apply to</span>
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>
+                Apply to<span aria-hidden style={{ color: "var(--fg-danger-emphasis)" }}> *</span>
+              </span>
               <ScopePicker value={scopes} onChange={setScopes} container={panelEl} />
             </div>
 
             {/* overrides */}
             <div className="flex flex-col gap-2.5">
-              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Threshold overrides</span>
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>
+                Threshold overrides<span aria-hidden style={{ color: "var(--fg-danger-emphasis)" }}> *</span>
+              </span>
               <MetricPicker taken={overriddenIds} onAdd={addMetric} baseline={baseline} container={panelEl} />
 
               {overriddenIds.length === 0 ? (
