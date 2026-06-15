@@ -118,10 +118,12 @@ export function EndpointDrawer({
   useEffect(() => {
     if (!open) return
     const onKey = (ev: KeyboardEvent) => {
+      // ↑/↓ flick between users; ←/→ move between the card's tabs. Tab is left to
+      // the browser/focus-trap for accessibility.
       if (ev.key === "ArrowDown") { ev.preventDefault(); go(1) }
-      if (ev.key === "ArrowUp") { ev.preventDefault(); go(-1) }
-      if (ev.key === "ArrowRight") { ev.preventDefault(); cycleTab(1) }
-      if (ev.key === "ArrowLeft") { ev.preventDefault(); cycleTab(-1) }
+      else if (ev.key === "ArrowUp") { ev.preventDefault(); go(-1) }
+      else if (ev.key === "ArrowRight") { ev.preventDefault(); cycleTab(1) }
+      else if (ev.key === "ArrowLeft") { ev.preventDefault(); cycleTab(-1) }
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
