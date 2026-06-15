@@ -36,6 +36,12 @@ export const devNavItems: NavItem[] = [
 export const pageLabel = (id: PageId) =>
   [...navItems, ...devNavItems].find((n) => n.id === id)?.label ?? "Overview"
 
+// Optional one-line context under a page title (shown in the top chrome).
+// Add entries only where a subtitle is genuinely useful — keep pages lean otherwise.
+export const pageSubtitle: Partial<Record<PageId, string>> = {
+  thresholds: "Set when a device is flagged warning or critical.",
+}
+
 // ---- URL routing (shareable per-page links) --------------------------------
 
 export const pagePath: Record<PageId, string> = {

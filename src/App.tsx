@@ -17,7 +17,7 @@ import { useStreaming } from "@/hooks/useStreaming"
 import { DEFAULT_LOCATION, locationById } from "@/data/dashboard"
 import type { Endpoint, Rollup, RollupCause } from "@/data/endpoints"
 import { rollupsForLocation, rollupsAll } from "@/data/endpoints"
-import { pageLabel, pagePath, pageFromPath, type PageId } from "@/nav"
+import { pageLabel, pageSubtitle, pagePath, pageFromPath, type PageId } from "@/nav"
 
 // map a real-time alert type to the issue cause it belongs to
 const alertTypeToCause: Record<string, RollupCause> = {
@@ -137,6 +137,9 @@ export default function App() {
               pageLabel(page)
             )}
           </h1>
+          {pageSubtitle[page] && (
+            <p className="mt-1 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>{pageSubtitle[page]}</p>
+          )}
         </div>
 
         <div className="flex flex-1 flex-col overflow-y-auto p-4">

@@ -6,7 +6,6 @@ import { Chip } from "@/components/ui/chip"
 import { ThresholdSlider } from "@/components/thresholds/ThresholdSlider"
 import { RuleEditor } from "@/components/thresholds/RuleEditor"
 import { toast } from "@/components/ui/toast"
-import { fleetTotals } from "@/data/dashboard"
 import {
   METRICS, metricById, defaultPolicy, initialRules, scopeById, fmtRange,
   type ThresholdRule, type ThresholdPolicy,
@@ -25,7 +24,6 @@ export function ThresholdsPage() {
   const [saving, setSaving] = useState(false)
   const [justSaved, setJustSaved] = useState(false)
 
-  const total = fleetTotals().endpoints.toLocaleString()
   const dirty = JSON.stringify(policy) !== JSON.stringify(savedPolicy)
   const isCustom = JSON.stringify(savedPolicy) !== JSON.stringify(defaultPolicy)
 
@@ -60,16 +58,12 @@ export function ThresholdsPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-      <p className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-        Define when a device is considered warning or critical. The default thresholds apply to all devices unless a custom rule overrides them.
-      </p>
-
-      {/* Section 1 — Default policy */}
+      {/* Section 1 — Default thresholds */}
       <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
         <div className="flex flex-wrap items-start justify-between gap-3 px-5 py-4" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
           <div className="flex flex-col">
             <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Default thresholds</h2>
-            <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Applies to all {total} devices unless overridden by a custom rule</span>
+            <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Applies to every device unless a custom rule overrides it</span>
           </div>
           {/* Save-gated: edits stay in a draft until committed. After save, a confirmation + Reset appears. */}
           <div className="flex items-center gap-2">
