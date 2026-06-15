@@ -169,7 +169,13 @@ export function RuleEditor({
   }
 
   const overriddenIds = METRICS.filter((m) => m.id in overrides).map((m) => m.id)
-  const remaining = METRICS.length - overriddenIds.length
+  const atDefault = (id: string) => {
+    const o = overrides[id]; if (!o) return true
+    const b = bandOf(baseline, id)
+    return o.warn === b.warn && o.crit === b.crit
+  }
+  // "still uses the default" = not overridden, OR added but left at the default value
+  const remaining = METRICS.filter((m) => atDefault(m.id)).length
 
   return (
     <Dialog.Root open={open} onOpenChange={requestClose}>
@@ -230,6 +236,7 @@ export function RuleEditor({
                             <m.icon className="size-4" style={{ color: "var(--fg-neutral-muted)" }} />
                             <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{m.name}</span>
                             <span className="font-mono text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>Default {fmtRange(m, bandOf(baseline, id).warn, bandOf(baseline, id).crit)}</span>
+                            {atDefault(id) && <span className="text-xs italic" style={{ color: "var(--fg-neutral-subtle)" }}>· matches default</span>}
                           </div>
                           <button type="button" aria-label={`Remove ${m.name} override`} onClick={() => removeMetric(id)}
                             className="flex size-7 items-center justify-center rounded-md transition-colors hover:bg-[var(--bg-neutral-subtle-pressed)]" style={{ color: "var(--fg-neutral-muted)" }}>
