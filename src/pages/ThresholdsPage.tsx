@@ -89,14 +89,23 @@ export function ThresholdsPage() {
           </div>
         ) : (
           rules.map((r, i) => {
-            const n = overrideCount(r)
+            const overridden = METRICS.filter((m) => m.id in r.overrides)
             return (
-              <div key={r.id} className="flex items-center justify-between gap-3 px-5 py-4" style={{ borderTop: i ? "1px solid var(--border-neutral-subtle)" : undefined }}>
-                <div className="flex min-w-px flex-col gap-1.5">
-                  <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{r.name}</span>
-                  <div className="flex flex-wrap items-center gap-1.5">
+              <div key={r.id} className="flex items-start justify-between gap-3 px-5 py-4" style={{ borderTop: i ? "1px solid var(--border-neutral-subtle)" : undefined }}>
+                <div className="flex min-w-px flex-col gap-2">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{r.name}</span>
                     {r.scopes.map((id) => <Chip key={id} size="sm">{scopeById(id)?.name ?? id}</Chip>)}
-                    <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>· {n} of {METRICS.length} metric{n === 1 ? "" : "s"} overridden</span>
+                  </div>
+                  {/* expose exactly which metrics + threshold values this rule overrides */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {overridden.map((m) => (
+                      <span key={m.id} className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs" style={{ background: "var(--bg-neutral-subtle)", border: "1px solid var(--border-neutral-subtle)" }}>
+                        <span style={{ color: "var(--fg-neutral-muted)" }}>{m.name}</span>
+                        <span className="font-mono font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{fmtRange(m, r.overrides[m.id].warn, r.overrides[m.id].crit)}</span>
+                      </span>
+                    ))}
+                    <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>· {overridden.length} of {METRICS.length} overridden</span>
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
