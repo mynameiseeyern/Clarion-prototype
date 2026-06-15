@@ -174,8 +174,6 @@ export function RuleEditor({
     const b = bandOf(baseline, id)
     return o.warn === b.warn && o.crit === b.crit
   }
-  // "still uses the default" = not overridden, OR added but left at the default value
-  const remaining = METRICS.filter((m) => atDefault(m.id)).length
 
   return (
     <Dialog.Root open={open} onOpenChange={requestClose}>
@@ -250,7 +248,7 @@ export function RuleEditor({
                     )
                   })}
                   <p className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-                    {remaining} of {METRICS.length} metric{remaining === 1 ? "" : "s"} still use the default policy.
+                    Any metric you don’t override inherits the default policy.
                   </p>
                 </div>
               )}

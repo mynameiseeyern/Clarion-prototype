@@ -65,7 +65,7 @@ export function ThresholdSlider({
       <Fragment key={which}>
         {/* role text ("Warn"/"Crit") so the threshold is legible without relying on colour */}
         <div className="pointer-events-none absolute -top-9 z-10 flex -translate-x-1/2 flex-col items-center leading-tight" style={{ left: `${p}%` }}>
-          <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-muted)" }}>{which === "warn" ? "Warn" : "Crit"}</span>
+          <span className="text-[10px] font-semibold" style={{ color: "var(--fg-neutral-muted)" }}>{which === "warn" ? "Warning" : "Critical"}</span>
           <span className="whitespace-nowrap font-mono text-xs font-semibold" style={{ color: labelColor }}>{fmtValue(metric, v)}</span>
         </div>
         <div
