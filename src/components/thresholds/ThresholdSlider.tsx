@@ -63,8 +63,10 @@ export function ThresholdSlider({
     const p = pct(v)
     return (
       <Fragment key={which}>
-        <div className="pointer-events-none absolute -top-6 z-10 -translate-x-1/2 whitespace-nowrap font-mono text-xs font-semibold" style={{ left: `${p}%`, color: labelColor }}>
-          {fmtValue(metric, v)}
+        {/* role text ("Warn"/"Crit") so the threshold is legible without relying on colour */}
+        <div className="pointer-events-none absolute -top-9 z-10 flex -translate-x-1/2 flex-col items-center leading-tight" style={{ left: `${p}%` }}>
+          <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-muted)" }}>{which === "warn" ? "Warn" : "Crit"}</span>
+          <span className="whitespace-nowrap font-mono text-xs font-semibold" style={{ color: labelColor }}>{fmtValue(metric, v)}</span>
         </div>
         <div
           role="slider"
@@ -85,7 +87,7 @@ export function ThresholdSlider({
   }
 
   return (
-    <div className="w-full select-none pt-6">
+    <div className="w-full select-none pt-9">
       <div className="relative h-4" ref={trackRef}>
         <div className="absolute inset-x-0 top-1/2 flex h-2 -translate-y-1/2 overflow-hidden rounded-full">
           <span className="h-full" style={{ width: `${lp}%`, background: bands[0] }} />

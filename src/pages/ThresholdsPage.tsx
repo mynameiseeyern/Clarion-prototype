@@ -7,7 +7,7 @@ import { ThresholdSlider } from "@/components/thresholds/ThresholdSlider"
 import { RuleEditor } from "@/components/thresholds/RuleEditor"
 import { fleetTotals } from "@/data/dashboard"
 import {
-  METRICS, defaultPolicy, initialRules, scopeById, overrideCount,
+  METRICS, metricById, defaultPolicy, initialRules, scopeById, fmtRange,
   type ThresholdRule, type ThresholdPolicy,
 } from "@/data/thresholds"
 
@@ -21,7 +21,8 @@ export function ThresholdsPage() {
   const total = fleetTotals().endpoints.toLocaleString()
 
   const setBand = (id: string, warn: number, crit: number) => setPolicy((p) => ({ ...p, [id]: { warn, crit } }))
-  const resetDefaults = () => setPolicy(JSON.parse(JSON.stringify(defaultPolicy)))
+  const resetAll = () => setPolicy(JSON.parse(JSON.stringify(defaultPolicy)))
+  const resetMetric = (id: string) => { const m = metricById(id); if (m) setBand(id, m.defaultWarn, m.defaultCrit) }
 
   const openNew = () => { setEditing(null); setEditorOpen(true) }
   const openEdit = (r: ThresholdRule) => { setEditing(r); setEditorOpen(true) }
@@ -42,8 +43,9 @@ export function ThresholdsPage() {
             <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Default policy</h2>
             <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Applies to all {total} devices unless overridden</span>
           </div>
-          <Button variant="secondary" size="sm" className="gap-1.5" onClick={resetDefaults}>
-            <RotateCcw className="size-3.5" /> Reset to engineering defaults
+          {/* TODO(eng): "Set to defaults" restores the placeholder engineering defaults; real values pending. */}
+          <Button variant="secondary" size="sm" className="gap-1.5" onClick={resetAll}>
+            <RotateCcw className="size-3.5" /> Set to defaults
           </Button>
         </div>
 
@@ -60,6 +62,14 @@ export function ThresholdsPage() {
             </div>
             <div className="min-w-px flex-1">
               <ThresholdSlider metric={m} warn={policy[m.id].warn} crit={policy[m.id].crit} onChange={(w, c) => setBand(m.id, w, c)} />
+            </div>
+            <div className="flex sm:w-8 sm:shrink-0 sm:justify-end">
+              {(policy[m.id].warn !== m.defaultWarn || policy[m.id].crit !== m.defaultCrit) && (
+                <button type="button" aria-label={`Set ${m.name} to default`} title="Set to default" onClick={() => resetMetric(m.id)}
+                  className="flex size-8 items-center justify-center rounded-md transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }}>
+                  <RotateCcw className="size-4" />
+                </button>
+              )}
             </div>
           </div>
         ))}
