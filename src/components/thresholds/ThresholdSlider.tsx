@@ -86,20 +86,57 @@ export function ThresholdSlider({
     )
   }
 
+  const field = (which: "warn" | "crit") => {
+    const v = which === "warn" ? warn : crit
+    const set = which === "warn" ? setWarn : setCrit
+    const labelColor = which === "warn" ? "var(--fg-warning-emphasis)" : "var(--fg-danger-emphasis)"
+    return (
+      <label className="flex min-w-px flex-1 flex-col gap-1">
+        <span className="text-xs font-semibold" style={{ color: labelColor }}>{which === "warn" ? "Warning" : "Critical"}</span>
+        <div className="relative">
+          <input
+            type="number" inputMode="decimal" value={v} min={min} max={max} step={step}
+            aria-label={`${metric.name} ${which === "warn" ? "warning" : "critical"} threshold`}
+            onChange={(e) => { const n = Number(e.target.value); if (!Number.isNaN(n)) set(n) }}
+            className="h-9 w-full rounded-md pl-3 pr-8 font-mono text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-focused)]"
+            style={{ border: "1px solid var(--border-input-default)", background: "var(--bg-input-default)", color: "var(--fg-neutral-emphasis)" }}
+          />
+          {metric.unit && <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{metric.unit}</span>}
+        </div>
+      </label>
+    )
+  }
+
   return (
-    <div className="w-full select-none pt-9">
-      <div className="relative h-4" ref={trackRef}>
-        <div className="absolute inset-x-0 top-1/2 flex h-2 -translate-y-1/2 overflow-hidden rounded-full">
+    <div className="w-full select-none">
+      {/* Drag slider — sm and up */}
+      <div className="hidden pt-9 sm:block">
+        <div className="relative h-4" ref={trackRef}>
+          <div className="absolute inset-x-0 top-1/2 flex h-2 -translate-y-1/2 overflow-hidden rounded-full">
+            <span className="h-full" style={{ width: `${lp}%`, background: bands[0] }} />
+            <span className="h-full" style={{ width: `${hp - lp}%`, background: bands[1] }} />
+            <span className="h-full" style={{ flex: 1, background: bands[2] }} />
+          </div>
+          {renderThumb("warn")}
+          {renderThumb("crit")}
+        </div>
+        <div className="mt-2 flex justify-between font-mono text-[11px]" style={{ color: "var(--fg-neutral-subtle)" }}>
+          <span>{fmtValue(metric, min)}</span>
+          <span>{fmtValue(metric, max)}</span>
+        </div>
+      </div>
+
+      {/* Numeric fields — below sm (precise + touch-friendly), with a read-only band bar for context */}
+      <div className="flex flex-col gap-2.5 sm:hidden">
+        <div className="flex h-1.5 w-full overflow-hidden rounded-full" aria-hidden>
           <span className="h-full" style={{ width: `${lp}%`, background: bands[0] }} />
           <span className="h-full" style={{ width: `${hp - lp}%`, background: bands[1] }} />
           <span className="h-full" style={{ flex: 1, background: bands[2] }} />
         </div>
-        {renderThumb("warn")}
-        {renderThumb("crit")}
-      </div>
-      <div className="mt-2 flex justify-between font-mono text-[11px]" style={{ color: "var(--fg-neutral-subtle)" }}>
-        <span>{fmtValue(metric, min)}</span>
-        <span>{fmtValue(metric, max)}</span>
+        <div className="flex items-end gap-3">
+          {field("warn")}
+          {field("crit")}
+        </div>
       </div>
     </div>
   )
