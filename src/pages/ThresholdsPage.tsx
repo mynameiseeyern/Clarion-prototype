@@ -63,7 +63,7 @@ export function ThresholdsPage() {
                 <RotateCcw className="size-3.5" /> Reset to defaults
               </Button>
             ) : (
-              <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>Using engineering defaults</span>
+              <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>Using defaults</span>
             )}
           </div>
         </div>
