@@ -31,7 +31,7 @@ const groups: Group[] = [
   {
     title: "Metrics",
     terms: [
-      { term: "Clarity™ Network Score", def: "The headline 1.0–5.0 network-quality score for a device or aggregate (formerly 'MOS / Average MOS score'). Acceptable > 3.6, Good > 4.", eg: "3.97" },
+      { term: "Clarity™ Network Score", def: "The headline 0–100 network-quality score for a device or aggregate (formerly 'MOS / Average MOS score'). Banded Excellent 80–100 · Good 60–79 · Fair 40–59 · Poor 0–39.", eg: "79 · Good" },
       { term: "Latency", def: "Round-trip time in ms. Threshold: warn ≥ 80ms · crit ≥ 150ms." },
       { term: "Jitter", def: "Variation in latency in ms. Threshold: warn ≥ 30ms · crit ≥ 50ms." },
       { term: "Packet loss", def: "% of packets lost. Threshold: warn ≥ 1% · crit ≥ 3%." },

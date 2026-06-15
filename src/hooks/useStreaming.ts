@@ -28,7 +28,7 @@ export function useStreaming(): LiveFleet {
           // re-roll the stream
           setJitter({
             offline: Math.floor(Math.random() * 12),
-            score: Math.round((Math.random() - 0.5) * 0.08 * 100) / 100,
+            score: Math.round((Math.random() - 0.5) * 3), // CNS jitter on a 0–100 scale
           })
           return 0
         }
@@ -41,7 +41,7 @@ export function useStreaming(): LiveFleet {
   return {
     ...base,
     online: Math.max(0, Math.min(base.endpoints, base.online - jitter.offline)),
-    score: Math.min(5, Math.max(1, base.score + jitter.score)),
+    score: Math.round(Math.min(100, Math.max(0, base.score + jitter.score))),
     secondsAgo,
   }
 }

@@ -301,9 +301,9 @@ export function EndpointsTable({
                   <td className="px-4 py-3">
                     <span
                       className="font-mono text-sm font-medium"
-                      style={{ color: e.score === null ? "var(--fg-neutral-subtle)" : e.status === "critical" ? "var(--fg-danger)" : e.status === "warning" ? "var(--fg-warning)" : "var(--fg-neutral-emphasis)" }}
+                      style={{ color: e.score === null ? "var(--fg-neutral-subtle)" : e.status === "critical" ? "var(--fg-danger-emphasis)" : e.status === "warning" ? "var(--fg-warning-emphasis)" : "var(--fg-neutral-emphasis)" }}
                     >
-                      {e.score === null ? "—" : e.score.toFixed(1)}
+                      {e.score === null ? "—" : e.score}
                     </span>
                   </td>
                   <td className="px-4 py-3">

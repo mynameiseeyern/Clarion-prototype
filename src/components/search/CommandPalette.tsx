@@ -97,7 +97,7 @@ export function CommandPalette({
         </div>
         <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
           <span className="size-1.5 rounded-full" style={{ background: statusVar[e.status] }} />
-          {e.score === null ? "—" : e.score.toFixed(1)}
+          {e.score === null ? "—" : e.score}
         </span>
         {isActive && <CornerDownLeft className="size-3.5" style={{ color: "var(--fg-neutral-subtle)" }} />}
       </div>

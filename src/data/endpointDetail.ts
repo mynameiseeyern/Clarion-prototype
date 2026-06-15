@@ -78,7 +78,7 @@ export function getEndpointDetail(e: Endpoint): EndpointDetail {
     { label: "Latency", value: String(e.latency), unit: "ms", fill: Math.min(1, e.latency / 200), status: metricStatus(e.latency, 80, 150), threshold: "warn ≥ 80ms · crit ≥ 150ms" },
     { label: "Packet loss", value: String(e.packetLoss), unit: "%", fill: Math.min(1, e.packetLoss / 6), status: metricStatus(e.packetLoss, 1, 3), threshold: "warn ≥ 1% · crit ≥ 3%" },
     { label: "Jitter", value: String(e.jitter), unit: "ms", fill: Math.min(1, e.jitter / 70), status: metricStatus(e.jitter, 30, 50), threshold: "warn ≥ 30ms · crit ≥ 50ms" },
-    { label: "Clarity Network Score", value: e.score === null ? "—" : e.score.toFixed(1), unit: "/ 5.0", fill: e.score === null ? 0 : e.score / 5, status: e.score === null ? "crit" : metricStatus(e.score, 3.6, 3.0, true), threshold: "warn < 3.6 · crit < 3.0" },
+    { label: "Clarity Network Score", value: e.score === null ? "—" : String(e.score), unit: "/ 100", fill: e.score === null ? 0 : e.score / 100, status: e.score === null ? "crit" : metricStatus(e.score, 60, 40, true), threshold: "warn < 60 · crit < 40" },
   ]
 
   // platforms: the endpoint's primary platform reflects its issue; others mostly OK

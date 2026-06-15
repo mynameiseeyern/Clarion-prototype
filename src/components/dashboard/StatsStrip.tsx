@@ -7,6 +7,14 @@ import type { LiveFleet } from "@/hooks/useStreaming"
 // Net change in open issues vs. ~24h ago (deterministic dummy).
 const ISSUES_24H_AGO = 6
 
+// Clarity Network Score (0–100) quality band.
+function cnsBand(v: number) {
+  if (v >= 80) return { label: "Excellent", range: "80–100", color: "var(--fg-success-emphasis)" }
+  if (v >= 60) return { label: "Good", range: "60–79", color: "var(--fg-success-emphasis)" }
+  if (v >= 40) return { label: "Fair", range: "40–59", color: "var(--fg-warning-emphasis)" }
+  return { label: "Poor", range: "0–39", color: "var(--fg-danger-emphasis)" }
+}
+
 function IssueDelta({ delta }: { delta: number }) {
   if (delta === 0) return <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>no change today</span>
   // more open issues than yesterday is a regression → danger; fewer → success
@@ -75,12 +83,17 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
             </>
           }
           icon={Tally5}
-          value={live.score.toFixed(2)}
+          value={String(live.score)}
         >
-          <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: "var(--fg-neutral-emphasis)" }}>Acceptable: &gt;3.6</span>
-            <span className="text-xs" style={{ color: "var(--fg-neutral-emphasis)" }}>Good: &gt;4</span>
-          </div>
+          {(() => {
+            const b = cnsBand(live.score)
+            return (
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-medium" style={{ color: b.color }}>{b.label}</span>
+                <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>· {b.range}</span>
+              </div>
+            )
+          })()}
         </KpiCard>
       </div>
     </section>

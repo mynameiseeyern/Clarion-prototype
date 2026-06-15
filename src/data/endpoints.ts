@@ -29,7 +29,7 @@ export interface Endpoint {
   locationName: string
   site: Site
   status: EndpointStatus
-  /** Clarity Network Score 1.0–5.0, or null when unreachable */
+  /** Clarity Network Score 0–100, or null when unreachable */
   score: number | null
   connection: Connection
   latency: number
@@ -139,14 +139,14 @@ function makeEndpoint(locId: string, locName: string, status: EndpointStatus, n:
     latency = 0; jitter = 0; loss = 0; score = null
   } else if (status === "healthy") {
     latency = round(between(8, 70)); jitter = round(between(4, 20)); loss = round(between(0, 0.6), 1)
-    score = round(between(4.0, 4.8), 1)
+    score = round(between(80, 99)) // Clarity Network Score, 0–100
   } else if (status === "warning") {
     // one metric in the warn band
     const which = Math.floor(rand() * 3)
     latency = round(which === 0 ? between(80, 149) : between(20, 70))
     jitter = round(which === 1 ? between(30, 49) : between(6, 22))
     loss = round(which === 2 ? between(1, 2.9) : between(0, 0.7), 1)
-    score = round(between(3.0, 3.59), 1)
+    score = round(between(50, 70)) // warning band
   } else {
     // critical: ~20% are an unreachable/down platform (score —)
     if (rand() < 0.2) {
@@ -159,7 +159,7 @@ function makeEndpoint(locId: string, locName: string, status: EndpointStatus, n:
       latency = round(which === 0 ? between(150, 280) : between(40, 120))
       jitter = round(which === 1 ? between(50, 90) : between(10, 35))
       loss = round(which === 2 ? between(3, 9) : between(0.2, 2), 1)
-      score = round(between(2.4, 2.99), 1)
+      score = round(between(18, 45)) // critical band
     }
   }
 
