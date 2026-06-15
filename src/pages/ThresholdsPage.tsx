@@ -12,17 +12,25 @@ import {
 } from "@/data/thresholds"
 
 export function ThresholdsPage() {
-  // default policy (editable). TODO(eng): seed/reset values from real engineering defaults.
-  const [policy, setPolicy] = useState<ThresholdPolicy>(() => JSON.parse(JSON.stringify(defaultPolicy)))
+  // default policy: `policy` is the working draft, `savedPolicy` is the committed state.
+  // Edits stay in the draft until Save (these thresholds drive alerting fleet-wide).
+  // TODO(eng): seed/reset values from real engineering defaults.
+  const clone = (p: ThresholdPolicy) => JSON.parse(JSON.stringify(p)) as ThresholdPolicy
+  const [savedPolicy, setSavedPolicy] = useState<ThresholdPolicy>(() => clone(defaultPolicy))
+  const [policy, setPolicy] = useState<ThresholdPolicy>(() => clone(defaultPolicy))
   const [rules, setRules] = useState<ThresholdRule[]>(initialRules)
   const [editorOpen, setEditorOpen] = useState(false)
   const [editing, setEditing] = useState<ThresholdRule | null>(null)
 
   const total = fleetTotals().endpoints.toLocaleString()
+  const dirty = JSON.stringify(policy) !== JSON.stringify(savedPolicy)
+  const isCustom = JSON.stringify(savedPolicy) !== JSON.stringify(defaultPolicy)
 
   const setBand = (id: string, warn: number, crit: number) => setPolicy((p) => ({ ...p, [id]: { warn, crit } }))
-  const resetAll = () => setPolicy(JSON.parse(JSON.stringify(defaultPolicy)))
   const resetMetric = (id: string) => { const m = metricById(id); if (m) setBand(id, m.defaultWarn, m.defaultCrit) }
+  const savePolicy = () => setSavedPolicy(clone(policy))
+  const discardPolicy = () => setPolicy(clone(savedPolicy))
+  const resetToDefaults = () => setPolicy(clone(defaultPolicy))
 
   const openNew = () => { setEditing(null); setEditorOpen(true) }
   const openEdit = (r: ThresholdRule) => { setEditing(r); setEditorOpen(true) }
@@ -33,20 +41,31 @@ export function ThresholdsPage() {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
       <p className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-        Define when a device is considered warning or critical. The default policy applies to all devices unless a rule overrides it.
+        Define when a device is considered warning or critical. Rules apply to all devices unless a custom rule overrides them.
       </p>
 
       {/* Section 1 — Default policy */}
       <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
         <div className="flex flex-wrap items-start justify-between gap-3 px-5 py-4" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
           <div className="flex flex-col">
-            <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Default policy</h2>
-            <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Applies to all {total} devices unless overridden</span>
+            <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Rules</h2>
+            <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Applies to all {total} devices unless overridden by a custom rule</span>
           </div>
-          {/* TODO(eng): "Set to defaults" restores the placeholder engineering defaults; real values pending. */}
-          <Button variant="secondary" size="sm" className="gap-1.5" onClick={resetAll}>
-            <RotateCcw className="size-3.5" /> Set to defaults
-          </Button>
+          {/* Save-gated: edits stay in a draft until committed. Reset appears once saved values diverge from defaults. */}
+          <div className="flex items-center gap-2">
+            {dirty ? (
+              <>
+                <Button variant="ghost" size="sm" onClick={discardPolicy}>Discard</Button>
+                <Button size="sm" onClick={savePolicy}>Save changes</Button>
+              </>
+            ) : isCustom ? (
+              <Button variant="secondary" size="sm" className="gap-1.5" onClick={resetToDefaults}>
+                <RotateCcw className="size-3.5" /> Reset to defaults
+              </Button>
+            ) : (
+              <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>Using engineering defaults</span>
+            )}
+          </div>
         </div>
 
         {METRICS.map((m, i) => (
@@ -78,14 +97,14 @@ export function ThresholdsPage() {
       {/* Section 2 — Rules */}
       <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
         <div className="flex flex-col px-5 py-4" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
-          <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Rules</h2>
+          <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Custom rules</h2>
           <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Custom thresholds for specific scopes. Each rule applies to the regions you select. Only metrics you override differ from the default.</span>
         </div>
 
         {rules.length === 0 ? (
           <div className="px-5 py-12 text-center">
-            <p className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>No rules yet</p>
-            <p className="mt-1 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Create a rule to customise thresholds for specific regions.</p>
+            <p className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>No custom rules yet</p>
+            <p className="mt-1 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Create a custom rule to override the default policy for specific regions.</p>
           </div>
         ) : (
           rules.map((r, i) => {
@@ -126,11 +145,11 @@ export function ThresholdsPage() {
         <button type="button" onClick={openNew}
           className="flex w-full items-center justify-center gap-1.5 px-5 py-3 text-sm font-medium transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]"
           style={{ borderTop: "1px solid var(--border-neutral-subtle)", color: "var(--fg-link-default)" }}>
-          <Plus className="size-4" /> New rule
+          <Plus className="size-4" /> New custom rule
         </button>
       </Card>
 
-      <RuleEditor open={editorOpen} rule={editing} onOpenChange={setEditorOpen} onSave={saveRule} />
+      <RuleEditor open={editorOpen} rule={editing} baseline={savedPolicy} onOpenChange={setEditorOpen} onSave={saveRule} />
     </div>
   )
 }

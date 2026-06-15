@@ -7,16 +7,22 @@ import { Chip } from "@/components/ui/chip"
 import { Popover, PopoverAnchor, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { ThresholdSlider } from "./ThresholdSlider"
 import {
-  METRICS, metricById, regionScopes, scopeById, fmtDefaults,
+  METRICS, metricById, regionScopes, scopeById, fmtRange,
   type ThresholdRule, type ThresholdPolicy, type ScopeOption,
 } from "@/data/thresholds"
+
+// the baseline a custom rule inherits from = the current saved "Rules" policy
+const bandOf = (baseline: ThresholdPolicy, id: string) => {
+  const m = metricById(id)!
+  return baseline[id] ?? { warn: m.defaultWarn, crit: m.defaultCrit }
+}
 
 type Draft = { name: string; scopes: string[]; overrides: ThresholdPolicy }
 const emptyDraft = (): Draft => ({ name: "", scopes: [], overrides: {} })
 const draftFromRule = (r: ThresholdRule): Draft => JSON.parse(JSON.stringify({ name: r.name, scopes: r.scopes, overrides: r.overrides }))
 
 /* ---------------- scope multi-select ---------------- */
-function ScopePicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+function ScopePicker({ value, onChange, container }: { value: string[]; onChange: (v: string[]) => void; container?: HTMLElement | null }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState("")
   const selected = value.map(scopeById).filter(Boolean) as ScopeOption[]
@@ -47,7 +53,7 @@ function ScopePicker({ value, onChange }: { value: string[]; onChange: (v: strin
           <ChevronDown className="ml-auto size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
         </div>
       </PopoverAnchor>
-      <PopoverContent align="start" className="p-0" style={{ width: "var(--radix-popover-trigger-width)" }}>
+      <PopoverContent container={container} align="start" className="p-0" style={{ width: "var(--radix-popover-trigger-width)" }}>
         <div className="flex items-center gap-1.5 border-b px-2.5 py-2" style={{ borderColor: "var(--border-neutral-subtle)" }}>
           <Search className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
           <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search regions…"
@@ -79,7 +85,7 @@ function ScopePicker({ value, onChange }: { value: string[]; onChange: (v: strin
 }
 
 /* ---------------- metric override picker (additive) ---------------- */
-function MetricPicker({ taken, onAdd }: { taken: string[]; onAdd: (id: string) => void }) {
+function MetricPicker({ taken, onAdd, baseline, container }: { taken: string[]; onAdd: (id: string) => void; baseline: ThresholdPolicy; container?: HTMLElement | null }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState("")
   const available = METRICS.filter((m) => !taken.includes(m.id) && m.name.toLowerCase().includes(q.trim().toLowerCase()))
@@ -96,7 +102,7 @@ function MetricPicker({ taken, onAdd }: { taken: string[]; onAdd: (id: string) =
           <ChevronDown className="size-4 shrink-0" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="p-0" style={{ width: "var(--radix-popover-trigger-width)" }}>
+      <PopoverContent container={container} align="start" className="p-0" style={{ width: "var(--radix-popover-trigger-width)" }}>
         <div className="flex items-center gap-1.5 border-b px-2.5 py-2" style={{ borderColor: "var(--border-neutral-subtle)" }}>
           <Search className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
           <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search metrics…"
@@ -108,7 +114,7 @@ function MetricPicker({ taken, onAdd }: { taken: string[]; onAdd: (id: string) =
               className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]">
               <m.icon className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
               <span className="flex-1" style={{ color: "var(--fg-neutral-emphasis)" }}>{m.name}</span>
-              <span className="font-mono text-xs font-semibold" style={{ color: "var(--fg-neutral-muted)" }}>{fmtDefaults(m)}</span>
+              <span className="font-mono text-xs font-semibold" style={{ color: "var(--fg-neutral-muted)" }}>{fmtRange(m, bandOf(baseline, m.id).warn, bandOf(baseline, m.id).crit)}</span>
             </button>
           ))}
           {available.length === 0 && <div className="px-2 py-3 text-center text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No metrics match.</div>}
@@ -120,16 +126,18 @@ function MetricPicker({ taken, onAdd }: { taken: string[]; onAdd: (id: string) =
 
 /* ---------------- panel ---------------- */
 export function RuleEditor({
-  open, rule, onOpenChange, onSave,
+  open, rule, baseline, onOpenChange, onSave,
 }: {
   open: boolean
   rule: ThresholdRule | null
+  baseline: ThresholdPolicy // current saved "Rules" values the custom rule inherits from
   onOpenChange: (o: boolean) => void
   onSave: (rule: ThresholdRule) => void
 }) {
   const [name, setName] = useState("")
   const [scopes, setScopes] = useState<string[]>([])
   const [overrides, setOverrides] = useState<ThresholdPolicy>({})
+  const [panelEl, setPanelEl] = useState<HTMLDivElement | null>(null)
   const initialRef = useRef("")
 
   useEffect(() => {
@@ -148,8 +156,9 @@ export function RuleEditor({
   }
 
   const addMetric = (id: string) => {
-    const m = metricById(id); if (!m) return
-    setOverrides((o) => ({ ...o, [id]: { warn: m.defaultWarn, crit: m.defaultCrit } }))
+    if (!metricById(id)) return
+    const b = bandOf(baseline, id) // start from the inherited baseline, not engineering defaults
+    setOverrides((o) => ({ ...o, [id]: { warn: b.warn, crit: b.crit } }))
   }
   const removeMetric = (id: string) => setOverrides((o) => { const { [id]: _drop, ...rest } = o; return rest })
   const updateMetric = (id: string, warn: number, crit: number) => setOverrides((o) => ({ ...o, [id]: { warn, crit } }))
@@ -167,13 +176,14 @@ export function RuleEditor({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0" style={{ background: "var(--bg-scrim)" }} />
         <Dialog.Content
-          className="fixed right-0 top-0 z-50 flex h-full w-full flex-col overflow-hidden shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right sm:w-[580px] sm:max-w-[95vw]"
+          ref={setPanelEl}
+          className="fixed right-0 top-0 z-50 flex h-full w-full flex-col shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right sm:w-[580px] sm:max-w-[95vw]"
           style={{ background: "var(--bg-card)", borderLeft: "1px solid var(--border-neutral-muted)" }}
         >
           {/* header */}
           <div className="flex shrink-0 items-start justify-between gap-3 px-5 py-4" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
             <div className="flex min-w-px flex-col">
-              <Dialog.Title className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{rule ? "Edit rule" : "New rule"}</Dialog.Title>
+              <Dialog.Title className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{rule ? "Edit custom rule" : "New custom rule"}</Dialog.Title>
               <Dialog.Description className="truncate text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
                 {name.trim() || "Override the default policy for specific regions."}
               </Dialog.Description>
@@ -195,13 +205,13 @@ export function RuleEditor({
             {/* scope */}
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Apply to</span>
-              <ScopePicker value={scopes} onChange={setScopes} />
+              <ScopePicker value={scopes} onChange={setScopes} container={panelEl} />
             </div>
 
             {/* overrides */}
             <div className="flex flex-col gap-2.5">
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Threshold overrides</span>
-              <MetricPicker taken={overriddenIds} onAdd={addMetric} />
+              <MetricPicker taken={overriddenIds} onAdd={addMetric} baseline={baseline} container={panelEl} />
 
               {overriddenIds.length === 0 ? (
                 <div className="flex flex-col items-center gap-1 rounded-xl px-6 py-10 text-center" style={{ border: "1px dashed var(--border-neutral-emphasis)" }}>
@@ -219,7 +229,7 @@ export function RuleEditor({
                           <div className="flex items-center gap-2">
                             <m.icon className="size-4" style={{ color: "var(--fg-neutral-muted)" }} />
                             <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{m.name}</span>
-                            <span className="font-mono text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>Default {fmtDefaults(m)}</span>
+                            <span className="font-mono text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>Default {fmtRange(m, bandOf(baseline, id).warn, bandOf(baseline, id).crit)}</span>
                           </div>
                           <button type="button" aria-label={`Remove ${m.name} override`} onClick={() => removeMetric(id)}
                             className="flex size-7 items-center justify-center rounded-md transition-colors hover:bg-[var(--bg-neutral-subtle-pressed)]" style={{ color: "var(--fg-neutral-muted)" }}>
