@@ -12,6 +12,7 @@ import { ComponentsPage } from "@/pages/ComponentsPage"
 import { EndpointDrawer } from "@/components/endpoints/drawer/EndpointDrawer"
 import { AlertDrawer } from "@/components/alerts/AlertDrawer"
 import { CommandPalette } from "@/components/search/CommandPalette"
+import { Toaster } from "@/components/ui/toast"
 import { useStreaming } from "@/hooks/useStreaming"
 import { DEFAULT_LOCATION, locationById } from "@/data/dashboard"
 import type { Endpoint, Rollup, RollupCause } from "@/data/endpoints"
@@ -194,6 +195,9 @@ export default function App() {
         onOpenChange={(o) => { if (!o) setAlertDrawer(null) }}
         onOpenEndpoint={(rows, index) => { setBackAlert(alertDrawer); setAlertDrawer(null); setDrawer({ rows, index }) }}
       />
+
+      {/* transient toasts (save confirmations, etc.) */}
+      <Toaster />
 
       {/* global command palette */}
       <CommandPalette

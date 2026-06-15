@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Chip } from "@/components/ui/chip"
 import { ThresholdSlider } from "@/components/thresholds/ThresholdSlider"
 import { RuleEditor } from "@/components/thresholds/RuleEditor"
+import { toast } from "@/components/ui/toast"
 import { fleetTotals } from "@/data/dashboard"
 import {
   METRICS, metricById, defaultPolicy, initialRules, scopeById, fmtRange,
@@ -21,6 +22,8 @@ export function ThresholdsPage() {
   const [rules, setRules] = useState<ThresholdRule[]>(initialRules)
   const [editorOpen, setEditorOpen] = useState(false)
   const [editing, setEditing] = useState<ThresholdRule | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [justSaved, setJustSaved] = useState(false)
 
   const total = fleetTotals().endpoints.toLocaleString()
   const dirty = JSON.stringify(policy) !== JSON.stringify(savedPolicy)
@@ -28,42 +31,66 @@ export function ThresholdsPage() {
 
   const setBand = (id: string, warn: number, crit: number) => setPolicy((p) => ({ ...p, [id]: { warn, crit } }))
   const resetMetric = (id: string) => { const m = metricById(id); if (m) setBand(id, m.defaultWarn, m.defaultCrit) }
-  const savePolicy = () => setSavedPolicy(clone(policy))
+  // TODO(api): POST default thresholds; map the response → success/error here.
+  const savePolicy = () => {
+    setSaving(true)
+    window.setTimeout(() => {
+      setSavedPolicy(clone(policy))
+      setSaving(false)
+      setJustSaved(true)
+      window.setTimeout(() => setJustSaved(false), 3000)
+    }, 700) // mock backend round-trip
+  }
   const discardPolicy = () => setPolicy(clone(savedPolicy))
   const resetToDefaults = () => setPolicy(clone(defaultPolicy))
 
   const openNew = () => { setEditing(null); setEditorOpen(true) }
   const openEdit = (r: ThresholdRule) => { setEditing(r); setEditorOpen(true) }
-  const removeRule = (id: string) => setRules((rs) => rs.filter((r) => r.id !== id))
-  const saveRule = (rule: ThresholdRule) =>
-    setRules((rs) => (rs.some((r) => r.id === rule.id) ? rs.map((r) => (r.id === rule.id ? rule : r)) : [...rs, rule]))
+  const removeRule = (id: string) => {
+    const name = rules.find((r) => r.id === id)?.name
+    setRules((rs) => rs.filter((r) => r.id !== id))
+    toast({ variant: "info", title: "Custom rule deleted", description: name })
+  }
+  // TODO(api): PUT/POST custom rule; map the response → toast (success/error).
+  const saveRule = (rule: ThresholdRule) => {
+    const existed = rules.some((r) => r.id === rule.id)
+    setRules((rs) => (existed ? rs.map((r) => (r.id === rule.id ? rule : r)) : [...rs, rule]))
+    toast({ variant: "success", title: existed ? "Custom rule updated" : "Custom rule created", description: rule.name })
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
       <p className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-        Define when a device is considered warning or critical. Rules apply to all devices unless a custom rule overrides them.
+        Define when a device is considered warning or critical. The default thresholds apply to all devices unless a custom rule overrides them.
       </p>
 
       {/* Section 1 — Default policy */}
       <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
         <div className="flex flex-wrap items-start justify-between gap-3 px-5 py-4" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
           <div className="flex flex-col">
-            <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Rules</h2>
+            <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Default thresholds</h2>
             <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Applies to all {total} devices unless overridden by a custom rule</span>
           </div>
-          {/* Save-gated: edits stay in a draft until committed. Reset appears once saved values diverge from defaults. */}
+          {/* Save-gated: edits stay in a draft until committed. After save, a confirmation + Reset appears. */}
           <div className="flex items-center gap-2">
-            {dirty ? (
+            {saving ? (
+              <Button size="sm" loading>Saving…</Button>
+            ) : dirty ? (
               <>
                 <Button variant="ghost" size="sm" onClick={discardPolicy}>Discard</Button>
                 <Button size="sm" onClick={savePolicy}>Save changes</Button>
               </>
-            ) : isCustom ? (
-              <Button variant="secondary" size="sm" className="gap-1.5" onClick={resetToDefaults}>
-                <RotateCcw className="size-3.5" /> Reset to defaults
-              </Button>
             ) : (
-              <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>Using defaults</span>
+              <>
+                {justSaved && <span className="text-xs font-medium" style={{ color: "var(--fg-success-emphasis)" }}>Changes have been applied</span>}
+                {isCustom ? (
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={resetToDefaults}>
+                    <RotateCcw className="size-3.5" /> Reset to defaults
+                  </Button>
+                ) : !justSaved ? (
+                  <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>Using defaults</span>
+                ) : null}
+              </>
             )}
           </div>
         </div>
@@ -104,7 +131,7 @@ export function ThresholdsPage() {
         {rules.length === 0 ? (
           <div className="px-5 py-12 text-center">
             <p className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>No custom rules yet</p>
-            <p className="mt-1 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Create a custom rule to override the default policy for specific regions.</p>
+            <p className="mt-1 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Create a custom rule to override the default thresholds for specific regions.</p>
           </div>
         ) : (
           rules.map((r, i) => {

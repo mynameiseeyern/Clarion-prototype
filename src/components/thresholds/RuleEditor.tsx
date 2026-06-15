@@ -189,7 +189,7 @@ export function RuleEditor({
             <div className="flex min-w-px flex-col">
               <Dialog.Title className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{rule ? "Edit custom rule" : "New custom rule"}</Dialog.Title>
               <Dialog.Description className="truncate text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-                {name.trim() || "Override the default policy for specific regions."}
+                {name.trim() || "Override the default thresholds for specific regions."}
               </Dialog.Description>
             </div>
             <button type="button" aria-label="Close" onClick={() => requestClose(false)}
@@ -220,7 +220,7 @@ export function RuleEditor({
               {overriddenIds.length === 0 ? (
                 <div className="flex flex-col items-center gap-1 rounded-xl px-6 py-10 text-center" style={{ border: "1px dashed var(--border-neutral-emphasis)" }}>
                   <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>No overrides yet</span>
-                  <span className="max-w-xs text-sm" style={{ color: "var(--fg-neutral-muted)" }}>All metrics use the default policy until you add an override. Use the combobox above to start.</span>
+                  <span className="max-w-xs text-sm" style={{ color: "var(--fg-neutral-muted)" }}>All metrics use the default thresholds until you add an override. Use the combobox above to start.</span>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
@@ -248,7 +248,7 @@ export function RuleEditor({
                     )
                   })}
                   <p className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-                    Any metric you don’t override inherits the default policy.
+                    Any metric you don’t override inherits the default thresholds.
                   </p>
                 </div>
               )}
