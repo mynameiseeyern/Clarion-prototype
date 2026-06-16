@@ -60,7 +60,7 @@ export function ThresholdSlider({
   const renderThumb = (which: "warn" | "crit") => {
     const v = which === "warn" ? warn : crit
     const color = which === "warn" ? "var(--status-warning)" : "var(--status-critical)"
-    const labelColor = which === "warn" ? "var(--fg-warning-emphasis)" : "var(--fg-danger-emphasis)"
+    const labelColor = color
     const p = pct(v)
     return (
       <Fragment key={which}>
@@ -90,7 +90,7 @@ export function ThresholdSlider({
   const field = (which: "warn" | "crit") => {
     const v = which === "warn" ? warn : crit
     const set = which === "warn" ? setWarn : setCrit
-    const labelColor = which === "warn" ? "var(--fg-warning-emphasis)" : "var(--fg-danger-emphasis)"
+    const labelColor = which === "warn" ? "var(--status-warning)" : "var(--status-critical)"
     return (
       <label className="flex min-w-px flex-1 flex-col gap-1">
         <span className="text-xs font-semibold" style={{ color: labelColor }}>{which === "warn" ? "Warning" : "Critical"}</span>
@@ -113,7 +113,7 @@ export function ThresholdSlider({
       {/* Drag slider — sm and up */}
       <div className="hidden pt-9 sm:block">
         <div className="relative h-4" ref={trackRef}>
-          <div className="absolute inset-x-0 top-1/2 flex h-2 -translate-y-1/2 overflow-hidden rounded-full" style={{ opacity: 0.45 }}>
+          <div className="absolute inset-x-0 top-1/2 flex h-2 -translate-y-1/2 overflow-hidden rounded-full">
             <span className="h-full" style={{ width: `${lp}%`, background: bands[0] }} />
             <span className="h-full" style={{ width: `${hp - lp}%`, background: bands[1] }} />
             <span className="h-full" style={{ flex: 1, background: bands[2] }} />
@@ -129,7 +129,7 @@ export function ThresholdSlider({
 
       {/* Numeric fields — below sm (precise + touch-friendly), with a read-only band bar for context */}
       <div className="flex flex-col gap-2.5 sm:hidden">
-        <div className="flex h-1.5 w-full overflow-hidden rounded-full" aria-hidden style={{ opacity: 0.45 }}>
+        <div className="flex h-1.5 w-full overflow-hidden rounded-full" aria-hidden>
           <span className="h-full" style={{ width: `${lp}%`, background: bands[0] }} />
           <span className="h-full" style={{ width: `${hp - lp}%`, background: bands[1] }} />
           <span className="h-full" style={{ flex: 1, background: bands[2] }} />

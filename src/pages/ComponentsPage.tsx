@@ -20,6 +20,7 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
 
 /**
  * Component gallery — the living source of truth for the primitives.
@@ -70,12 +71,27 @@ export function ComponentsPage() {
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState<string[]>(["critical"])
   const [tokens, setTokens] = useState<string[]>(["us-east", "london", "tokyo"])
+  const [sw, setSw] = useState(true)
 
   const toggleFilter = (id: string) =>
     setFilters((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]))
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-12 py-2">
+      {/* ---------------- SWITCH ---------------- */}
+      <Section
+        title="Switch"
+        description="Binary toggle. The off state keeps a filled neutral track + border so it's clearly visible (not invisible on the surface)."
+      >
+        <Row label="States">
+          <Switch checked={sw} onCheckedChange={setSw} aria-label="Interactive switch" />
+          <Switch checked={true} onCheckedChange={() => {}} aria-label="On" />
+          <Switch checked={false} onCheckedChange={() => {}} aria-label="Off" />
+          <Switch checked={true} disabled onCheckedChange={() => {}} aria-label="On disabled" />
+          <Switch checked={false} disabled onCheckedChange={() => {}} aria-label="Off disabled" />
+        </Row>
+      </Section>
+
       {/* ---------------- BUTTON ---------------- */}
       <Section
         title="Button"
