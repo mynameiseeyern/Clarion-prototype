@@ -70,7 +70,7 @@ export function PlatformsTab({ d, focus }: { d: EndpointDetail; focus?: string }
               const col = dim ? "var(--fg-neutral-subtle)" : p.status === "degraded" ? "var(--fg-warning)" : "var(--fg-neutral-emphasis)"
               const hi = focus === "platform" && p.status !== "ok"
               return (
-                <tr key={p.name} style={{ borderTop: "1px solid var(--border-neutral-subtle)", background: hi ? "var(--bg-info-subtle)" : undefined, boxShadow: hi ? "inset 2px 0 0 0 var(--border-info-muted)" : undefined }}>
+                <tr key={p.name} style={{ borderTop: "1px solid var(--border-neutral-subtle)", background: hi ? "var(--bg-neutral-subtle-pressed)" : undefined, boxShadow: hi ? "inset 2px 0 0 0 var(--border-neutral-emphasis)" : undefined }}>
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-2.5">
                       <span className="flex size-7 items-center justify-center rounded-md text-xs font-bold text-white" style={{ background: p.color }}>{p.key}</span>
