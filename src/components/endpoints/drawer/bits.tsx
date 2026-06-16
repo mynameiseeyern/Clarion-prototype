@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react"
+import { Flag } from "lucide-react"
 import type { MetricStatus } from "@/data/endpointDetail"
 
 const statusColor: Record<MetricStatus, string> = {
@@ -31,12 +32,22 @@ export function Panel({ children, className, highlight = false }: { children: Re
   return (
     <div
       ref={ref}
-      className={"rounded-xl p-4 " + (className ?? "")}
+      className={"relative rounded-xl p-4 " + (className ?? "")}
       style={{
-        background: highlight ? "var(--bg-selected-subtle)" : "var(--bg-neutral-subtle)",
-        border: `1px solid ${highlight ? "var(--border-focused)" : "var(--border-neutral-subtle)"}`,
+        // informational callout (not a control): soft info tint + border, no focus ring
+        background: highlight ? "var(--bg-info-subtle)" : "var(--bg-neutral-subtle)",
+        border: `1px solid ${highlight ? "var(--border-info-muted)" : "var(--border-neutral-subtle)"}`,
       }}
     >
+      {highlight && (
+        <span
+          className="pointer-events-none absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+          style={{ background: "var(--bg-card)", color: "var(--fg-info-emphasis)", border: "1px solid var(--border-info-muted)" }}
+          title="This is the condition that flagged the device"
+        >
+          <Flag className="size-2.5" /> Flagged
+        </span>
+      )}
       {children}
     </div>
   )
