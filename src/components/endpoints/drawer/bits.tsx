@@ -1,6 +1,9 @@
 import { useEffect, useRef, type ReactNode } from "react"
-import { Flag } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import type { MetricStatus } from "@/data/endpointDetail"
+
+/** severity tone for the "Flagged" badge on the affected item */
+export type FlagTone = "warning" | "danger"
 
 const statusColor: Record<MetricStatus, string> = {
   good: "var(--bg-primary-emphasis)",
@@ -24,30 +27,19 @@ export function SegBar({ fill, status, segments = 10 }: { fill: number; status: 
   )
 }
 
-export function Panel({ children, className, highlight = false }: { children: ReactNode; className?: string; highlight?: boolean }) {
+export function Panel({ children, className, flag }: { children: ReactNode; className?: string; flag?: FlagTone }) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (highlight) ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
-  }, [highlight])
+    if (flag) ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
+  }, [flag])
   return (
     <div
       ref={ref}
       className={"relative rounded-xl p-4 " + (className ?? "")}
-      style={{
-        // neutral "flagged" callout (not a control, not a status): darker surface + border, no focus ring
-        background: highlight ? "var(--bg-neutral-subtle-pressed)" : "var(--bg-neutral-subtle)",
-        border: `1px solid ${highlight ? "var(--border-neutral-emphasis)" : "var(--border-neutral-subtle)"}`,
-      }}
+      style={{ background: "var(--bg-neutral-subtle)", border: "1px solid var(--border-neutral-subtle)" }}
     >
-      {highlight && (
-        <span
-          className="pointer-events-none absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-          style={{ background: "var(--bg-card)", color: "var(--fg-neutral-muted)", border: "1px solid var(--border-neutral-muted)" }}
-          title="This is the condition that flagged the device"
-        >
-          <Flag className="size-2.5" /> Flagged
-        </span>
-      )}
+      {/* all cards share styling; the affected one just gets a severity-coloured "Flagged" badge */}
+      {flag && <Badge variant={flag} className="absolute right-3 top-3" title="Affected by the current issue">Flagged</Badge>}
       {children}
     </div>
   )
@@ -62,9 +54,9 @@ export function SectionLabel({ children }: { children: ReactNode }) {
   )
 }
 
-export function MetricBlock({ label, value, unit, children, highlight = false }: { label: string; value: string; unit: string; children?: ReactNode; highlight?: boolean }) {
+export function MetricBlock({ label, value, unit, children, flag }: { label: string; value: string; unit: string; children?: ReactNode; flag?: FlagTone }) {
   return (
-    <Panel highlight={highlight}>
+    <Panel flag={flag}>
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>{label}</div>
       <div className="mb-3 flex items-baseline gap-1">
         <span className="text-2xl font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{value}</span>
