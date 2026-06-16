@@ -5,6 +5,9 @@ import { OverviewPage } from "@/pages/OverviewPage"
 import { EndpointsPage } from "@/pages/EndpointsPage"
 import { AlertsPage } from "@/pages/AlertsPage"
 import { ThresholdsPage } from "@/pages/ThresholdsPage"
+import { UsersRolesPage } from "@/pages/UsersRolesPage"
+import { PlaceholderPage } from "@/pages/PlaceholderPage"
+import { FolderTree, RadioTower, CreditCard, ScrollText } from "lucide-react"
 import { GlossaryPage } from "@/pages/GlossaryPage"
 import { IssuesDocPage } from "@/pages/IssuesDocPage"
 import { DevicesModelPage } from "@/pages/DevicesModelPage"
@@ -170,6 +173,19 @@ export default function App() {
             />
           )}
           {page === "thresholds" && <ThresholdsPage />}
+          {page === "users" && <UsersRolesPage />}
+          {page === "groups" && (
+            <PlaceholderPage title="Groups" icon={FolderTree} description="Build a Group hierarchy that mirrors your team structure and scopes what each Manager sees. Bulk-assign and move Widgets between Groups." />
+          )}
+          {page === "widgets" && (
+            <PlaceholderPage title="Widget management" icon={RadioTower} description="Register agents and generate auth tokens, assign unassigned Widgets to Groups, revoke compromised tokens, and review status and last-seen across the estate." />
+          )}
+          {page === "subscription" && (
+            <PlaceholderPage title="Subscription & billing" icon={CreditCard} description="See what's included in your tier and track seat usage. Plan changes, add-ons, invoices and payment arrive for 1.0." />
+          )}
+          {page === "audit" && (
+            <PlaceholderPage title="Audit log" icon={ScrollText} description="Search and filter a record of who changed what, and when — across Users, Groups, Widgets and settings." />
+          )}
           {page === "glossary" && <GlossaryPage />}
           {page === "devicesdoc" && <DevicesModelPage />}
           {page === "issuesdoc" && <IssuesDocPage />}

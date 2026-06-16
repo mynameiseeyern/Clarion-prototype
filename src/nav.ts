@@ -7,10 +7,18 @@ import {
   Workflow,
   Laptop,
   Component,
+  Users,
+  FolderTree,
+  RadioTower,
+  CreditCard,
+  ScrollText,
   type LucideIcon,
 } from "lucide-react"
 
-export type PageId = "overview" | "endpoints" | "alerts" | "thresholds" | "glossary" | "issuesdoc" | "devicesdoc" | "components"
+export type PageId =
+  | "overview" | "endpoints" | "alerts" | "thresholds"
+  | "users" | "groups" | "widgets" | "subscription" | "audit"
+  | "glossary" | "issuesdoc" | "devicesdoc" | "components"
 
 export interface NavItem {
   id: PageId
@@ -25,6 +33,16 @@ export const navItems: NavItem[] = [
   { id: "thresholds", label: "Thresholds", icon: SlidersHorizontal },
 ]
 
+// Administration — Admin-only (NEW). "Users & roles" is the scaffolded screen;
+// the rest are placeholders mapping to the Admin epics (see ADMIN-TICKETS.md).
+export const adminNavItems: NavItem[] = [
+  { id: "users", label: "Users & roles", icon: Users },
+  { id: "groups", label: "Groups", icon: FolderTree },
+  { id: "widgets", label: "Widgets", icon: RadioTower },
+  { id: "subscription", label: "Subscription", icon: CreditCard },
+  { id: "audit", label: "Audit log", icon: ScrollText },
+]
+
 // Internal — not shipped in the built product.
 export const devNavItems: NavItem[] = [
   { id: "components", label: "Components", icon: Component },
@@ -34,21 +52,31 @@ export const devNavItems: NavItem[] = [
 ]
 
 export const pageLabel = (id: PageId) =>
-  [...navItems, ...devNavItems].find((n) => n.id === id)?.label ?? "Overview"
+  [...navItems, ...adminNavItems, ...devNavItems].find((n) => n.id === id)?.label ?? "Overview"
 
 // Optional one-line context under a page title (shown in the top chrome).
 // Add entries only where a subtitle is genuinely useful — keep pages lean otherwise.
 export const pageSubtitle: Partial<Record<PageId, string>> = {
   thresholds: "Set when a device is flagged warning or critical.",
+  users: "Invite people, set their role, and manage access.",
+  groups: "Organise Widgets into Groups that scope what each Manager sees.",
+  widgets: "Register, assign and revoke endpoint Widgets.",
+  subscription: "Review your plan, usage and billing.",
+  audit: "Track who changed what, and when.",
 }
 
 // ---- URL routing (shareable per-page links) --------------------------------
 
 export const pagePath: Record<PageId, string> = {
   overview: "/",
-  endpoints: "/users",
+  endpoints: "/devices",
   alerts: "/issues",
   thresholds: "/thresholds",
+  users: "/admin/users",
+  groups: "/admin/groups",
+  widgets: "/admin/widgets",
+  subscription: "/admin/subscription",
+  audit: "/admin/audit",
   glossary: "/glossary",
   devicesdoc: "/devices-model",
   issuesdoc: "/issues-model",
