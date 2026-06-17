@@ -1,0 +1,103 @@
+import { PanelLeft, ChevronRight, Sun, Moon, FolderTree, RadioTower, CreditCard, ScrollText } from "lucide-react"
+import { fleet } from "@/data/dashboard"
+import { pageLabel, pageSubtitle, type PageId, type Experience } from "@/nav"
+import { AdminSidebar } from "@/components/dashboard/AdminSidebar"
+import { ExperienceMenu } from "@/components/dashboard/ExperienceMenu"
+import { UsersRolesPage } from "@/pages/UsersRolesPage"
+import { PlaceholderPage } from "@/pages/PlaceholderPage"
+
+/**
+ * The Administration experience shell. Lives in the same repo as the Fleet app
+ * and shares the design system, but has its own sidebar + chrome. Reached via
+ * the top-right account menu; admin routes are under /admin/*.
+ */
+export function AdminApp({
+  page,
+  onNavigate,
+  dark,
+  onToggleTheme,
+  sidebarOpen,
+  onToggleSidebar,
+  onSwitchExperience,
+}: {
+  page: PageId
+  onNavigate: (id: PageId) => void
+  dark: boolean
+  onToggleTheme: () => void
+  sidebarOpen: boolean
+  onToggleSidebar: () => void
+  onSwitchExperience: (e: Experience) => void
+}) {
+  return (
+    <div className="flex h-screen w-full items-start overflow-hidden" style={{ background: "var(--bg-app)" }}>
+      {sidebarOpen && <AdminSidebar active={page} onNavigate={onNavigate} />}
+
+      <div
+        className="flex h-full min-w-px flex-1 flex-col overflow-hidden"
+        style={{ borderLeft: "1px solid var(--border-neutral-muted)", borderRight: "1px solid var(--border-neutral-muted)" }}
+      >
+        {/* top chrome */}
+        <header className="flex h-16 items-center justify-between px-4" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label="Toggle sidebar"
+              onClick={onToggleSidebar}
+              className="flex size-7 items-center justify-center rounded-md transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]"
+              style={{ color: "var(--fg-neutral-muted)" }}
+            >
+              <PanelLeft className="size-4" />
+            </button>
+            <span className="mx-1 h-4 w-px" style={{ background: "var(--border-neutral-muted)" }} />
+            <nav className="flex items-center gap-2.5 text-sm">
+              <span style={{ color: "var(--fg-neutral-muted)" }}>{fleet.workspace}</span>
+              <ChevronRight className="size-4" style={{ color: "var(--fg-neutral-subtle)" }} />
+              <span style={{ color: "var(--fg-neutral-muted)" }}>Administration</span>
+              <ChevronRight className="size-4" style={{ color: "var(--fg-neutral-subtle)" }} />
+              <span style={{ color: "var(--fg-neutral-emphasis)" }}>{pageLabel(page)}</span>
+            </nav>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label="Toggle theme"
+              onClick={onToggleTheme}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full transition-colors"
+              style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--bg-neutral-subtle)")}
+            >
+              {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            </button>
+            <ExperienceMenu experience="admin" onSwitch={onSwitchExperience} />
+          </div>
+        </header>
+
+        {/* page title */}
+        <div className="shrink-0 p-5" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
+          <h1 className="text-xl font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{pageLabel(page)}</h1>
+          {pageSubtitle[page] && (
+            <p className="mt-1 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>{pageSubtitle[page]}</p>
+          )}
+        </div>
+
+        {/* content */}
+        <div className="flex flex-1 flex-col overflow-y-auto p-4">
+          {page === "users" && <UsersRolesPage />}
+          {page === "groups" && (
+            <PlaceholderPage title="Groups" icon={FolderTree} description="Build a Group hierarchy that mirrors your team structure (Country → Area → Office → Shift). A Manager assigned to a Group sees every Widget beneath it. Bulk-assign and move Widgets between Groups." />
+          )}
+          {page === "widgets" && (
+            <PlaceholderPage title="Widget management" icon={RadioTower} description="Register agents and generate auth tokens, assign unassigned Widgets to Groups, revoke compromised tokens, and review status and last-seen. A Widget becomes a Device once it's set up and reporting telemetry." />
+          )}
+          {page === "subscription" && (
+            <PlaceholderPage title="Subscription & billing" icon={CreditCard} description="See what's included in your tier and track seat usage. Plan changes, add-ons, invoices and payment arrive for 1.0." />
+          )}
+          {page === "audit" && (
+            <PlaceholderPage title="Audit log" icon={ScrollText} description="Search and filter a record of who changed what, and when — across Users, Groups, Widgets and settings." />
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
