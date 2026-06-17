@@ -5,6 +5,7 @@ import { AdminSidebar } from "@/components/dashboard/AdminSidebar"
 import { ExperienceMenu } from "@/components/dashboard/ExperienceMenu"
 import { UsersRolesPage } from "@/pages/UsersRolesPage"
 import { PlaceholderPage } from "@/pages/PlaceholderPage"
+import { Toaster } from "@/components/ui/toast"
 
 /**
  * The Administration experience shell. Lives in the same repo as the Fleet app
@@ -98,6 +99,8 @@ export function AdminApp({
           )}
         </div>
       </div>
+
+      <Toaster />
     </div>
   )
 }
