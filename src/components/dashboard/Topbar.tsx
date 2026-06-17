@@ -91,7 +91,7 @@ export function Topbar({
             {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </IconButton>
           <NotificationsBell onNavigate={onAlertNavigate} onViewIssues={onViewIssues} />
-          <ExperienceMenu experience="fleet" onSwitch={onSwitchExperience} />
+          <RoleSwitcher role={role} onSwitch={onSwitchRole} />
         </div>
       </div>
     </header>
