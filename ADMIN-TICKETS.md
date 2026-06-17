@@ -10,14 +10,16 @@
 Captured live with Ee. These override the assumptions further down where they
 conflict; the rest still stands for Ben to confirm.
 
-1. **One Fleet view, role-gated — not a separate space.** Management isn't its
-   own experience; it's **Admin-only sections inside the Fleet view**. Admins
-   see the whole org plus an **Administration** nav group; CC Managers
-   (Supervisors) get a **stripped-down view scoped to their Group(s)** — a
-   subset of the org, never the whole thing.
-2. **"View as" lives top-right; org switch stays top-left.** The top-left
-   sidebar header switches **org**. A top-right **"View as" role toggle**
-   (Admin / CC Manager) previews each role in the prototype.
+1. **Separate Admin experience, one repo.** Administration is its own **shell**
+   (own sidebar + chrome), sharing `@ir/tokens` + shadcn, reached from the
+   top-right account menu. Chosen over role-gating *inside* the Fleet view:
+   threading role conditionals through the Fleet code is harder for devs to
+   reason about, so the two surfaces are kept cleanly separated. (Role still
+   governs access conceptually — only Admins reach the Administration shell.)
+2. **Switch top-right; org switch top-left.** The top-left sidebar header
+   switches **org**; the **Fleet ↔ Administration** switch is in the
+   **top-right account menu**. CC Managers (Supervisors) stay in a Fleet view
+   scoped to their Group(s).
 3. **Roles for MVP: Admin + CC Manager** (Ben's two). **Owner** (manages admins,
    owns billing) and a **billing-scoped admin** for Finance are planned for
    later — modelled on how other SaaS do it (GitHub "Billing manager", Google
@@ -46,10 +48,10 @@ registration = **CSV manifest + bulk token generation**; audit = **90 days,
 Admin actions**; billing in trial = **D1 read-only visible, rest "coming
 soon"**.
 
-**Prototype status:** the Administration nav group is gated to the Admin role
-inside the one Fleet view, with **Members** built and Device management / Groups /
-Subscription / Audit log as placeholders. A top-right **"View as"** toggle
-switches between Admin and CC Manager; the CC Manager view hides Administration.
+**Prototype status:** the Administration **experience is its own shell** in the
+repo, reached via the top-right account-menu switch, with **Members** built and
+Device management / Groups / Subscription / Audit log as placeholders. The Fleet
+sidebar is clean (no admin items woven in).
 
 ---
 

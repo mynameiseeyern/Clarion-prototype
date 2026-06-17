@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, type ReactNode } from "react"
 import { Search, X, Check, Monitor, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, CircleCheck } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Chip } from "@/components/ui/chip"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
@@ -214,16 +215,13 @@ export function EndpointsTable({
           )}
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
-          <button
-            type="button"
+          <Chip
+            selected={issuesOnly}
+            aria-pressed={issuesOnly}
             onClick={() => { setIssuesOnly((v) => { const next = !v; if (next) setStatus("all"); return next }); resetPage() }}
-            className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors"
-            style={issuesOnly
-              ? { background: "var(--bg-primary-subtle)", color: "var(--fg-primary-emphasis)", border: "1px solid var(--border-primary-muted)" }
-              : { background: "var(--bg-input-default)", color: "var(--fg-neutral-muted)", border: "1px solid var(--border-input-default)" }}
           >
             Issues only
-          </button>
+          </Chip>
           <LocationFilter value={locationIds} onChange={(ids) => { onLocationsChange(ids); resetPage() }} />
           <Select value={status} onValueChange={(v) => { const s = v as EndpointStatus | "all"; setStatus(s); if (s !== "all") setIssuesOnly(false); resetPage() }}>
             <SelectTrigger className="h-9"><SelectValue placeholder="Status" /></SelectTrigger>
