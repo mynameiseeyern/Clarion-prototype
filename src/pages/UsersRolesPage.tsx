@@ -98,7 +98,7 @@ export function UsersRolesPage() {
       <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
         {/* header */}
         <div className="flex items-center gap-2 px-4 py-4">
-          <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Users &amp; roles</h2>
+          <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Members</h2>
           <span className="flex h-5 items-center rounded-full px-2 text-xs font-medium" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>
             {filtered.length} {filtered.length === 1 ? "user" : "users"}
           </span>

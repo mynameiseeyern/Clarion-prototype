@@ -10,38 +10,46 @@
 Captured live with Ee. These override the assumptions further down where they
 conflict; the rest still stands for Ben to confirm.
 
-1. **Separate surface, one repo.** User management is its own **experience**
-   (own sidebar + chrome), kept apart from the Fleet dashboard — but in the
-   **same repo**, sharing `@ir/tokens` + shadcn. Both are viewable from one dev
-   server / deploy.
-2. **Switch lives top-right.** The top-left sidebar header switches **org**; the
-   **Fleet ↔ Administration** switch sits in the **top-right account menu**.
-3. **Widget = a Device's provisioning side.** One object: management lens
+1. **One Fleet view, role-gated — not a separate space.** Management isn't its
+   own experience; it's **Admin-only sections inside the Fleet view**. Admins
+   see the whole org plus an **Administration** nav group; CC Managers
+   (Supervisors) get a **stripped-down view scoped to their Group(s)** — a
+   subset of the org, never the whole thing.
+2. **"View as" lives top-right; org switch stays top-left.** The top-left
+   sidebar header switches **org**. A top-right **"View as" role toggle**
+   (Admin / CC Manager) previews each role in the prototype.
+3. **Roles for MVP: Admin + CC Manager** (Ben's two). **Owner** (manages admins,
+   owns billing) and a **billing-scoped admin** for Finance are planned for
+   later — modelled on how other SaaS do it (GitHub "Billing manager", Google
+   "Billing admin", Slack Primary Owner). Design principle: **gate each nav item
+   per capability**, not one all-or-nothing admin flag, so those roles layer on
+   without restructuring.
+4. **Widget = a Device's provisioning side.** One object: management lens
    (register / token / assign / revoke, incl. pending & revoked) vs telemetry
-   lens (live, reporting → shown as a Device). Widget management is conceptually
-   **within Devices**, surfaced as its own page. _"Devices are Widgets that have
-   been set up."_
-4. **"Member" for login accounts.** Login accounts (Admins, CC Managers) are
+   lens (live, reporting → shown as a Device). Surfaced as a **"Device
+   management"** section. _"Devices are Widgets that have been set up."_
+5. **"Member" for login accounts.** Login accounts (Admins, CC Managers) are
    **Members**; the person a monitored endpoint belongs to stays the device
    **user/owner**. Different populations — owners don't log in.
-5. **Group visibility cascades.** A Manager assigned to a Group sees that Group
-   **and every Group beneath it**. Role = permission level (Admin / CC Manager);
-   scope = position in the tree.
-6. **Flexible Group depth.** Real hierarchy is 4 deep (Country → Area → Office →
+6. **Group visibility cascades.** A Manager assigned to a Group sees that Group
+   **and every Group beneath it**. Role = permission level; scope = position in
+   the tree.
+7. **Flexible Group depth.** Real hierarchy is 4 deep (Country → Area → Office →
    Shift), each node with a lead. Design for nested/arbitrary depth, not a cap.
-7. **CC = Contact Centre.** "CC Manager" = Contact Centre Manager.
-8. **Auth:** email/password + admin-triggered reset for MVP; **SSO at 1.0**.
-9. **User management is Admin-only for MVP** (delegation to Managers revisited
-   at 1.0).
+8. **CC = Contact Centre.** "CC Manager" = Contact Centre Manager.
+9. **Auth:** email/password + admin-triggered reset for MVP; **SSO at 1.0**.
+10. **User management is Admin-only for MVP** (delegation to Managers revisited
+    at 1.0).
 
 _Assumed defaults pending Ben (lower-stakes, see Open Questions):_ bulk Widget
 registration = **CSV manifest + bulk token generation**; audit = **90 days,
 Admin actions**; billing in trial = **D1 read-only visible, rest "coming
 soon"**.
 
-**Prototype status:** the Administration experience is wired into the repo
-behind the top-right switch, with **Users & roles** built and Groups / Widgets /
-Subscription / Audit log as placeholders. The Fleet sidebar is back to clean.
+**Prototype status:** the Administration nav group is gated to the Admin role
+inside the one Fleet view, with **Members** built and Device management / Groups /
+Subscription / Audit log as placeholders. A top-right **"View as"** toggle
+switches between Admin and CC Manager; the CC Manager view hides Administration.
 
 ---
 
@@ -101,11 +109,11 @@ Workspace
   Issues
   Thresholds
 
-Administration   ← Admin-only (NEW)
-  Users & roles
+Administration   ← Admin-only nav group (hidden for CC Managers)
+  Device management ← register, token, assign, revoke (Widget lifecycle)
+  Members           ← login accounts & roles
   Groups
-  Widgets         ← admin/lifecycle view: register, token, assign, revoke
-  Subscription    ← plan, usage, billing, invoices
+  Subscription      ← plan, usage, billing, invoices
   Audit log
 
 Product development (internal)
