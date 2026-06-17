@@ -9,9 +9,7 @@ import { GlossaryPage } from "@/pages/GlossaryPage"
 import { IssuesDocPage } from "@/pages/IssuesDocPage"
 import { DevicesModelPage } from "@/pages/DevicesModelPage"
 import { ComponentsPage } from "@/pages/ComponentsPage"
-import { UsersRolesPage } from "@/pages/UsersRolesPage"
-import { PlaceholderPage } from "@/pages/PlaceholderPage"
-import { FolderTree, RadioTower, CreditCard, ScrollText } from "lucide-react"
+import { AdminApp } from "@/AdminApp"
 import { EndpointDrawer } from "@/components/endpoints/drawer/EndpointDrawer"
 import { AlertDrawer } from "@/components/alerts/AlertDrawer"
 import { CommandPalette } from "@/components/search/CommandPalette"
@@ -20,7 +18,7 @@ import { useStreaming } from "@/hooks/useStreaming"
 import { DEFAULT_LOCATION, locationById } from "@/data/dashboard"
 import type { Endpoint, Rollup, RollupCause } from "@/data/endpoints"
 import { rollupsForLocation, rollupsAll } from "@/data/endpoints"
-import { pageLabel, pageSubtitle, pagePath, pageFromPath, isAdminPage, type PageId, type Role } from "@/nav"
+import { pageLabel, pageSubtitle, pagePath, pageFromPath, experienceOf, defaultPageFor, type PageId, type Experience } from "@/nav"
 
 // map a real-time alert type to the issue cause it belongs to
 const alertTypeToCause: Record<string, RollupCause> = {
@@ -32,7 +30,6 @@ const alertTypeToCause: Record<string, RollupCause> = {
 
 export default function App() {
   const [dark, setDark] = useState(false)
-  const [role, setRole] = useState<Role>("admin")
   const [page, setPage] = useState<PageId>(() => pageFromPath(window.location.pathname))
   const [selectedId, setSelectedId] = useState<string>(DEFAULT_LOCATION)
   const [endpointFilters, setEndpointFilters] = useState<string[]>([])
@@ -90,16 +87,28 @@ export default function App() {
   const openEndpointId = drawer ? drawer.rows[drawer.index]?.id ?? null : null
   const openAlertId = alertDrawer ? alertDrawer.rows[alertDrawer.index]?.id ?? null : null
 
-  // CC Managers can't reach admin pages — bounce them to Overview if they land
-  // on one (e.g. via URL or after switching role).
-  useEffect(() => {
-    if (role === "manager" && isAdminPage(page)) setPage("overview")
-  }, [role, page])
+  const switchExperience = (e: Experience) => setPage(defaultPageFor[e])
+
+  // The Administration experience is its own shell (own sidebar + chrome),
+  // sharing this repo's design system. Reached via the top-right account menu.
+  if (experienceOf(page) === "admin") {
+    return (
+      <AdminApp
+        page={page}
+        onNavigate={setPage}
+        dark={dark}
+        onToggleTheme={() => setDark((v) => !v)}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={() => setSidebarOpen((v) => !v)}
+        onSwitchExperience={switchExperience}
+      />
+    )
+  }
 
   return (
     <div className="flex h-screen w-full items-start overflow-hidden" style={{ background: "var(--bg-app)" }}>
       {sidebarOpen && (
-        <Sidebar active={page} onNavigate={setPage} secondsAgo={live.secondsAgo} role={role} />
+        <Sidebar active={page} onNavigate={setPage} secondsAgo={live.secondsAgo} />
       )}
 
       <div
@@ -115,8 +124,7 @@ export default function App() {
           onToggleTheme={() => setDark((v) => !v)}
           onToggleSidebar={() => setSidebarOpen((v) => !v)}
           onOpenSearch={() => setSearchOpen(true)}
-          role={role}
-          onSwitchRole={setRole}
+          onSwitchExperience={switchExperience}
           onViewIssues={() => { setAlertFilter("all"); setPage("alerts") }}
           onAlertNavigate={(a) => {
             if (a.navTo === "endpoints") {
@@ -182,20 +190,6 @@ export default function App() {
             />
           )}
           {page === "thresholds" && <ThresholdsPage />}
-          {/* Administration — Admin-only (gated in the sidebar; guarded above) */}
-          {page === "users" && <UsersRolesPage />}
-          {page === "groups" && (
-            <PlaceholderPage title="Groups" icon={FolderTree} description="Build a Group hierarchy that mirrors your team structure (Country → Area → Office → Shift). A Manager assigned to a Group sees every Widget beneath it (visibility cascades). Bulk-assign and move Widgets between Groups." />
-          )}
-          {page === "widgets" && (
-            <PlaceholderPage title="Device management" icon={RadioTower} description="Register agents and generate auth tokens, assign unassigned Widgets to Groups, revoke compromised tokens, and review status and last-seen. A Widget becomes a Device once it's set up and reporting telemetry." />
-          )}
-          {page === "subscription" && (
-            <PlaceholderPage title="Subscription & billing" icon={CreditCard} description="See what's included in your tier and track seat usage. Plan changes, add-ons, invoices and payment arrive for 1.0." />
-          )}
-          {page === "audit" && (
-            <PlaceholderPage title="Audit log" icon={ScrollText} description="Search and filter a record of who changed what, and when — across Members, Groups, Widgets and settings." />
-          )}
           {page === "glossary" && <GlossaryPage />}
           {page === "devicesdoc" && <DevicesModelPage />}
           {page === "issuesdoc" && <IssuesDocPage />}

@@ -89,22 +89,21 @@ export const pageFromPath = (path: string): PageId => {
   return (Object.keys(pagePath) as PageId[]).find((id) => pagePath[id] === clean) ?? "overview"
 }
 
-// ---- Roles (gating within the one Fleet view) ------------------------------
-// One Fleet view, gated by role. Admins see the Administration nav group and the
-// whole org; CC Managers (Supervisors) get a stripped-down, Group-scoped view.
-// The top-right "View as" control previews each role. Owner / Billing roles are
-// planned for later (see ADMIN-TICKETS.md).
+// ---- Experiences (two surfaces in one repo) --------------------------------
+// "fleet" = the supervisor dashboard · "admin" = the Administration surface.
+// The Administration experience has its own shell (sidebar + chrome); it's
+// reached from the top-right account menu. The top-left sidebar switches org.
 
-export type Role = "admin" | "manager"
+export type Experience = "fleet" | "admin"
 
-export const roleName: Record<Role, string> = {
-  admin: "Admin",
-  manager: "CC Manager",
-}
-
-// Pages that only Admins can reach.
 export const adminPageIds: PageId[] = ["users", "groups", "widgets", "subscription", "audit"]
 
-export const isAdminPage = (id: PageId) => (adminPageIds as string[]).includes(id)
+export const experienceOf = (id: PageId): Experience =>
+  (adminPageIds as string[]).includes(id) ? "admin" : "fleet"
 
-export const canSee = (role: Role, id: PageId) => role === "admin" || !isAdminPage(id)
+export const defaultPageFor: Record<Experience, PageId> = { fleet: "overview", admin: "users" }
+
+export const experienceLabel: Record<Experience, string> = {
+  fleet: "Fleet dashboard",
+  admin: "Administration",
+}
