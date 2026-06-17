@@ -1,9 +1,9 @@
 import type { ReactNode } from "react"
 import { PanelLeft, ChevronRight, Search, Sun, Moon } from "lucide-react"
 import { fleet } from "@/data/dashboard"
-import { pageLabel, type PageId, type Experience } from "@/nav"
+import { pageLabel, type PageId, type Role } from "@/nav"
 import { NotificationsBell } from "./NotificationsBell"
-import { ExperienceMenu } from "./ExperienceMenu"
+import { RoleSwitcher } from "./RoleSwitcher"
 import type { AlertNotification } from "@/data/alerts"
 
 function IconButton({ children, label, onClick }: { children: ReactNode; label: string; onClick?: () => void }) {
@@ -30,7 +30,8 @@ export function Topbar({
   onOpenSearch,
   onAlertNavigate,
   onViewIssues,
-  onSwitchExperience,
+  role,
+  onSwitchRole,
 }: {
   page: PageId
   dark: boolean
@@ -39,7 +40,8 @@ export function Topbar({
   onOpenSearch: () => void
   onAlertNavigate: (a: AlertNotification) => void
   onViewIssues: () => void
-  onSwitchExperience: (e: Experience) => void
+  role: Role
+  onSwitchRole: (r: Role) => void
 }) {
   return (
     <header
