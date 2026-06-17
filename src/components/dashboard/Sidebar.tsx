@@ -1,6 +1,6 @@
 import { GalleryVerticalEnd, ChevronsUpDown } from "lucide-react"
 import { fleet } from "@/data/dashboard"
-import { navItems, adminNavItems, devNavItems, type NavItem, type PageId } from "@/nav"
+import { navItems, devNavItems, type NavItem, type PageId } from "@/nav"
 
 export function Sidebar({
   active,
@@ -43,9 +43,6 @@ export function Sidebar({
       {/* Content — nav */}
       <div className="flex-1 overflow-y-auto p-2">
         <NavGroup label="Workspace" items={navItems} active={active} onNavigate={onNavigate} />
-        <div className="mt-3">
-          <NavGroup label="Administration" items={adminNavItems} active={active} onNavigate={onNavigate} />
-        </div>
         <div className="mt-3">
           <NavGroup label="Product development" items={devNavItems} active={active} onNavigate={onNavigate} />
         </div>

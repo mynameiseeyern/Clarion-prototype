@@ -65,6 +65,17 @@ function MapPanel({
   const cities = country ? citiesInCountry(country) : []
   const [hoveredCity, setHoveredCity] = useState<string | null>(null)
 
+  // In country view, re-project the cities' world coords to fill the map (otherwise a
+  // single/clustered country leaves the pin(s) stranded in a corner). One city → centre.
+  const cityPos = (() => {
+    const xs = cities.map((c) => c.x), ys = cities.map((c) => c.y)
+    const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys)
+    const axis = (v: number, min: number, max: number, lo: number, hi: number) =>
+      max - min < 1 ? (lo + hi) / 2 : lo + ((v - min) / (max - min)) * (hi - lo)
+    return (m: LocationRow) =>
+      cities.length <= 1 ? { x: 50, y: 50 } : { x: axis(m.x, minX, maxX, 18, 82), y: axis(m.y, minY, maxY, 22, 78) }
+  })()
+
   return (
     <div className="flex w-full flex-col lg:min-w-0 lg:flex-1" style={{ borderRight: "1px solid var(--border-neutral-subtle)" }}>
       <div className="flex items-center justify-between p-4">
@@ -126,12 +137,13 @@ function MapPanel({
           {country && cities.map((m) => {
             const isActive = m.id === selectedId
             const mSev = locationSeverity(m.id)
+            const pos = cityPos(m)
             // selected pin's tooltip stays pinned, but hovering ANY other pin hides it
             const show = isActive ? hoveredCity === null || hoveredCity === m.id : hoveredCity === m.id
             return (
               <button key={m.id} type="button" onClick={() => onSelect(m.id)} aria-label={m.name}
                 onMouseEnter={() => setHoveredCity(m.id)} onMouseLeave={() => setHoveredCity(null)}
-                className="group absolute -translate-x-1/2 -translate-y-1/2 hover:z-20 focus:z-20 focus:outline-none" style={{ left: `${m.x}%`, top: `${m.y}%` }}>
+                className="group absolute -translate-x-1/2 -translate-y-1/2 hover:z-20 focus:z-20 focus:outline-none" style={{ left: `${pos.x}%`, top: `${pos.y}%` }}>
                 <PinTooltip name={m.name} endpoints={m.endpoints} healthy={m.healthy} warning={m.warning} critical={m.critical} show={show} />
                 {isActive ? (
                   <span className="flex size-4 items-center justify-center rounded-full" style={{ border: `2px solid ${statusVar[mSev]}`, background: "var(--bg-card)" }}>

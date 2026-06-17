@@ -87,3 +87,21 @@ export const pageFromPath = (path: string): PageId => {
   const clean = path.replace(/\/+$/, "") || "/"
   return (Object.keys(pagePath) as PageId[]).find((id) => pagePath[id] === clean) ?? "overview"
 }
+
+// ---- Experiences (two surfaces in one repo) --------------------------------
+// "fleet" = the supervisor dashboard · "admin" = the user-management world.
+// Switched from the top-right account menu (the top-left sidebar switches org).
+
+export type Experience = "fleet" | "admin"
+
+export const adminPageIds: PageId[] = ["users", "groups", "widgets", "subscription", "audit"]
+
+export const experienceOf = (id: PageId): Experience =>
+  (adminPageIds as string[]).includes(id) ? "admin" : "fleet"
+
+export const defaultPageFor: Record<Experience, PageId> = { fleet: "overview", admin: "users" }
+
+export const experienceLabel: Record<Experience, string> = {
+  fleet: "Fleet dashboard",
+  admin: "Administration",
+}
