@@ -76,16 +76,22 @@ function MapPanel({
       cities.length <= 1 ? { x: 50, y: 50 } : { x: axis(m.x, minX, maxX, 18, 82), y: axis(m.y, minY, maxY, 22, 78) }
   })()
 
+  // header reflects the selected city when one is picked, else the country
+  const selectedCity = country && selectedId !== "all" ? cities.find((c) => c.id === selectedId) : null
+  const headerName = selectedCity?.name ?? ctry?.name
+  // back: from a selected city in a multi-city country → the country overview; otherwise → world
+  const handleHeaderBack = () => { if (selectedCity && cities.length > 1) onSelect("all"); else onBack() }
+
   return (
     <div className="flex w-full flex-col lg:min-w-0 lg:flex-1" style={{ borderRight: "1px solid var(--border-neutral-subtle)" }}>
       <div className="flex items-center justify-between p-4">
         <h2 className="flex items-center gap-1.5 text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
           {ctry ? (
             <>
-              <button type="button" onClick={onBack} className="rounded p-0.5 transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }} aria-label="Back to world">
+              <button type="button" onClick={handleHeaderBack} className="rounded p-0.5 transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }} aria-label={selectedCity && cities.length > 1 ? `Back to ${ctry.name}` : "Back to world"}>
                 <ArrowLeft className="size-4" />
               </button>
-              Devices in <span style={{ color: "var(--fg-link-default)" }}>{ctry.name}</span>
+              Devices in <span style={{ color: "var(--fg-link-default)" }}>{headerName}</span>
             </>
           ) : (
             <>Devices <span style={{ color: "var(--fg-neutral-muted)" }}>· worldwide</span></>
