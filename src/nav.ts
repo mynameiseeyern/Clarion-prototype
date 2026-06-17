@@ -33,12 +33,13 @@ export const navItems: NavItem[] = [
   { id: "thresholds", label: "Thresholds", icon: SlidersHorizontal },
 ]
 
-// Administration — Admin-only (NEW). "Users & roles" is the scaffolded screen;
-// the rest are placeholders mapping to the Admin epics (see ADMIN-TICKETS.md).
+// Administration — shown only to Admins (role-gated within the one Fleet view).
+// "Members" is the scaffolded screen; the rest are placeholders mapping to the
+// Admin epics (see ADMIN-TICKETS.md).
 export const adminNavItems: NavItem[] = [
-  { id: "users", label: "Users & roles", icon: Users },
+  { id: "widgets", label: "Device management", icon: RadioTower },
+  { id: "users", label: "Members", icon: Users },
   { id: "groups", label: "Groups", icon: FolderTree },
-  { id: "widgets", label: "Widgets", icon: RadioTower },
   { id: "subscription", label: "Subscription", icon: CreditCard },
   { id: "audit", label: "Audit log", icon: ScrollText },
 ]
@@ -60,7 +61,7 @@ export const pageSubtitle: Partial<Record<PageId, string>> = {
   thresholds: "Set when a device is flagged warning or critical.",
   users: "Invite people, set their role, and manage access.",
   groups: "Organise Widgets into Groups that scope what each Manager sees.",
-  widgets: "Register, assign and revoke endpoint Widgets.",
+  widgets: "Register, assign and revoke endpoint Widgets. A Widget becomes a Device once it's set up and reporting.",
   subscription: "Review your plan, usage and billing.",
   audit: "Track who changed what, and when.",
 }
@@ -88,20 +89,22 @@ export const pageFromPath = (path: string): PageId => {
   return (Object.keys(pagePath) as PageId[]).find((id) => pagePath[id] === clean) ?? "overview"
 }
 
-// ---- Experiences (two surfaces in one repo) --------------------------------
-// "fleet" = the supervisor dashboard · "admin" = the user-management world.
-// Switched from the top-right account menu (the top-left sidebar switches org).
+// ---- Roles (gating within the one Fleet view) ------------------------------
+// One Fleet view, gated by role. Admins see the Administration nav group and the
+// whole org; CC Managers (Supervisors) get a stripped-down, Group-scoped view.
+// The top-right "View as" control previews each role. Owner / Billing roles are
+// planned for later (see ADMIN-TICKETS.md).
 
-export type Experience = "fleet" | "admin"
+export type Role = "admin" | "manager"
 
+export const roleName: Record<Role, string> = {
+  admin: "Admin",
+  manager: "CC Manager",
+}
+
+// Pages that only Admins can reach.
 export const adminPageIds: PageId[] = ["users", "groups", "widgets", "subscription", "audit"]
 
-export const experienceOf = (id: PageId): Experience =>
-  (adminPageIds as string[]).includes(id) ? "admin" : "fleet"
+export const isAdminPage = (id: PageId) => (adminPageIds as string[]).includes(id)
 
-export const defaultPageFor: Record<Experience, PageId> = { fleet: "overview", admin: "users" }
-
-export const experienceLabel: Record<Experience, string> = {
-  fleet: "Fleet dashboard",
-  admin: "Administration",
-}
+export const canSee = (role: Role, id: PageId) => role === "admin" || !isAdminPage(id)
