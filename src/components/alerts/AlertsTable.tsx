@@ -1,9 +1,14 @@
 import { useMemo, useState } from "react"
 import { Search, X, Siren, Wifi, Activity, Gauge, ChevronRight, type LucideIcon } from "lucide-react"
 import { Card } from "@/components/ui/card"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-import { locations, type Status } from "@/data/dashboard"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel } from "@/components/ui/select"
+import { countries, citiesInCountry, type Status } from "@/data/dashboard"
 import { rollupsAll, type Rollup, type RollupCause } from "@/data/endpoints"
+
+// locations grouped under their country (label only, cities selectable), alphabetical
+const locationGroups = [...countries]
+  .sort((a, b) => a.name.localeCompare(b.name))
+  .map((c) => ({ name: c.name, cities: [...citiesInCountry(c.id)].sort((a, b) => a.name.localeCompare(b.name)) }))
 
 const causeIcon: Record<RollupCause, LucideIcon> = {
   platform: Siren, loss: Activity, latency: Gauge, jitter: Wifi, other: Activity,
@@ -67,7 +72,12 @@ export function AlertsTable({
             <SelectTrigger className="h-9"><SelectValue placeholder="Location" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All locations</SelectItem>
-              {locations.map((l) => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+              {locationGroups.map((g) => (
+                <SelectGroup key={g.name}>
+                  <SelectLabel>{g.name}</SelectLabel>
+                  {g.cities.map((l) => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+                </SelectGroup>
+              ))}
             </SelectContent>
           </Select>
           <Select value={severity} onValueChange={(v) => setSeverity(v as typeof severity)}>
