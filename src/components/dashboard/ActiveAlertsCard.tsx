@@ -43,7 +43,7 @@ export function ActiveAlertsCard({
     <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
       <div className="flex items-center justify-between p-4" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Critical issues</h2>
+          <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Critical issues needing attention</h2>
           {rollups.length > 0 && (
             <span className="flex h-5 items-center rounded-full px-2 text-xs font-medium" style={{ background: "var(--bg-danger-subtle)", color: "var(--fg-on-danger-subtle)" }}>
               {rollups.length}

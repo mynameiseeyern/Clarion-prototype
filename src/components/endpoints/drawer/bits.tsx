@@ -6,7 +6,7 @@ import type { MetricStatus } from "@/data/endpointDetail"
 export type IssueStatus = "warning" | "critical"
 
 const statusColor: Record<MetricStatus, string> = {
-  good: "var(--bg-primary-emphasis)",
+  good: "var(--status-healthy)",
   warn: "var(--status-warning)",
   crit: "var(--status-critical)",
   none: "var(--bg-neutral-subtle-pressed)",
