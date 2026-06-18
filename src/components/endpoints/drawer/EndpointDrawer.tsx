@@ -56,25 +56,6 @@ function eventTab(e?: Endpoint): string {
   return "network" // latency / packet loss / jitter / Wi-Fi
 }
 
-// Within that tab, the specific item to highlight as the cause of the event.
-function eventFocus(e?: Endpoint): string {
-  const s = (e?.event ?? e?.primaryIssue ?? "").toLowerCase()
-  if (/packet loss/.test(s)) return "packet loss"
-  if (/latency/.test(s)) return "latency"
-  if (/jitter/.test(s)) return "jitter"
-  if (/score/.test(s)) return "clarity network score"
-  if (/(unreachable|genesys|teams|zoom|webex|cxone|platform)/.test(s)) return "platform"
-  if (/(audio|headset|mic|speaker|driver)/.test(s)) return "audio"
-  if (/(camera|video)/.test(s)) return "video"
-  if (/usb/.test(s)) return "usb"
-  if (/bluetooth/.test(s)) return "bluetooth"
-  if (/cpu/.test(s)) return "cpu"
-  if (/memory/.test(s)) return "memory"
-  if (/disk/.test(s)) return "disk"
-  if (/battery/.test(s)) return "battery"
-  return ""
-}
-
 /* Shown in place of a tab's content when telemetry is older than 5 minutes,
    so we never present stale readings as if they were live. */
 function StaleBanner({ mins }: { mins: number }) {
@@ -133,9 +114,6 @@ export function EndpointDrawer({
   const tone = statusTone[e.status]
   const stale = e.lastSeenMinAgo > 5
   const offline = e.status === "offline"
-  const focus = eventFocus(e)
-  // severity tone for the "Flagged" badge on the affected card (warning vs critical)
-  const flagTone = e.status === "critical" ? "danger" : "warning"
 
   const contentClass = expanded
     ? "fixed left-1/2 top-1/2 z-50 flex h-[94vh] w-[1120px] max-w-[96vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
@@ -221,10 +199,10 @@ export function EndpointDrawer({
           {/* body */}
           <div className="min-h-px flex-1 overflow-y-auto px-5 py-5" style={{ background: "var(--bg-app)" }}>
             <Tabs value={tab} onValueChange={setTab}>
-              <TabsContent value="network">{stale ? <StaleBanner mins={e.lastSeenMinAgo} /> : <NetworkTab d={detail} focus={focus} flagTone={flagTone} />}</TabsContent>
-              <TabsContent value="platforms">{stale ? <StaleBanner mins={e.lastSeenMinAgo} /> : <PlatformsTab d={detail} focus={focus} flagTone={flagTone} />}</TabsContent>
-              <TabsContent value="devices">{stale ? <StaleBanner mins={e.lastSeenMinAgo} /> : <DevicesTab d={detail} focus={focus} flagTone={flagTone} />}</TabsContent>
-              <TabsContent value="system">{stale ? <StaleBanner mins={e.lastSeenMinAgo} /> : <SystemTab d={detail} focus={focus} flagTone={flagTone} />}</TabsContent>
+              <TabsContent value="network">{stale ? <StaleBanner mins={e.lastSeenMinAgo} /> : <NetworkTab d={detail} />}</TabsContent>
+              <TabsContent value="platforms">{stale ? <StaleBanner mins={e.lastSeenMinAgo} /> : <PlatformsTab d={detail} />}</TabsContent>
+              <TabsContent value="devices">{stale ? <StaleBanner mins={e.lastSeenMinAgo} /> : <DevicesTab d={detail} />}</TabsContent>
+              <TabsContent value="system">{stale ? <StaleBanner mins={e.lastSeenMinAgo} /> : <SystemTab d={detail} />}</TabsContent>
             </Tabs>
           </div>
         </Dialog.Content>

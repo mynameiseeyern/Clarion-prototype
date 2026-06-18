@@ -218,6 +218,7 @@ export function EndpointsTable({
           <Chip
             selected={issuesOnly}
             aria-pressed={issuesOnly}
+            leading={issuesOnly ? <Check /> : undefined}
             onClick={() => { setIssuesOnly((v) => { const next = !v; if (next) setStatus("all"); return next }); resetPage() }}
           >
             Issues only

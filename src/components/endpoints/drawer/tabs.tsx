@@ -1,18 +1,20 @@
 import { Headphones, Mic, Video, Bluetooth, Usb, Info } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 import type { Endpoint } from "@/data/endpoints"
-import type { EndpointDetail, PlatformStatus } from "@/data/endpointDetail"
-import { SegBar, Panel, SectionLabel, MetricBlock, type FlagTone } from "./bits"
+import type { EndpointDetail, PlatformStatus, MetricStatus } from "@/data/endpointDetail"
+import { SegBar, Panel, SectionLabel, MetricBlock, type IssueStatus } from "./bits"
+
+// a metric's own status → the badge severity shown on its card (healthy → no badge)
+const issueOf = (s: MetricStatus): IssueStatus | undefined => (s === "crit" ? "critical" : s === "warn" ? "warning" : undefined)
 
 /* ---------------- Network ---------------- */
-export function NetworkTab({ d, focus, flagTone }: { d: EndpointDetail; focus?: string; flagTone?: FlagTone }) {
+export function NetworkTab({ d }: { d: EndpointDetail }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
         <SectionLabel>Internet health</SectionLabel>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {d.network.health.map((m) => (
-            <MetricBlock key={m.label} label={m.label} value={m.value} unit={m.unit} flag={m.label.toLowerCase() === focus ? flagTone : undefined}>
+            <MetricBlock key={m.label} label={m.label} value={m.value} unit={m.unit} status={issueOf(m.status)}>
               <SegBar fill={m.fill} status={m.status} />
               <div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>Threshold: {m.threshold}</div>
             </MetricBlock>
@@ -48,7 +50,7 @@ const platTone: Record<PlatformStatus, { bg: string; fg: string; label: string }
 }
 const fmt = (v: number | null, u: string) => (v === null ? "—" : `${v}${u}`)
 
-export function PlatformsTab({ d, focus, flagTone }: { d: EndpointDetail; focus?: string; flagTone?: FlagTone }) {
+export function PlatformsTab({ d }: { d: EndpointDetail }) {
   return (
     <div className="flex flex-col gap-4">
       <SectionLabel>UC/CC platforms in use</SectionLabel>
@@ -68,15 +70,13 @@ export function PlatformsTab({ d, focus, flagTone }: { d: EndpointDetail; focus?
             {d.platforms.rows.map((p) => {
               const tone = platTone[p.status]
               const dim = p.status === "down"
-              const col = dim ? "var(--fg-neutral-subtle)" : p.status === "degraded" ? "var(--fg-warning)" : "var(--fg-neutral-emphasis)"
-              const hi = focus === "platform" && p.status !== "ok"
+              const col = dim ? "var(--fg-neutral-subtle)" : p.status === "degraded" ? "var(--fg-warning-emphasis)" : "var(--fg-neutral-emphasis)"
               return (
                 <tr key={p.name} style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-2.5">
                       <span className="flex size-7 items-center justify-center rounded-md text-xs font-bold text-white" style={{ background: p.color }}>{p.key}</span>
                       <span className="font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{p.name}</span>
-                      {hi && <Badge variant={flagTone} title="Affected by the current issue">Flagged</Badge>}
                     </div>
                   </td>
                   <td className="px-3 py-3 text-right font-mono" style={{ color: col }}>{fmt(p.latency, "ms")}</td>
@@ -105,19 +105,17 @@ export function PlatformsTab({ d, focus, flagTone }: { d: EndpointDetail; focus?
 /* ---------------- Devices ---------------- */
 const deviceIcon = { "audio-out": Headphones, "audio-in": Mic, video: Video, bt: Bluetooth, usb: Usb }
 
-const kindFocus = (k: string) => (k === "audio-out" || k === "audio-in" ? "audio" : k === "bt" ? "bluetooth" : k)
-
-export function DevicesTab({ d, focus, flagTone }: { d: EndpointDetail; focus?: string; flagTone?: FlagTone }) {
+export function DevicesTab({ d }: { d: EndpointDetail }) {
   const Row = ({ r }: { r: EndpointDetail["devices"]["audio"][number] }) => {
     const Icon = deviceIcon[r.kind]
     return (
-      <Panel flag={!!focus && kindFocus(r.kind) === focus ? flagTone : undefined} className="flex items-center gap-3">
+      <Panel className="flex items-center gap-3">
         <span className="flex size-9 items-center justify-center rounded-lg" style={{ background: "var(--bg-neutral-muted)", color: "var(--fg-neutral-muted)" }}><Icon className="size-4" /></span>
         <div className="flex min-w-px flex-1 flex-col">
           <span className="truncate text-sm font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{r.name}</span>
           <span className="truncate text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{r.meta}</span>
         </div>
-        <span className="text-xs font-medium" style={{ color: r.stateTone === "good" ? "var(--fg-success)" : "var(--fg-neutral-muted)" }}>{r.state}</span>
+        <span className="text-xs font-medium" style={{ color: r.stateTone === "good" ? "var(--fg-success-emphasis)" : "var(--fg-neutral-muted)" }}>{r.state}</span>
       </Panel>
     )
   }
@@ -132,7 +130,7 @@ export function DevicesTab({ d, focus, flagTone }: { d: EndpointDetail; focus?: 
 }
 
 /* ---------------- System ---------------- */
-export function SystemTab({ d, focus, flagTone }: { d: EndpointDetail; focus?: string; flagTone?: FlagTone }) {
+export function SystemTab({ d }: { d: EndpointDetail }) {
   const { system: s } = d
   const Bar = ({ fill }: { fill: number }) => (
     <div className="flex items-center gap-1">
@@ -146,10 +144,10 @@ export function SystemTab({ d, focus, flagTone }: { d: EndpointDetail; focus?: s
       <div>
         <SectionLabel>Compute &amp; storage</SectionLabel>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <MetricBlock label={s.cpu.label} value={s.cpu.value} unit={s.cpu.unit} flag={focus === "cpu" ? flagTone : undefined}><Bar fill={Number(s.cpu.value) / 100} /><div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.cpu.meta}</div></MetricBlock>
-          <MetricBlock label={s.memory.label} value={s.memory.value} unit={s.memory.unit} flag={focus === "memory" ? flagTone : undefined}><Bar fill={s.memory.fill} /><div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.memory.meta}</div></MetricBlock>
-          <MetricBlock label={s.disk.label} value={s.disk.value} unit={s.disk.unit} flag={focus === "disk" ? flagTone : undefined}><Bar fill={s.disk.fill} /><div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.disk.meta}</div></MetricBlock>
-          <Panel flag={focus === "battery" ? flagTone : undefined}>
+          <MetricBlock label={s.cpu.label} value={s.cpu.value} unit={s.cpu.unit}><Bar fill={Number(s.cpu.value) / 100} /><div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.cpu.meta}</div></MetricBlock>
+          <MetricBlock label={s.memory.label} value={s.memory.value} unit={s.memory.unit}><Bar fill={s.memory.fill} /><div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.memory.meta}</div></MetricBlock>
+          <MetricBlock label={s.disk.label} value={s.disk.value} unit={s.disk.unit}><Bar fill={s.disk.fill} /><div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.disk.meta}</div></MetricBlock>
+          <Panel>
             <div className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Battery</div>
             <div className="text-2xl font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{s.battery.value}</div>
             <div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.battery.detail}</div>

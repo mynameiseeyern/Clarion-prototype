@@ -1,9 +1,9 @@
-import { useEffect, useRef, type ReactNode } from "react"
+import { type ReactNode } from "react"
 import { Badge } from "@/components/ui/badge"
 import type { MetricStatus } from "@/data/endpointDetail"
 
-/** severity tone for the "Flagged" badge on the affected item */
-export type FlagTone = "warning" | "danger"
+/** an issue severity shown as a badge on the card that has the problem */
+export type IssueStatus = "warning" | "critical"
 
 const statusColor: Record<MetricStatus, string> = {
   good: "var(--bg-primary-emphasis)",
@@ -27,19 +27,18 @@ export function SegBar({ fill, status, segments = 10 }: { fill: number; status: 
   )
 }
 
-export function Panel({ children, className, flag }: { children: ReactNode; className?: string; flag?: FlagTone }) {
-  const ref = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (flag) ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
-  }, [flag])
+export function Panel({ children, className, status }: { children: ReactNode; className?: string; status?: IssueStatus }) {
   return (
     <div
-      ref={ref}
       className={"relative rounded-xl p-4 " + (className ?? "")}
       style={{ background: "var(--bg-neutral-subtle)", border: "1px solid var(--border-neutral-subtle)" }}
     >
-      {/* all cards share styling; the affected one just gets a severity-coloured "Flagged" badge */}
-      {flag && <Badge variant={flag} className="absolute right-3 top-3" title="Affected by the current issue">Flagged</Badge>}
+      {/* cards share styling; a card with an issue shows its severity badge so you can see what's affected */}
+      {status && (
+        <Badge variant={status === "critical" ? "danger" : "warning"} className="absolute right-3 top-3">
+          {status === "critical" ? "Critical" : "Warning"}
+        </Badge>
+      )}
       {children}
     </div>
   )
@@ -54,9 +53,9 @@ export function SectionLabel({ children }: { children: ReactNode }) {
   )
 }
 
-export function MetricBlock({ label, value, unit, children, flag }: { label: string; value: string; unit: string; children?: ReactNode; flag?: FlagTone }) {
+export function MetricBlock({ label, value, unit, children, status }: { label: string; value: string; unit: string; children?: ReactNode; status?: IssueStatus }) {
   return (
-    <Panel flag={flag}>
+    <Panel status={status}>
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>{label}</div>
       <div className="mb-3 flex items-baseline gap-1">
         <span className="text-2xl font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{value}</span>
