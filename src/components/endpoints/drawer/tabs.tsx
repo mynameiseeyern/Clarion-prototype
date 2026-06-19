@@ -2,6 +2,7 @@ import { Headphones, Mic, Video, Bluetooth, Usb, Info } from "lucide-react"
 import type { Endpoint } from "@/data/endpoints"
 import type { EndpointDetail, PlatformStatus, MetricStatus } from "@/data/endpointDetail"
 import { SegBar, Panel, SectionLabel, MetricBlock, type IssueStatus } from "./bits"
+import { Badge } from "@/components/ui/badge"
 
 // a metric's own status → the badge severity shown on its card (healthy → no badge)
 const issueOf = (s: MetricStatus): IssueStatus | undefined => (s === "crit" ? "critical" : s === "warn" ? "warning" : undefined)
@@ -43,10 +44,10 @@ export function NetworkTab({ d }: { d: EndpointDetail }) {
 }
 
 /* ---------------- UC/CC platforms ---------------- */
-const platTone: Record<PlatformStatus, { bg: string; fg: string; label: string }> = {
-  ok: { bg: "var(--bg-success-subtle)", fg: "var(--fg-on-success-subtle)", label: "OK" },
-  degraded: { bg: "var(--bg-warning-subtle)", fg: "var(--fg-on-warning-subtle)", label: "DEGRADED" },
-  down: { bg: "var(--bg-danger-subtle)", fg: "var(--fg-on-danger-subtle)", label: "DOWN" },
+const platBadge: Record<PlatformStatus, { variant: "success" | "warning" | "danger"; label: string }> = {
+  ok: { variant: "success", label: "OK" },
+  degraded: { variant: "warning", label: "Degraded" },
+  down: { variant: "danger", label: "Down" },
 }
 const fmt = (v: number | null, u: string) => (v === null ? "—" : `${v}${u}`)
 
@@ -68,7 +69,7 @@ export function PlatformsTab({ d }: { d: EndpointDetail }) {
           </thead>
           <tbody>
             {d.platforms.rows.map((p) => {
-              const tone = platTone[p.status]
+              const badge = platBadge[p.status]
               const dim = p.status === "down"
               const col = dim ? "var(--fg-neutral-subtle)" : p.status === "degraded" ? "var(--fg-warning-emphasis)" : "var(--fg-neutral-emphasis)"
               return (
@@ -84,7 +85,7 @@ export function PlatformsTab({ d }: { d: EndpointDetail }) {
                   <td className="px-3 py-3 text-right font-mono" style={{ color: col }}>{fmt(p.jitter, "ms")}</td>
                   <td className="px-3 py-3 text-right font-mono" style={{ color: col }}>{p.mos === null ? "—" : p.mos.toFixed(1)}</td>
                   <td className="px-3 py-3 text-right">
-                    <span className="inline-flex rounded-md px-2 py-0.5 text-xs font-semibold" style={{ background: tone.bg, color: tone.fg }}>{tone.label}</span>
+                    <Badge variant={badge.variant}>{badge.label}</Badge>
                   </td>
                 </tr>
               )

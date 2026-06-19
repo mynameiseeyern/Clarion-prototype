@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Pencil, Trash2, Plus, RotateCcw } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Chip } from "@/components/ui/chip"
+import { Badge } from "@/components/ui/badge"
 import { ThresholdSlider } from "@/components/thresholds/ThresholdSlider"
 import { RuleEditor } from "@/components/thresholds/RuleEditor"
 import { toast } from "@/components/ui/toast"
@@ -147,15 +147,15 @@ export function ThresholdsPage() {
                 <div className="flex min-w-px flex-col gap-2">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{r.name}</span>
-                    {r.scopes.map((id) => <Chip key={id} size="sm">{scopeById(id)?.name ?? id}</Chip>)}
+                    {r.scopes.map((id) => <Badge key={id} variant="secondary">{scopeById(id)?.name ?? id}</Badge>)}
                   </div>
                   {/* expose exactly which metrics + threshold values this rule overrides */}
                   <div className="flex flex-wrap items-center gap-1.5">
                     {overridden.map((m) => (
-                      <span key={m.id} className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs" style={{ background: "var(--bg-neutral-subtle)", border: "1px solid var(--border-neutral-subtle)" }}>
+                      <Badge key={m.id} variant="secondary" className="gap-1.5">
                         <span style={{ color: "var(--fg-neutral-muted)" }}>{m.name}</span>
                         <span className="font-mono font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{fmtRange(m, r.overrides[m.id].warn, r.overrides[m.id].crit)}</span>
-                      </span>
+                      </Badge>
                     ))}
                     <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>· {overridden.length} of {METRICS.length} overridden</span>
                   </div>

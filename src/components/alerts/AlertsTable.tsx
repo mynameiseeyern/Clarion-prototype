@@ -129,7 +129,7 @@ export function AlertsTable({
                       <span className="font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{r.affected}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3"><span className="inline-flex rounded-md px-2 py-0.5 text-xs font-semibold uppercase" style={{ background: tone.bg, color: tone.fg }}>{cap(r.severity)}</span></td>
+                  <td className="px-4 py-3"><Badge variant={r.severity === "critical" ? "danger" : "warning"}>{cap(r.severity)}</Badge></td>
                   <td className="px-4 py-3"><span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>{r.startedMinAgo}m ago</span></td>
                   <td className="pr-3"><ChevronRight className="size-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color: "var(--fg-neutral-subtle)" }} /></td>
                 </tr>

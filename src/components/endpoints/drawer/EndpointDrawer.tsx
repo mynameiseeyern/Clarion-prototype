@@ -2,17 +2,12 @@ import { useEffect, useMemo, useState } from "react"
 import * as Dialog from "@radix-ui/react-dialog"
 import { Monitor, MapPin, Globe, User, Users, ChevronUp, ChevronDown, Maximize2, Minimize2, X, ArrowLeft, CloudOff } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getEndpointDetail } from "@/data/endpointDetail"
-import type { Endpoint, EndpointStatus } from "@/data/endpoints"
+import type { Endpoint } from "@/data/endpoints"
 import { NetworkTab, PlatformsTab, DevicesTab, SystemTab } from "./tabs"
 
-const statusTone: Record<EndpointStatus, { bg: string; fg: string }> = {
-  healthy: { bg: "var(--bg-success-subtle)", fg: "var(--fg-on-success-subtle)" },
-  warning: { bg: "var(--bg-warning-subtle)", fg: "var(--fg-on-warning-subtle)" },
-  critical: { bg: "var(--bg-danger-subtle)", fg: "var(--fg-on-danger-subtle)" },
-  offline: { bg: "var(--bg-neutral-subtle)", fg: "var(--fg-neutral-muted)" },
-}
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
 const initials = (name: string) => name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
 
@@ -111,7 +106,6 @@ export function EndpointDrawer({
   }, [open, index, rows.length])
 
   if (!e || !detail) return null
-  const tone = statusTone[e.status]
   const stale = e.lastSeenMinAgo > 5
   const offline = e.status === "offline"
 
@@ -165,7 +159,7 @@ export function EndpointDrawer({
               <div className="flex min-w-px flex-1 flex-col">
                 <div className="flex items-center gap-2.5">
                   <Dialog.Title className={`truncate text-lg font-semibold ${offline ? "font-mono" : ""}`} style={{ color: "var(--fg-neutral-emphasis)" }}>{offline ? e.machine : e.user}</Dialog.Title>
-                  <span className="shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold uppercase" style={{ background: tone.bg, color: tone.fg }}>{cap(e.status)}</span>
+                  <Badge variant={e.status === "critical" ? "danger" : e.status === "warning" ? "warning" : e.status === "healthy" ? "success" : "secondary"}>{cap(e.status)}</Badge>
                 </div>
                 {!offline && <span className="truncate font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{e.machine}</span>}
               </div>

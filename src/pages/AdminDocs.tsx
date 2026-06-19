@@ -1,4 +1,4 @@
-import { ShieldCheck, UserCog, Crown, ReceiptText, KeyRound, Network, Users, Boxes, type LucideIcon } from "lucide-react"
+import { ShieldCheck, UserCog, Crown, ReceiptText, KeyRound, Network, Users, Boxes, Check, AlertTriangle, type LucideIcon } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
@@ -15,6 +15,17 @@ function DocHeader({ title, blurb }: { title: string; blurb: string }) {
       </div>
       <h2 className="mt-3 text-heading-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>{title}</h2>
       <p className="mt-1 text-body-sm" style={{ color: "var(--fg-neutral-muted)" }}>{blurb}</p>
+
+      <div
+        className="mt-4 flex items-start gap-2 rounded-lg p-3"
+        style={{ background: "var(--bg-warning-subtle)", border: "1px solid var(--border-warning-muted)", color: "var(--fg-on-warning-subtle)" }}
+      >
+        <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+        <p className="text-sm">
+          <strong>Working draft.</strong> Everything in Product development is exploratory and not finalised —
+          roles, permissions, and flows here are for discussion and may change.
+        </p>
+      </div>
     </Card>
   )
 }
@@ -50,6 +61,103 @@ const tag = (label: string, phase: "MVP" | "1.0" | "Later") => (
   <Badge variant={phaseVariant[phase]} className="ml-2 uppercase tracking-wide">{label}</Badge>
 )
 
+/* ------------------------------------------------------ Permissions matrix -- */
+
+type Access = "full" | "scoped" | "view" | "none"
+
+const roleCols: { name: string; phase: "MVP" | "Later" }[] = [
+  { name: "Owner", phase: "Later" },
+  { name: "Admin", phase: "MVP" },
+  { name: "CC Manager", phase: "MVP" },
+  { name: "Billing admin", phase: "Later" },
+]
+
+// Order matches roleCols: [Owner, Admin, CC Manager, Billing admin]
+const matrix: { domain: string; rows: { cap: string; access: [Access, Access, Access, Access] }[] }[] = [
+  { domain: "Members", rows: [
+    { cap: "View members & roles", access: ["full", "full", "none", "none"] },
+    { cap: "Invite & deactivate members", access: ["full", "full", "none", "none"] },
+    { cap: "Assign & change roles", access: ["full", "full", "none", "none"] },
+    { cap: "Manage Admins & transfer ownership", access: ["full", "none", "none", "none"] },
+  ] },
+  { domain: "Groups", rows: [
+    { cap: "View Group hierarchy", access: ["full", "full", "scoped", "none"] },
+    { cap: "Create & edit Groups", access: ["full", "full", "none", "none"] },
+    { cap: "Assign Managers & Widgets to Groups", access: ["full", "full", "none", "none"] },
+  ] },
+  { domain: "Device management", rows: [
+    { cap: "View estate (status, last-seen)", access: ["full", "full", "scoped", "none"] },
+    { cap: "Register, move & revoke Widgets / tokens", access: ["full", "full", "none", "none"] },
+  ] },
+  { domain: "Monitoring", rows: [
+    { cap: "Monitor devices & issues", access: ["full", "full", "scoped", "none"] },
+  ] },
+  { domain: "Subscription & billing", rows: [
+    { cap: "View plan, usage & invoices", access: ["full", "full", "none", "full"] },
+    { cap: "Change plan, add-ons & payment", access: ["full", "view", "none", "full"] },
+  ] },
+  { domain: "Audit log", rows: [
+    { cap: "View audit log", access: ["full", "full", "none", "none"] },
+  ] },
+]
+
+function Cell({ access }: { access: Access }) {
+  if (access === "full") return <Check className="mx-auto size-4" style={{ color: "var(--fg-success-emphasis)" }} aria-label="Full" />
+  if (access === "scoped") return <span className="text-xs font-medium" style={{ color: "var(--fg-warning-emphasis)" }}>Scoped</span>
+  if (access === "view") return <span className="text-xs font-medium" style={{ color: "var(--fg-neutral-muted)" }}>View</span>
+  return <span style={{ color: "var(--fg-neutral-subtle)" }} aria-label="No access">–</span>
+}
+
+function PermissionsMatrix() {
+  return (
+    <SectionCard title="Permissions matrix">
+      <p className="mb-4 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
+        A strawman of who can do what. {em("Admin")} and {em("CC Manager")} are the MVP roles; {em("Owner")} and {em("Billing admin")} are planned. CC Manager access is {em("scoped")} to their assigned Group(s) and everything beneath.
+      </p>
+      <div className="overflow-x-auto" style={{ border: "1px solid var(--border-neutral-subtle)", borderRadius: "10px" }}>
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr style={{ background: "var(--bg-neutral-subtle)", borderBottom: "1px solid var(--border-neutral-muted)" }}>
+              <th className="px-4 py-2.5 text-left text-xs font-medium" style={{ color: "var(--fg-neutral-muted)" }}>Capability</th>
+              {roleCols.map((r) => (
+                <th key={r.name} className="px-3 py-2.5 text-center">
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-xs font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{r.name}</span>
+                    <Badge variant={r.phase === "MVP" ? "success" : "secondary"} className="uppercase tracking-wide">{r.phase}</Badge>
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          {matrix.map((group) => (
+            <tbody key={group.domain}>
+              <tr style={{ background: "var(--bg-neutral-subtle)" }}>
+                <td colSpan={5} className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>{group.domain}</td>
+              </tr>
+              {group.rows.map((row) => (
+                <tr key={row.cap} style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
+                  <td className="px-4 py-2.5" style={{ color: "var(--fg-neutral-emphasis)" }}>{row.cap}</td>
+                  {row.access.map((a, i) => (
+                    <td key={i} className="px-3 py-2.5 text-center">
+                      <Cell access={a} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          ))}
+        </table>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
+        <span className="inline-flex items-center gap-1.5"><Check className="size-3.5" style={{ color: "var(--fg-success-emphasis)" }} /> Full</span>
+        <span className="inline-flex items-center gap-1.5"><b style={{ color: "var(--fg-warning-emphasis)" }}>Scoped</b> within their Groups</span>
+        <span className="inline-flex items-center gap-1.5"><b style={{ color: "var(--fg-neutral-muted)" }}>View</b> read-only</span>
+        <span className="inline-flex items-center gap-1.5"><span style={{ color: "var(--fg-neutral-subtle)" }}>–</span> No access</span>
+      </div>
+    </SectionCard>
+  )
+}
+
 /* ------------------------------------------------------------------ RBAC -- */
 
 export function RbacDocPage() {
@@ -84,6 +192,8 @@ export function RbacDocPage() {
           <p>Guardrails: at least one Admin must always exist (can&apos;t deactivate or demote the last Admin). The audit log is read-only — no one can edit or delete entries.</p>
         </div>
       </SectionCard>
+
+      <PermissionsMatrix />
 
       <SectionCard title="Authentication">
         <div className="flex flex-col gap-3">

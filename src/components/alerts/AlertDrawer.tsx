@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import * as Dialog from "@radix-ui/react-dialog"
 import { X, MapPin, Clock, Users, Siren, Wifi, Activity, Gauge, ChevronRight, ChevronUp, ChevronDown, Maximize2, Minimize2, type LucideIcon } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import type { Status } from "@/data/dashboard"
 import type { Rollup, RollupCause, Endpoint, EndpointStatus } from "@/data/endpoints"
 
@@ -112,7 +113,7 @@ export function AlertDrawer({
               <div className="flex min-w-px flex-col">
                 <div className="flex items-center gap-2">
                   <Dialog.Title className="truncate text-lg font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{rollup.title}</Dialog.Title>
-                  <span className="shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold uppercase" style={{ background: tone.bg, color: tone.fg }}>{cap(rollup.severity)}</span>
+                  <Badge variant={rollup.severity === "critical" ? "danger" : "warning"}>{cap(rollup.severity)}</Badge>
                 </div>
                 <Dialog.Description className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Issue · {rollup.affected} devices affected</Dialog.Description>
               </div>
