@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { Chip } from "@/components/ui/chip"
 import { groups, type UserRole } from "@/data/users"
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -111,18 +112,15 @@ export function InviteMemberDialog({
               {groups.map((g) => {
                 const on = picked.includes(g.id)
                 return (
-                  <button
+                  <Chip
                     key={g.id}
-                    type="button"
+                    size="sm"
+                    selected={on}
+                    leading={on ? <Check /> : undefined}
                     onClick={() => toggleGroup(g.id)}
-                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors"
-                    style={on
-                      ? { background: "var(--bg-primary-subtle)", color: "var(--fg-primary-emphasis)", border: "1px solid var(--border-primary-muted)" }
-                      : { background: "var(--bg-input-default)", color: "var(--fg-neutral-emphasis)", border: "1px solid var(--border-input-default)" }}
                   >
-                    {on && <Check className="size-3" />}
                     {g.name}
-                  </button>
+                  </Chip>
                 )
               })}
             </div>
