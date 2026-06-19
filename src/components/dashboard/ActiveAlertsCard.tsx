@@ -75,7 +75,7 @@ export function ActiveAlertsCard({
           <div className="px-4 pt-3 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
             {rollups.length} critical issue{rollups.length === 1 ? "" : "s"} · {totalAffected.toLocaleString()} critical device{totalAffected === 1 ? "" : "s"} in {name}
           </div>
-          <div className="flex flex-col p-2">
+          <div className="flex max-h-80 flex-col overflow-y-auto overscroll-contain p-2">
             {rollups.map((r, i) => {
               const Icon = causeIcon[r.cause]
               const tone = sevTone[r.severity]

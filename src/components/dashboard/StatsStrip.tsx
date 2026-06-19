@@ -4,8 +4,8 @@ import { SegmentedBar, LegendItem } from "./primitives"
 import { rollupsAll } from "@/data/endpoints"
 import type { LiveFleet } from "@/hooks/useStreaming"
 
-// Net change in open issues vs. ~24h ago (deterministic dummy).
-const ISSUES_24H_AGO = 6
+// Net new open issues today vs. ~24h ago (deterministic dummy delta).
+const ISSUES_NET_TODAY = 3
 
 // Clarity Network Score (0–100) quality band.
 function cnsBand(v: number) {
@@ -36,7 +36,7 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
     { status: "warning" as const, flex: warnIssues, count: warnIssues, label: "Warning" },
     { status: "critical" as const, flex: critIssues, count: critIssues, label: "Critical" },
   ].filter((s) => s.count > 0)
-  const issuesDelta = issues.length - ISSUES_24H_AGO
+  const issuesDelta = ISSUES_NET_TODAY
 
   return (
     <section className="flex w-full flex-col gap-2">

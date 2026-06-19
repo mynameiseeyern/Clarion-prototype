@@ -367,74 +367,40 @@ function categorize(e: Endpoint): { cause: RollupCause; key: string; title: stri
   return { cause: "other", key: "other", title: "Degraded performance" }
 }
 
-// Isolated, endpoint-specific issues that don't pertain to other endpoints.
-const singleReasons = ["High CPU utilisation", "Memory pressure", "Headset disconnected", "Agent app crash"]
-
+// Real issues for a location, derived from its unhealthy devices (uncapped).
+// Devices are grouped by cause AND severity, so each issue's `affected` count is
+// the number of devices of that severity — meaning critical-issue counts and
+// device totals reconcile exactly with the map tooltip's healthy/warning/critical
+// breakdown. The Overview card, Issues page, KPI and right-panel all read this.
 export function rollupsForLocation(locId: string): Rollup[] {
   const loc = locations.find((l) => l.id === locId)
-  if (!loc || loc.activeAlerts === 0) return []
-  const slots = loc.activeAlerts
-  const unhealthy = endpoints
-    .filter((e) => e.locationId === locId && (e.status === "critical" || e.status === "warning"))
-    .sort((a, b) => sev[a.status] - sev[b.status] || (a.score ?? 9) - (b.score ?? 9))
+  if (!loc) return []
+  const unhealthy = endpoints.filter(
+    (e) => e.locationId === locId && (e.status === "critical" || e.status === "warning")
+  )
 
-  // group by cause
-  const groups = new Map<string, { title: string; cause: RollupCause; eps: Endpoint[] }>()
+  const groups = new Map<string, { title: string; cause: RollupCause; severity: Exclude<Status, "healthy">; eps: Endpoint[] }>()
   for (const e of unhealthy) {
     const { cause, key, title } = categorize(e)
-    if (!groups.has(key)) groups.set(key, { title, cause, eps: [] })
-    groups.get(key)!.eps.push(e)
+    const severity = e.status as Exclude<Status, "healthy">
+    const gkey = `${severity}:${key}`
+    if (!groups.has(gkey)) groups.set(gkey, { title, cause, severity, eps: [] })
+    groups.get(gkey)!.eps.push(e)
   }
-  const groupArr = [...groups.entries()].sort((a, b) => b[1].eps.length - a[1].eps.length)
 
-  // mix: most slots are multi-endpoint rollups, the last 1–2 are isolated single-endpoint alerts
-  const singlesWanted = slots >= 4 ? 2 : slots >= 2 ? 1 : 0
-  const rollupWanted = Math.max(1, slots - singlesWanted)
-
-  const multi: Rollup[] = groupArr.slice(0, rollupWanted).map(([key, g], i) => {
-    // Issue severity = critical only for a platform outage OR when affected
-    // endpoints are majority-critical; otherwise it's a warning-level issue.
-    const criticalCount = g.eps.filter((e) => e.status === "critical").length
-    const severity: Exclude<Status, "healthy"> =
-      g.cause === "platform" || criticalCount * 2 >= g.eps.length ? "critical" : "warning"
-    return {
-      id: `ru-${locId}-${key}`,
+  return [...groups.entries()]
+    .map(([gkey, g], i) => ({
+      id: `ru-${locId}-${gkey}`,
       locationId: locId,
       locationName: loc.name,
-      severity,
+      severity: g.severity,
       title: g.title,
       cause: g.cause,
       affected: g.eps.length,
       endpoints: g.eps,
-      startedMinAgo: 8 + i * 13,
-    }
-  })
-
-  const used = new Set(multi.flatMap((r) => r.endpoints.map((e) => e.id)))
-  const singlesPool = unhealthy.filter((e) => !used.has(e.id))
-  // interleave critical + warning so single-endpoint issues carry a mix of severities
-  const critPool = singlesPool.filter((e) => e.status === "critical")
-  const warnPool = singlesPool.filter((e) => e.status === "warning")
-  const interleaved: Endpoint[] = []
-  for (let i = 0; i < Math.max(critPool.length, warnPool.length); i++) {
-    if (critPool[i]) interleaved.push(critPool[i])
-    if (warnPool[i]) interleaved.push(warnPool[i])
-  }
-  const singles: Rollup[] = interleaved.slice(0, singlesWanted).map((e, i) => ({
-    id: `ru1-${e.id}`,
-    locationId: locId,
-    locationName: loc.name,
-    severity: e.status as Exclude<Status, "healthy">,
-    title: singleReasons[(i + locId.length) % singleReasons.length],
-    cause: "other" as RollupCause,
-    affected: 1,
-    endpoints: [e],
-    startedMinAgo: 4 + i * 6,
-  }))
-
-  const result = [...multi, ...singles]
-  result.sort((a, b) => sev[a.severity] - sev[b.severity] || b.affected - a.affected)
-  return result.slice(0, slots)
+      startedMinAgo: 6 + i * 11,
+    }))
+    .sort((a, b) => sev[a.severity] - sev[b.severity] || b.affected - a.affected)
 }
 
 export function rollupsAll(): Rollup[] {
@@ -443,34 +409,9 @@ export function rollupsAll(): Rollup[] {
     .sort((a, b) => sev[a.severity] - sev[b.severity] || b.affected - a.affected)
 }
 
-// Critical issues for the Overview "needs attention" card, derived directly from
-// a location's CRITICAL devices (grouped by cause) — NOT capped by activeAlerts.
-// `affected` = number of critical devices in the group, so the totals reconcile
-// exactly with the map tooltip's critical count. (The Issues page / KPI keep the
-// curated rollup model above; this is a device-accurate critical lens.)
+// The Overview "needs attention" card = the critical slice of the same model.
 export function criticalIssuesForLocation(locId: string): Rollup[] {
-  const loc = locations.find((l) => l.id === locId)
-  if (!loc) return []
-  const crit = endpoints.filter((e) => e.locationId === locId && e.status === "critical")
-  const groups = new Map<string, { title: string; cause: RollupCause; eps: Endpoint[] }>()
-  for (const e of crit) {
-    const { cause, key, title } = categorize(e)
-    if (!groups.has(key)) groups.set(key, { title, cause, eps: [] })
-    groups.get(key)!.eps.push(e)
-  }
-  return [...groups.entries()]
-    .sort((a, b) => b[1].eps.length - a[1].eps.length)
-    .map(([key, g], i) => ({
-      id: `ci-${locId}-${key}`,
-      locationId: locId,
-      locationName: loc.name,
-      severity: "critical" as Exclude<Status, "healthy">,
-      title: g.title,
-      cause: g.cause,
-      affected: g.eps.length,
-      endpoints: g.eps,
-      startedMinAgo: 6 + i * 11,
-    }))
+  return rollupsForLocation(locId).filter((r) => r.severity === "critical")
 }
 
 // ---- derived display status (so a location's dot always matches its issues) --
