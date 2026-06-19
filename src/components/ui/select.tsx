@@ -29,7 +29,7 @@ function SelectContent({ className, children, position = "popper", ...props }: R
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         className={cn(
-          "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-[var(--border-neutral-muted)] bg-[var(--bg-overlay)] text-foreground shadow-md animate-in fade-in-0 zoom-in-95",
+          "relative z-[100] max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-[var(--border-neutral-muted)] bg-[var(--bg-overlay)] text-foreground shadow-md animate-in fade-in-0 zoom-in-95",
           position === "popper" && "data-[side=bottom]:translate-y-1",
           className
         )}
