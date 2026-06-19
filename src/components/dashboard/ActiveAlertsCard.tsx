@@ -2,7 +2,7 @@ import { ArrowRight, CircleCheck, Timer, Bot, ChevronRight, Siren, Wifi, Activit
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { KpiCard } from "./KpiCard"
-import { locations, locationById, recentActivityFor, type RecentActivity, type Status } from "@/data/dashboard"
+import { locations, locationById, countryById, citiesInCountry, recentActivityFor, type RecentActivity, type Status } from "@/data/dashboard"
 import { rollupsForLocation, rollupsAll, type RollupCause, type Rollup } from "@/data/endpoints"
 
 const iconMap: Record<string, LucideIcon> = { resolved: CircleCheck, time: Timer, auto: Bot }
@@ -14,8 +14,9 @@ const sevTone: Record<Exclude<Status, "healthy">, { bg: string; fg: string; dot:
   warning: { bg: "var(--bg-warning-subtle)", fg: "var(--fg-on-warning-subtle)", dot: "var(--status-warning)" },
 }
 
-function aggregateRecent(): RecentActivity {
-  const all = locations.map((l) => recentActivityFor(l.id))
+function aggregateRecent(ids?: string[]): RecentActivity {
+  const src = ids ? ids : locations.map((l) => l.id)
+  const all = src.map((id) => recentActivityFor(id))
   return {
     resolved: all.reduce((s, r) => s + r.resolved, 0),
     avgTime: "23m",
@@ -25,18 +26,28 @@ function aggregateRecent(): RecentActivity {
 
 export function ActiveAlertsCard({
   selectedId,
+  country = null,
   onViewAll,
   onOpenAlert,
 }: {
   selectedId: string
+  /** Map scope when no specific city is selected: filter to this country's cities. */
+  country?: string | null
   onViewAll: () => void
   onOpenAlert: (rollups: Rollup[], index: number) => void
 }) {
   const isAll = selectedId === "all"
   const loc = locationById(selectedId)
-  const name = isAll ? "all locations" : loc?.name ?? "—"
+  // Scope mirrors the map: a selected city → that city; else a drilled-in
+  // country → all its cities; else the whole fleet.
+  const scoped = !isAll
+    ? rollupsForLocation(selectedId)
+    : country
+      ? citiesInCountry(country).flatMap((c) => rollupsForLocation(c.id))
+      : rollupsAll()
+  const name = !isAll ? loc?.name ?? "—" : country ? countryById(country)?.name ?? "all locations" : "all locations"
   // Overview surfaces critical issues only; warnings live on the Issues page.
-  const rollups = (isAll ? rollupsAll() : rollupsForLocation(selectedId)).filter((r) => r.severity === "critical")
+  const rollups = scoped.filter((r) => r.severity === "critical")
   const totalAffected = rollups.reduce((s, r) => s + r.affected, 0)
 
   return (
@@ -119,7 +130,9 @@ export function ActiveAlertsCard({
           </p>
           <div className="flex flex-wrap items-center gap-2 py-2">
             {(() => {
-              const recent = isAll ? aggregateRecent() : recentActivityFor(selectedId)
+              const recent = isAll
+                ? aggregateRecent(country ? citiesInCountry(country).map((c) => c.id) : undefined)
+                : recentActivityFor(selectedId)
               const items = [
                 { id: "resolved", label: "Resolved", value: String(recent.resolved), icon: "resolved" as const },
                 { id: "avg", label: "Average time", value: recent.avgTime, icon: "time" as const },

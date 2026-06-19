@@ -263,22 +263,19 @@ function LocationsPanel({
 export function MapAndLocations({
   selectedId,
   onSelect,
+  country,
+  onCountryChange,
   onViewEndpoints,
 }: {
   selectedId: string
   onSelect: (id: string) => void
+  country: string | null
+  onCountryChange: (id: string | null) => void
   onViewEndpoints: (loc?: string | string[]) => void
 }) {
-  // derive the initial drilled country from a selected city, else world view
-  const initialCountry = (() => {
-    const loc: LocationRow | undefined = selectedId === "all" ? undefined : locationById(selectedId)
-    return loc?.countryId ?? null
-  })()
-  const [country, setCountry] = useState<string | null>(initialCountry)
-
   const handleSelectCity = (id: string) => {
     const loc = locationById(id)
-    if (loc) setCountry(loc.countryId)
+    if (loc) onCountryChange(loc.countryId)
     onSelect(id)
   }
   // entering a country: auto-select only when it has a single city; otherwise
@@ -288,12 +285,12 @@ export function MapAndLocations({
     if (cities.length === 1) {
       handleSelectCity(cities[0].id)
     } else {
-      setCountry(id)
+      onCountryChange(id)
       onSelect("all")
     }
   }
   const handleAllLocations = () => {
-    setCountry(null)
+    onCountryChange(null)
     onSelect("all")
   }
 
