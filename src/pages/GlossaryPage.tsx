@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 interface Term { term: string; def: string; eg?: string }
 interface Group { title: string; terms: Term[] }
@@ -55,9 +56,7 @@ export function GlossaryPage() {
     <div className="flex flex-col gap-4">
       <Card className="w-full rounded-xl p-5">
         <div className="flex items-center gap-2">
-          <span className="rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide" style={{ background: "var(--bg-primary-subtle)", color: "var(--fg-primary-emphasis)" }}>
-            Internal
-          </span>
+          <Badge variant="info" className="uppercase tracking-wide">Internal</Badge>
           <span className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Product development · not shipped in the built product</span>
         </div>
         <h2 className="mt-3 text-heading-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>Glossary</h2>

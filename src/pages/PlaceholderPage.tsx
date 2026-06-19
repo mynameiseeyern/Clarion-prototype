@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react"
 import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 export function PlaceholderPage({
   title,
@@ -25,12 +26,7 @@ export function PlaceholderPage({
         <p className="text-body-sm" style={{ color: "var(--fg-neutral-muted)" }}>
           {description}
         </p>
-        <span
-          className="mt-1 rounded-full px-2.5 py-1 text-xs font-medium"
-          style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}
-        >
-          Coming soon
-        </span>
+        <Badge variant="secondary" className="mt-1">Coming soon</Badge>
       </div>
     </Card>
   )

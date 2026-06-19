@@ -1,4 +1,5 @@
 import { Monitor, Siren, Tally5 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { KpiCard } from "./KpiCard"
 import { SegmentedBar, LegendItem } from "./primitives"
 import { rollupsAll } from "@/data/endpoints"
@@ -44,12 +45,7 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
         <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
           Entire fleet
         </span>
-        <span
-          className="flex h-5 items-center rounded-full px-1.5 text-xs font-medium"
-          style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-emphasis)" }}
-        >
-          {live.endpoints.toLocaleString()} total devices
-        </span>
+        <Badge variant="secondary">{live.endpoints.toLocaleString()} total devices</Badge>
       </div>
 
       <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-stretch">

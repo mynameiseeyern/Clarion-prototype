@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react"
 import { Search, X, Siren, Wifi, Activity, Gauge, ChevronRight, type LucideIcon } from "lucide-react"
 import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel } from "@/components/ui/select"
 import { countries, citiesInCountry, type Status } from "@/data/dashboard"
 import { rollupsAll, type Rollup, type RollupCause } from "@/data/endpoints"
@@ -50,9 +51,7 @@ export function AlertsTable({
     <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
       <div className="flex items-center gap-2 px-4 py-4">
         <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Issues</h2>
-        <span className="flex h-5 items-center rounded-full px-2 text-xs font-medium" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>
-          {rows.length} open · {totalAffected.toLocaleString()} devices
-        </span>
+        <Badge variant="secondary">{rows.length} open · {totalAffected.toLocaleString()} devices</Badge>
       </div>
 
       {/* toolbar */}

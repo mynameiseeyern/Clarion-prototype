@@ -1,6 +1,7 @@
 import { ArrowRight, CircleCheck, Timer, Bot, ChevronRight, Siren, Wifi, Activity, Gauge, type LucideIcon } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { KpiCard } from "./KpiCard"
 import { locations, locationById, countryById, citiesInCountry, recentActivityFor, type RecentActivity, type Status } from "@/data/dashboard"
 import { criticalIssuesForLocation, type RollupCause, type Rollup } from "@/data/endpoints"
@@ -59,9 +60,7 @@ export function ActiveAlertsCard({
         <div className="flex items-center gap-2">
           <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Critical issues needing attention</h2>
           {rollups.length > 0 && (
-            <span className="flex h-5 items-center rounded-full px-2 text-xs font-medium" style={{ background: "var(--bg-danger-subtle)", color: "var(--fg-on-danger-subtle)" }}>
-              {rollups.length}
-            </span>
+            <Badge variant="danger">{rollups.length}</Badge>
           )}
         </div>
         <Button variant="outline" size="sm" className="gap-1.5" onClick={onViewAll}>
@@ -94,9 +93,9 @@ export function ActiveAlertsCard({
                   <div className="flex min-w-px flex-1 flex-col">
                     <span className="flex items-center gap-2">
                       <span className="truncate text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{r.title}</span>
-                      <span className="shrink-0 rounded-full px-1.5 text-xs font-medium" style={{ background: tone.bg, color: tone.fg }}>
+                      <Badge variant={r.severity === "critical" ? "danger" : "warning"}>
                         {r.affected} device{r.affected === 1 ? "" : "s"}
-                      </span>
+                      </Badge>
                     </span>
                     <span className="truncate text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
                       {isAll ? r.locationName + " · " : ""}started {r.startedMinAgo}m ago

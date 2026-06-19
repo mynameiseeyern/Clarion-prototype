@@ -1,5 +1,6 @@
 import { ShieldCheck, UserCog, Crown, ReceiptText, KeyRound, Network, Users, Boxes, type LucideIcon } from "lucide-react"
 import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 // Internal documentation for the Administration domain — RBAC, Groups, billing.
 // Mirrors the Fleet "Product development" docs, but scoped to admin concepts.
@@ -9,7 +10,7 @@ function DocHeader({ title, blurb }: { title: string; blurb: string }) {
   return (
     <Card className="w-full rounded-xl p-5">
       <div className="flex items-center gap-2">
-        <span className="rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide" style={{ background: "var(--bg-primary-subtle)", color: "var(--fg-primary-emphasis)" }}>Internal</span>
+        <Badge variant="info" className="uppercase tracking-wide">Internal</Badge>
         <span className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Product development · Administration · not shipped in the built product</span>
       </div>
       <h2 className="mt-3 text-heading-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>{title}</h2>
@@ -43,15 +44,11 @@ function ConceptRow({ icon: Icon, title, children }: { icon: LucideIcon; title: 
 
 const em = (t: string) => <strong style={{ color: "var(--fg-neutral-emphasis)" }}>{t}</strong>
 
-const tag = (label: string, phase: "MVP" | "1.0" | "Later") => {
-  const map = {
-    MVP: ["var(--bg-success-subtle)", "var(--fg-on-success-subtle)"],
-    "1.0": ["var(--bg-info-subtle)", "var(--fg-on-info-subtle)"],
-    Later: ["var(--bg-neutral-subtle)", "var(--fg-neutral-muted)"],
-  } as const
-  const [bg, fg] = map[phase]
-  return <span className="ml-2 rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide" style={{ background: bg, color: fg }}>{label}</span>
-}
+const phaseVariant = { MVP: "success", "1.0": "info", Later: "secondary" } as const
+
+const tag = (label: string, phase: "MVP" | "1.0" | "Later") => (
+  <Badge variant={phaseVariant[phase]} className="ml-2 uppercase tracking-wide">{label}</Badge>
+)
 
 /* ------------------------------------------------------------------ RBAC -- */
 

@@ -4,6 +4,7 @@ import { X, Plus, Search, Trash2, Check, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Chip } from "@/components/ui/chip"
+import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverAnchor, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { ThresholdSlider } from "./ThresholdSlider"
 import {
@@ -32,7 +33,7 @@ function ScopePicker({ value, onChange, claims, selectedMetrics, container }: { 
   const disabledSection = (label: string) => (
     <div className="flex items-center justify-between px-2 py-1.5 opacity-50">
       <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>{label}</span>
-      <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>Coming later</span>
+      <Badge variant="secondary">Coming later</Badge>
     </div>
   )
 
