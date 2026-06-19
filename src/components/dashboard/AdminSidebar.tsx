@@ -1,6 +1,6 @@
 import { GalleryVerticalEnd, ChevronsUpDown } from "lucide-react"
 import { fleet } from "@/data/dashboard"
-import { adminNavItems, devNavItems, type NavItem, type PageId } from "@/nav"
+import { adminNavItems, adminDocNavItems, type NavItem, type PageId } from "@/nav"
 
 /**
  * Sidebar for the Administration experience. Same chrome as the Fleet sidebar
@@ -45,7 +45,7 @@ export function AdminSidebar({
       <div className="flex-1 overflow-y-auto p-2">
         <NavGroup label="Administration" items={adminNavItems} active={active} onNavigate={onNavigate} />
         <div className="mt-3">
-          <NavGroup label="Product development" items={devNavItems} active={active} onNavigate={onNavigate} />
+          <NavGroup label="Product development" items={adminDocNavItems} active={active} onNavigate={onNavigate} />
         </div>
       </div>
 

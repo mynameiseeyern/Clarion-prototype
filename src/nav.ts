@@ -12,12 +12,16 @@ import {
   RadioTower,
   CreditCard,
   ScrollText,
+  ShieldCheck,
+  Network,
+  ReceiptText,
   type LucideIcon,
 } from "lucide-react"
 
 export type PageId =
   | "overview" | "endpoints" | "alerts" | "thresholds"
   | "users" | "groups" | "widgets" | "subscription" | "audit"
+  | "rbacdoc" | "groupsdoc" | "billingdoc"
   | "glossary" | "issuesdoc" | "devicesdoc" | "components"
 
 export interface NavItem {
@@ -44,6 +48,14 @@ export const adminNavItems: NavItem[] = [
   { id: "audit", label: "Audit log", icon: ScrollText },
 ]
 
+// Internal Administration docs (shown in the Admin sidebar's "Product
+// development" group). Scoped to admin concepts — RBAC, Groups, billing.
+export const adminDocNavItems: NavItem[] = [
+  { id: "rbacdoc", label: "Roles & permissions", icon: ShieldCheck },
+  { id: "groupsdoc", label: "Groups & hierarchy", icon: Network },
+  { id: "billingdoc", label: "Subscription & billing", icon: ReceiptText },
+]
+
 // Internal — not shipped in the built product.
 export const devNavItems: NavItem[] = [
   { id: "components", label: "Components", icon: Component },
@@ -53,7 +65,7 @@ export const devNavItems: NavItem[] = [
 ]
 
 export const pageLabel = (id: PageId) =>
-  [...navItems, ...adminNavItems, ...devNavItems].find((n) => n.id === id)?.label ?? "Overview"
+  [...navItems, ...adminNavItems, ...adminDocNavItems, ...devNavItems].find((n) => n.id === id)?.label ?? "Overview"
 
 // Optional one-line context under a page title (shown in the top chrome).
 // Add entries only where a subtitle is genuinely useful — keep pages lean otherwise.
@@ -64,6 +76,9 @@ export const pageSubtitle: Partial<Record<PageId, string>> = {
   widgets: "Register, assign and revoke endpoint Widgets. A Widget becomes a Device once it's set up and reporting.",
   subscription: "Review your plan, usage and billing.",
   audit: "Track who changed what, and when.",
+  rbacdoc: "How roles, scope and permissions work.",
+  groupsdoc: "How the Group tree scopes visibility.",
+  billingdoc: "Plan entitlements, usage and payment model.",
 }
 
 // ---- URL routing (shareable per-page links) --------------------------------
@@ -78,6 +93,9 @@ export const pagePath: Record<PageId, string> = {
   widgets: "/admin/widgets",
   subscription: "/admin/subscription",
   audit: "/admin/audit",
+  rbacdoc: "/admin/docs/roles",
+  groupsdoc: "/admin/docs/groups",
+  billingdoc: "/admin/docs/billing",
   glossary: "/glossary",
   devicesdoc: "/devices-model",
   issuesdoc: "/issues-model",
@@ -96,7 +114,7 @@ export const pageFromPath = (path: string): PageId => {
 
 export type Experience = "fleet" | "admin"
 
-export const adminPageIds: PageId[] = ["users", "groups", "widgets", "subscription", "audit"]
+export const adminPageIds: PageId[] = ["users", "groups", "widgets", "subscription", "audit", "rbacdoc", "groupsdoc", "billingdoc"]
 
 export const experienceOf = (id: PageId): Experience =>
   (adminPageIds as string[]).includes(id) ? "admin" : "fleet"

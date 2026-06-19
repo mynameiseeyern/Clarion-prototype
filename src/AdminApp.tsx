@@ -5,10 +5,7 @@ import { AdminSidebar } from "@/components/dashboard/AdminSidebar"
 import { ExperienceMenu } from "@/components/dashboard/ExperienceMenu"
 import { UsersRolesPage } from "@/pages/UsersRolesPage"
 import { PlaceholderPage } from "@/pages/PlaceholderPage"
-import { GlossaryPage } from "@/pages/GlossaryPage"
-import { DevicesModelPage } from "@/pages/DevicesModelPage"
-import { IssuesDocPage } from "@/pages/IssuesDocPage"
-import { ComponentsPage } from "@/pages/ComponentsPage"
+import { RbacDocPage, GroupsDocPage, BillingDocPage } from "@/pages/AdminDocs"
 import { Toaster } from "@/components/ui/toast"
 
 /**
@@ -101,11 +98,10 @@ export function AdminApp({
           {page === "audit" && (
             <PlaceholderPage title="Audit log" icon={ScrollText} description="Search and filter a record of who changed what, and when — across Members, Groups, Widgets and settings." />
           )}
-          {/* Shared Product development docs (also in the Fleet sidebar) */}
-          {page === "glossary" && <GlossaryPage />}
-          {page === "devicesdoc" && <DevicesModelPage />}
-          {page === "issuesdoc" && <IssuesDocPage />}
-          {page === "components" && <ComponentsPage />}
+          {/* Administration docs (RBAC, Groups, billing) */}
+          {page === "rbacdoc" && <RbacDocPage />}
+          {page === "groupsdoc" && <GroupsDocPage />}
+          {page === "billingdoc" && <BillingDocPage />}
         </div>
       </div>
 
