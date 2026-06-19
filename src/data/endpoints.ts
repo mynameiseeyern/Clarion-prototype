@@ -243,6 +243,10 @@ function generate(): Endpoint[] {
 
 export const endpoints: Endpoint[] = generate()
 
+const endpointIndex = new Map(endpoints.map((e) => [e.id, e]))
+/** Look up a single device by id (for drawer deep-linking). */
+export const endpointById = (id: string): Endpoint | undefined => endpointIndex.get(id)
+
 // ---- selectors -------------------------------------------------------------
 
 export type SortKey = "status" | "user" | "location" | "score" | "event"

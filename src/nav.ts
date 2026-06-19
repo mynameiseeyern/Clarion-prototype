@@ -107,6 +107,24 @@ export const pageFromPath = (path: string): PageId => {
   return (Object.keys(pagePath) as PageId[]).find((id) => pagePath[id] === clean) ?? "overview"
 }
 
+// ---- Drawer deep-linking (query param on the current page) ------------------
+// A drilldown is a modal layered over a page, so it lives as a query param on
+// that page rather than its own route:  /devices?device=ep_1842 · /issues?issue=al_07
+export interface DrawerParams { device?: string; issue?: string }
+
+export const readDrawerParams = (search: string): DrawerParams => {
+  const p = new URLSearchParams(search)
+  return { device: p.get("device") ?? undefined, issue: p.get("issue") ?? undefined }
+}
+
+export const buildPath = (page: PageId, drawer: DrawerParams = {}): string => {
+  const p = new URLSearchParams()
+  if (drawer.device) p.set("device", drawer.device)
+  if (drawer.issue) p.set("issue", drawer.issue)
+  const qs = p.toString()
+  return qs ? `${pagePath[page]}?${qs}` : pagePath[page]
+}
+
 // ---- Experiences (two surfaces in one repo) --------------------------------
 // "fleet" = the supervisor dashboard · "admin" = the Administration surface.
 // The Administration experience has its own shell (sidebar + chrome); it's
