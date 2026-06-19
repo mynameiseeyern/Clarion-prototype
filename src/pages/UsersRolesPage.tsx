@@ -12,6 +12,7 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { toast } from "@/components/ui/toast"
+import { InviteMemberDialog, type InviteDraft } from "@/components/admin/InviteMemberDialog"
 import {
   users as seedUsers, groupName, roleLabel, roleBlurb, statusLabel,
   type AccountUser, type UserRole, type UserStatus,
@@ -43,6 +44,7 @@ export function UsersRolesPage() {
   const [search, setSearch] = useState("")
   const [role, setRole] = useState<UserRole | "all">("all")
   const [status, setStatus] = useState<UserStatus | "all">("active")
+  const [inviteOpen, setInviteOpen] = useState(false)
 
   const stats = useMemo(() => ({
     active: rows.filter((u) => u.status === "active").length,
@@ -85,6 +87,18 @@ export function UsersRolesPage() {
   const onEditRole = (u: AccountUser) =>
     toast({ title: `Edit role — ${u.name}`, description: "Role editor coming next.", variant: "info" })
 
+  const onInvite = ({ email, role: r, groups: gs }: InviteDraft) => {
+    const name = email.split("@")[0].split(/[._-]+/).filter(Boolean)
+      .map((p) => p[0].toUpperCase() + p.slice(1)).join(" ") || email
+    const newUser: AccountUser = {
+      id: `u-${Date.now()}`, name, email, role: r, status: "invited",
+      groups: gs, lastActive: null, invitedAgo: "just now",
+    }
+    setRows((xs) => [newUser, ...xs])
+    setStatus("invited")
+    toast({ title: `Invite sent to ${email}`, description: "Email stubbed in prototype.", variant: "success" })
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {/* KPI strip */}
@@ -102,12 +116,8 @@ export function UsersRolesPage() {
           <span className="flex h-5 items-center rounded-full px-2 text-xs font-medium" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>
             {filtered.length} {filtered.length === 1 ? "user" : "users"}
           </span>
-          <Button
-            size="sm"
-            className="ml-auto"
-            onClick={() => toast({ title: "Invite user", description: "Invite flow coming next.", variant: "info" })}
-          >
-            <Plus /> Invite user
+          <Button size="sm" className="ml-auto" onClick={() => setInviteOpen(true)}>
+            <Plus /> Invite member
           </Button>
         </div>
 
@@ -259,6 +269,13 @@ export function UsersRolesPage() {
           </span>
         </div>
       </Card>
+
+      <InviteMemberDialog
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        existingEmails={rows.map((u) => u.email)}
+        onInvite={onInvite}
+      />
     </div>
   )
 }
