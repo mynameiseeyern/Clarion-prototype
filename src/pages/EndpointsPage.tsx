@@ -6,11 +6,13 @@ export function EndpointsPage({
   onLocationsChange,
   onOpenEndpoint,
   openEndpointId,
+  showAll,
 }: {
   locationIds: string[]
   onLocationsChange: (ids: string[]) => void
   onOpenEndpoint: (rows: Endpoint[], index: number) => void
   openEndpointId?: string | null
+  showAll?: boolean
 }) {
   return (
     <EndpointsTable
@@ -18,6 +20,7 @@ export function EndpointsPage({
       onLocationsChange={onLocationsChange}
       onOpenEndpoint={onOpenEndpoint}
       openEndpointId={openEndpointId}
+      showAll={showAll}
     />
   )
 }

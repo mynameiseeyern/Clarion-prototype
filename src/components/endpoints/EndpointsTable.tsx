@@ -181,15 +181,25 @@ export function EndpointsTable({
   onLocationsChange,
   onOpenEndpoint,
   openEndpointId,
+  showAll = false,
 }: {
   locationIds: string[]
   onLocationsChange: (ids: string[]) => void
   onOpenEndpoint: (rows: Endpoint[], index: number) => void
   openEndpointId?: string | null
+  /** Opened via "View devices": show all statuses (Issues only off) when the
+   *  scope has healthy devices, so they aren't hidden behind the triage default. */
+  showAll?: boolean
 }) {
   const [search, setSearch] = useState("")
-  // single source of truth for status filtering (empty = all). Default = the "Issues only" view.
-  const [statuses, setStatuses] = useState<EndpointStatus[]>(["critical", "warning"])
+  // single source of truth for status filtering (empty = all). Default = the
+  // "Issues only" triage view, unless opened via "View devices" on a scope that
+  // has healthy devices — then start with everything shown.
+  const [statuses, setStatuses] = useState<EndpointStatus[]>(() =>
+    showAll && queryEndpoints({ locationIds, statuses: ["healthy"] }).length > 0
+      ? []
+      : ["critical", "warning"]
+  )
   const [sortKey, setSortKey] = useState<SortKey>("status")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [page, setPage] = useState(1)

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react"
-import { Check, ShieldCheck, AlertCircle } from "lucide-react"
+import { ShieldCheck, AlertCircle } from "lucide-react"
 import { Dialog } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-import { Chip } from "@/components/ui/chip"
-import { groups, type UserRole } from "@/data/users"
+import { GroupTreePicker } from "@/components/admin/GroupTreePicker"
+import { type UserRole } from "@/data/users"
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -42,9 +42,6 @@ export function InviteMemberDialog({
   const duplicate = emailValid && existingEmails.some((e) => e.toLowerCase() === trimmed)
   const needsGroups = role === "manager" && picked.length === 0
   const canSend = emailValid && !duplicate && !needsGroups
-
-  const toggleGroup = (id: string) =>
-    setPicked((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : [...xs, id]))
 
   const submit = () => {
     setTouched(true)
@@ -108,27 +105,15 @@ export function InviteMemberDialog({
         {role === "manager" ? (
           <div className="flex flex-col gap-1.5">
             <Label>Groups</Label>
-            <div className="flex flex-wrap gap-1.5">
-              {groups.map((g) => {
-                const on = picked.includes(g.id)
-                return (
-                  <Chip
-                    key={g.id}
-                    size="sm"
-                    selected={on}
-                    leading={on ? <Check /> : undefined}
-                    onClick={() => toggleGroup(g.id)}
-                  >
-                    {g.name}
-                  </Chip>
-                )
-              })}
-            </div>
+            <GroupTreePicker value={picked} onChange={setPicked} />
             {touched && needsGroups && (
               <span className="inline-flex items-center gap-1 text-xs" style={{ color: "var(--fg-danger-emphasis)" }}>
                 <AlertCircle className="size-3" /> Pick at least one group for a CC Manager.
               </span>
             )}
+            <span className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
+              Assigning a group includes everything beneath it.
+            </span>
           </div>
         ) : (
           <div className="flex items-center gap-2 rounded-lg p-2.5 text-xs" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>

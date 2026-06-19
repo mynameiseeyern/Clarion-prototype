@@ -57,6 +57,8 @@ export default function App() {
   const [page, setPage] = useState<PageId>(() => pageFromPath(window.location.pathname))
   const [selectedId, setSelectedId] = useState<string>(DEFAULT_LOCATION)
   const [endpointFilters, setEndpointFilters] = useState<string[]>([])
+  // true when the Devices page was reached via a "View devices" action
+  const [endpointsShowAll, setEndpointsShowAll] = useState(false)
   const [alertFilter, setAlertFilter] = useState<string>("all")
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [drawer, setDrawer] = useState<DeviceDrawer | null>(() => deviceDrawerFromUrl())
@@ -112,8 +114,8 @@ export default function App() {
   }, [])
 
   // Navigating to another page closes any open drawer (a drilldown belongs to
-  // the page it was opened from).
-  const navigate = (p: PageId) => { setDrawer(null); setAlertDrawer(null); setPage(p) }
+  // the page it was opened from). Also resets the "View devices" show-all intent.
+  const navigate = (p: PageId) => { setDrawer(null); setAlertDrawer(null); setEndpointsShowAll(false); setPage(p) }
 
   const handleViewEndpoints = (loc?: string | string[]) => {
     if (Array.isArray(loc)) setEndpointFilters(loc)
@@ -122,6 +124,9 @@ export default function App() {
       setEndpointFilters(id === "all" ? [] : [id])
     }
     navigate("endpoints")
+    // Opened explicitly to see a location's devices → start with all statuses
+    // shown (the table drops the Issues-only default when healthy devices exist).
+    setEndpointsShowAll(true)
   }
 
   const handleViewAllAlerts = () => {
@@ -224,6 +229,7 @@ export default function App() {
               onLocationsChange={setEndpointFilters}
               onOpenEndpoint={(rows, index) => setDrawer({ rows, index })}
               openEndpointId={openEndpointId}
+              showAll={endpointsShowAll}
             />
           )}
           {page === "alerts" && (
