@@ -94,6 +94,51 @@ const statusBadge: Record<EndpointStatus, "success" | "warning" | "danger" | "se
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
 const initials = (name: string) => name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
 
+// status options ordered worst-first, offline last
+const STATUS_OPTIONS: { id: EndpointStatus; label: string }[] = [
+  { id: "critical", label: "Critical" },
+  { id: "warning", label: "Warning" },
+  { id: "healthy", label: "Healthy" },
+  { id: "offline", label: "Offline" },
+]
+
+/** Multi-select status filter (empty = all statuses). */
+function StatusFilter({ value, onToggle, onClear }: { value: EndpointStatus[]; onToggle: (s: EndpointStatus) => void; onClear: () => void }) {
+  const [open, setOpen] = useState(false)
+  const label = value.length === 0 ? "All statuses" : value.length === 1 ? cap(value[0]) : `${value.length} statuses`
+  const rowCls = "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]"
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button type="button" className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm shadow-xs transition-colors hover:border-[var(--border-input-hovered)]"
+          style={{ background: "var(--bg-input-default)", border: "1px solid var(--border-input-default)", color: "var(--fg-neutral-emphasis)" }}>
+          <span>{label}</span>
+          <ChevronDown className="size-4" style={{ color: "var(--fg-neutral-muted)" }} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-48 p-1">
+        {STATUS_OPTIONS.map((o) => {
+          const on = value.includes(o.id)
+          return (
+            <button key={o.id} type="button" role="option" aria-selected={on} onClick={() => onToggle(o.id)} className={rowCls} style={{ color: "var(--fg-neutral-emphasis)" }}>
+              <span className="flex size-4 shrink-0 items-center justify-center rounded" style={{ background: on ? "var(--bg-primary-emphasis)" : "var(--bg-input-default)", border: `1px solid ${on ? "var(--bg-primary-emphasis)" : "var(--border-input-default)"}` }}>
+                {on && <Check className="size-3" style={{ color: "var(--fg-on-primary-emphasis)" }} />}
+              </span>
+              <span className="size-2 shrink-0 rounded-full" style={{ background: statusVar[o.id] }} />
+              <span className="flex-1">{o.label}</span>
+            </button>
+          )
+        })}
+        {value.length > 0 && (
+          <div className="mt-1 pt-1" style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
+            <button type="button" onClick={onClear} className={rowCls} style={{ color: "var(--fg-link-default)" }}>Clear</button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 function pageList(current: number, total: number): (number | "…")[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
   const out: (number | "…")[] = [1]
@@ -215,25 +260,19 @@ export function EndpointsTable({
           )}
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
+          {/* quick-filter preset */}
           <Chip
-            selected={issuesOnly}
-            aria-pressed={issuesOnly}
-            leading={issuesOnly ? <Check /> : undefined}
-            onClick={() => { setIssuesOnly((v) => { const next = !v; if (next) setStatus("all"); return next }); resetPage() }}
+            selected={issuesActive}
+            aria-pressed={issuesActive}
+            leading={issuesActive ? <Check /> : undefined}
+            onClick={() => { setStatuses(issuesActive ? [] : ["critical", "warning"]); resetPage() }}
           >
             Issues only
           </Chip>
+          {/* divider separating quick-filter presets from precise filters */}
+          <span className="mx-0.5 hidden h-5 w-px sm:block" style={{ background: "var(--border-neutral-muted)" }} aria-hidden />
           <LocationFilter value={locationIds} onChange={(ids) => { onLocationsChange(ids); resetPage() }} />
-          <Select value={status} onValueChange={(v) => { const s = v as EndpointStatus | "all"; setStatus(s); if (s !== "all") setIssuesOnly(false); resetPage() }}>
-            <SelectTrigger className="h-9"><SelectValue placeholder="Status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="critical">Critical</SelectItem>
-              <SelectItem value="warning">Warning</SelectItem>
-              <SelectItem value="healthy">Healthy</SelectItem>
-              <SelectItem value="offline">Offline</SelectItem>
-            </SelectContent>
-          </Select>
+          <StatusFilter value={statuses} onToggle={(s) => { toggleStatus(s); resetPage() }} onClear={() => { setStatuses([]); resetPage() }} />
         </div>
       </div>
 
