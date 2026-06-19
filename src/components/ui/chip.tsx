@@ -22,7 +22,7 @@ const chipVariants = cva(
     variants: {
       variant: {
         default:
-          "border-[var(--border-neutral-muted)] bg-[var(--bg-neutral-subtle)] text-[var(--fg-neutral-emphasis)]",
+          "border-[var(--border-neutral-muted)] bg-transparent text-[var(--fg-neutral-emphasis)]",
         outline:
           "border-[var(--border-neutral-emphasis)] bg-transparent text-[var(--fg-neutral-emphasis)]",
         primary:
@@ -37,7 +37,7 @@ const chipVariants = cva(
       },
       size: {
         sm: "h-6 gap-1 px-2 text-xs [&>svg]:size-3",
-        md: "h-7 gap-1.5 px-2.5 text-sm [&>svg]:size-3.5",
+        md: "h-8 gap-1.5 px-3 text-sm [&>svg]:size-3.5",
       },
       // applied when the chip is clickable / toggleable
       interactive: {
@@ -49,8 +49,11 @@ const chipVariants = cva(
   }
 )
 
+// Selected filter chip = neutral soft fill + auto leading tick (per the
+// Design System "Filter chip" spec). The tick is the selection signal, not a
+// brand-coloured fill. Focus is conveyed by the ring, matching the other chips.
 const selectedClasses =
-  "border-[var(--border-focused)] bg-[var(--bg-selected-subtle)] text-[var(--fg-on-primary-subtle)] hover:bg-[var(--bg-selected-subtle-hovered)] active:bg-[var(--bg-selected-subtle-pressed)]"
+  "border-[var(--border-neutral-muted)] bg-[var(--bg-neutral-muted)] text-[var(--fg-neutral-emphasis)] hover:bg-[var(--bg-neutral-muted-hovered)] active:bg-[var(--bg-neutral-muted-pressed)]"
 
 type ChipBaseProps = VariantProps<typeof chipVariants> & {
   /** Leading content: an icon, status dot, or avatar. */
