@@ -443,6 +443,36 @@ export function rollupsAll(): Rollup[] {
     .sort((a, b) => sev[a.severity] - sev[b.severity] || b.affected - a.affected)
 }
 
+// Critical issues for the Overview "needs attention" card, derived directly from
+// a location's CRITICAL devices (grouped by cause) — NOT capped by activeAlerts.
+// `affected` = number of critical devices in the group, so the totals reconcile
+// exactly with the map tooltip's critical count. (The Issues page / KPI keep the
+// curated rollup model above; this is a device-accurate critical lens.)
+export function criticalIssuesForLocation(locId: string): Rollup[] {
+  const loc = locations.find((l) => l.id === locId)
+  if (!loc) return []
+  const crit = endpoints.filter((e) => e.locationId === locId && e.status === "critical")
+  const groups = new Map<string, { title: string; cause: RollupCause; eps: Endpoint[] }>()
+  for (const e of crit) {
+    const { cause, key, title } = categorize(e)
+    if (!groups.has(key)) groups.set(key, { title, cause, eps: [] })
+    groups.get(key)!.eps.push(e)
+  }
+  return [...groups.entries()]
+    .sort((a, b) => b[1].eps.length - a[1].eps.length)
+    .map(([key, g], i) => ({
+      id: `ci-${locId}-${key}`,
+      locationId: locId,
+      locationName: loc.name,
+      severity: "critical" as Exclude<Status, "healthy">,
+      title: g.title,
+      cause: g.cause,
+      affected: g.eps.length,
+      endpoints: g.eps,
+      startedMinAgo: 6 + i * 11,
+    }))
+}
+
 // ---- derived display status (so a location's dot always matches its issues) --
 
 export function locationIssueCount(locId: string): number {

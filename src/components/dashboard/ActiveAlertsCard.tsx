@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { KpiCard } from "./KpiCard"
 import { locations, locationById, countryById, citiesInCountry, recentActivityFor, type RecentActivity, type Status } from "@/data/dashboard"
-import { rollupsForLocation, rollupsAll, type RollupCause, type Rollup } from "@/data/endpoints"
+import { criticalIssuesForLocation, type RollupCause, type Rollup } from "@/data/endpoints"
 
 const iconMap: Record<string, LucideIcon> = { resolved: CircleCheck, time: Timer, auto: Bot }
 const causeIcon: Record<RollupCause, LucideIcon> = {
@@ -40,14 +40,17 @@ export function ActiveAlertsCard({
   const loc = locationById(selectedId)
   // Scope mirrors the map: a selected city → that city; else a drilled-in
   // country → all its cities; else the whole fleet.
-  const scoped = !isAll
-    ? rollupsForLocation(selectedId)
+  const scopeIds = !isAll
+    ? [selectedId]
     : country
-      ? citiesInCountry(country).flatMap((c) => rollupsForLocation(c.id))
-      : rollupsAll()
+      ? citiesInCountry(country).map((c) => c.id)
+      : locations.map((l) => l.id)
   const name = !isAll ? loc?.name ?? "—" : country ? countryById(country)?.name ?? "all locations" : "all locations"
-  // Overview surfaces critical issues only; warnings live on the Issues page.
-  const rollups = scoped.filter((r) => r.severity === "critical")
+  // Critical issues are derived from the actual critical devices (grouped by
+  // cause), so `affected` totals match the map tooltip's critical count exactly.
+  const rollups = scopeIds
+    .flatMap((id) => criticalIssuesForLocation(id))
+    .sort((a, b) => b.affected - a.affected)
   const totalAffected = rollups.reduce((s, r) => s + r.affected, 0)
 
   return (
@@ -70,7 +73,7 @@ export function ActiveAlertsCard({
       {rollups.length > 0 ? (
         <>
           <div className="px-4 pt-3 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
-            {rollups.length} critical issue{rollups.length === 1 ? "" : "s"} · {totalAffected.toLocaleString()} devices affected in {name}
+            {rollups.length} critical issue{rollups.length === 1 ? "" : "s"} · {totalAffected.toLocaleString()} critical device{totalAffected === 1 ? "" : "s"} in {name}
           </div>
           <div className="flex flex-col p-2">
             {rollups.map((r, i) => {
