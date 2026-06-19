@@ -143,8 +143,8 @@ export function EndpointsTable({
   openEndpointId?: string | null
 }) {
   const [search, setSearch] = useState("")
-  const [status, setStatus] = useState<EndpointStatus | "all">("all")
-  const [issuesOnly, setIssuesOnly] = useState(true)
+  // single source of truth for status filtering (empty = all). Default = the "Issues only" view.
+  const [statuses, setStatuses] = useState<EndpointStatus[]>(["critical", "warning"])
   const [sortKey, setSortKey] = useState<SortKey>("status")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [page, setPage] = useState(1)
@@ -152,15 +152,15 @@ export function EndpointsTable({
 
   // hide the Location column only when exactly one city is selected
   const showLocation = locationIds.length !== 1
-  // "Issues only" applies unless the user has picked an explicit status
-  const issuesActive = issuesOnly && status === "all"
+  // the "Issues only" preset = exactly {critical, warning}
+  const issuesActive = statuses.length === 2 && statuses.includes("critical") && statuses.includes("warning")
+  const toggleStatus = (s: EndpointStatus) =>
+    setStatuses((xs) => (xs.includes(s) ? xs.filter((x) => x !== s) : [...xs, s]))
 
-  const rows = useMemo(() => {
-    let r = queryEndpoints({ search, locationIds, status, sortKey, sortDir })
-    // "Issues only" = critical + warning (offline is not an issue)
-    if (issuesActive) r = r.filter((e) => e.status === "critical" || e.status === "warning")
-    return r
-  }, [search, locationIds, status, sortKey, sortDir, issuesActive])
+  const rows = useMemo(
+    () => queryEndpoints({ search, locationIds, statuses, sortKey, sortDir }),
+    [search, locationIds, statuses, sortKey, sortDir]
+  )
 
   // keep the table page in sync with the row open in the drawer (so flicking
   // ↑/↓ past a page boundary keeps the in-view row visible & highlighted)
