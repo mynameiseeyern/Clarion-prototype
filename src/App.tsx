@@ -31,6 +31,9 @@ const alertTypeToCause: Record<string, RollupCause> = {
 export default function App() {
   const [dark, setDark] = useState(false)
   const [page, setPage] = useState<PageId>(() => pageFromPath(window.location.pathname))
+  // Which shell is showing. Sticky: only the top-right switch changes it, so
+  // opening a shared doc page from the Admin sidebar stays in the Admin shell.
+  const [experience, setExperience] = useState<Experience>(() => experienceOf(pageFromPath(window.location.pathname)))
   const [selectedId, setSelectedId] = useState<string>(DEFAULT_LOCATION)
   const [endpointFilters, setEndpointFilters] = useState<string[]>([])
   const [alertFilter, setAlertFilter] = useState<string>("all")
@@ -51,9 +54,13 @@ export default function App() {
     if (window.location.pathname !== path) window.history.pushState(null, "", path)
   }, [page])
 
-  // back/forward buttons → restore the page from the URL
+  // back/forward buttons → restore the page (and its shell) from the URL
   useEffect(() => {
-    const onPop = () => setPage(pageFromPath(window.location.pathname))
+    const onPop = () => {
+      const next = pageFromPath(window.location.pathname)
+      setPage(next)
+      setExperience(experienceOf(next))
+    }
     window.addEventListener("popstate", onPop)
     return () => window.removeEventListener("popstate", onPop)
   }, [])
@@ -87,11 +94,11 @@ export default function App() {
   const openEndpointId = drawer ? drawer.rows[drawer.index]?.id ?? null : null
   const openAlertId = alertDrawer ? alertDrawer.rows[alertDrawer.index]?.id ?? null : null
 
-  const switchExperience = (e: Experience) => setPage(defaultPageFor[e])
+  const switchExperience = (e: Experience) => { setExperience(e); setPage(defaultPageFor[e]) }
 
   // The Administration experience is its own shell (own sidebar + chrome),
   // sharing this repo's design system. Reached via the top-right account menu.
-  if (experienceOf(page) === "admin") {
+  if (experience === "admin") {
     return (
       <AdminApp
         page={page}

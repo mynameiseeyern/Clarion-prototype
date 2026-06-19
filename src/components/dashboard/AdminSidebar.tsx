@@ -1,11 +1,12 @@
 import { GalleryVerticalEnd, ChevronsUpDown } from "lucide-react"
 import { fleet } from "@/data/dashboard"
-import { adminNavItems, type PageId } from "@/nav"
+import { adminNavItems, devNavItems, type NavItem, type PageId } from "@/nav"
 
 /**
  * Sidebar for the Administration experience. Same chrome as the Fleet sidebar
- * (top-left header switches org), but lists the admin nav. The Fleet ↔ Admin
- * switch lives in the top-right account menu.
+ * (top-left header switches org), listing the admin nav plus the shared
+ * Product development docs. The Fleet ↔ Admin switch lives in the top-right
+ * account menu.
  */
 export function AdminSidebar({
   active,
@@ -40,35 +41,12 @@ export function AdminSidebar({
         </button>
       </div>
 
-      {/* Content — admin nav */}
+      {/* Content — admin nav + shared docs */}
       <div className="flex-1 overflow-y-auto p-2">
-        <div className="flex h-8 items-center px-2 text-xs font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
-          Administration
+        <NavGroup label="Administration" items={adminNavItems} active={active} onNavigate={onNavigate} />
+        <div className="mt-3">
+          <NavGroup label="Product development" items={devNavItems} active={active} onNavigate={onNavigate} />
         </div>
-        <nav className="flex flex-col gap-1">
-          {adminNavItems.map(({ id, label, icon: Icon }) => {
-            const isActive = id === active
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => onNavigate(id)}
-                className="relative flex h-8 w-full items-center gap-2 rounded-md p-2 text-left text-sm transition-colors"
-                style={isActive
-                  ? { background: "var(--bg-selected-subtle)", color: "var(--fg-neutral-emphasis)" }
-                  : { color: "var(--fg-neutral-emphasis)" }}
-                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)" }}
-                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent" }}
-              >
-                {isActive && (
-                  <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full" style={{ background: "var(--border-focused)" }} />
-                )}
-                <Icon className="size-4 shrink-0" style={{ color: isActive ? "var(--fg-primary-emphasis)" : "var(--fg-neutral-muted)" }} />
-                <span className="truncate">{label}</span>
-              </button>
-            )
-          })}
-        </nav>
       </div>
 
       {/* Footer */}
@@ -84,5 +62,46 @@ export function AdminSidebar({
         </div>
       </div>
     </aside>
+  )
+}
+
+function NavGroup({
+  label, items, active, onNavigate,
+}: {
+  label: string
+  items: NavItem[]
+  active: PageId
+  onNavigate: (id: PageId) => void
+}) {
+  return (
+    <>
+      <div className="flex h-8 items-center px-2 text-xs font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
+        {label}
+      </div>
+      <nav className="flex flex-col gap-1">
+        {items.map(({ id, label: itemLabel, icon: Icon }) => {
+          const isActive = id === active
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onNavigate(id)}
+              className="relative flex h-8 w-full items-center gap-2 rounded-md p-2 text-left text-sm transition-colors"
+              style={isActive
+                ? { background: "var(--bg-selected-subtle)", color: "var(--fg-neutral-emphasis)" }
+                : { color: "var(--fg-neutral-emphasis)" }}
+              onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)" }}
+              onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent" }}
+            >
+              {isActive && (
+                <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full" style={{ background: "var(--border-focused)" }} />
+              )}
+              <Icon className="size-4 shrink-0" style={{ color: isActive ? "var(--fg-primary-emphasis)" : "var(--fg-neutral-muted)" }} />
+              <span className="truncate">{itemLabel}</span>
+            </button>
+          )
+        })}
+      </nav>
+    </>
   )
 }
