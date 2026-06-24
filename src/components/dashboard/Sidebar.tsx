@@ -1,6 +1,19 @@
-import { GalleryVerticalEnd, ChevronsUpDown } from "lucide-react"
 import { fleet } from "@/data/dashboard"
 import { navItems, devNavItems, type NavItem, type PageId } from "@/nav"
+
+// Acme Contact Centre brand monogram (placeholder customer logo).
+function CompanyLogo() {
+  return (
+    <svg viewBox="0 0 32 32" className="size-8 shrink-0" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="#3730A3" />
+      <g stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none">
+        <path d="M16 8 L10 24" />
+        <path d="M16 8 L22 24" />
+        <path d="M12.4 18.6 H19.6" />
+      </g>
+    </svg>
+  )
+}
 
 export function Sidebar({
   active,
@@ -16,28 +29,14 @@ export function Sidebar({
       className="flex h-full w-64 shrink-0 flex-col"
       style={{ background: "var(--bg-sidebar)" }}
     >
-      {/* Header — workspace switcher */}
+      {/* Header — workspace brand */}
       <div className="flex h-16 items-center px-2">
-        <button
-          type="button"
-          className="flex w-full items-center gap-2 rounded-md p-2 transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]"
-        >
-          <span
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg"
-            style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)" }}
-          >
-            <GalleryVerticalEnd className="size-4" />
+        <div className="flex w-full items-center gap-2.5 p-2">
+          <CompanyLogo />
+          <span className="min-w-px flex-1 truncate text-sm font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>
+            {fleet.workspace}
           </span>
-          <span className="flex min-w-px flex-1 flex-col items-start gap-0.5 text-left">
-            <span className="w-full truncate text-sm font-semibold leading-none" style={{ color: "var(--fg-neutral-emphasis)" }}>
-              {fleet.workspace}
-            </span>
-            <span className="w-full truncate text-xs leading-none" style={{ color: "var(--fg-neutral-muted)" }}>
-              {fleet.product}
-            </span>
-          </span>
-          <ChevronsUpDown className="size-4 shrink-0" style={{ color: "var(--fg-neutral-subtle)" }} />
-        </button>
+        </div>
       </div>
 
       {/* Content — nav */}
