@@ -58,11 +58,11 @@ export function Sidebar({
             {secondsAgo === 0 ? "Streaming just now" : `Streaming ${secondsAgo}s ago`}
           </span>
         </div>
-        <div className="flex items-center gap-2 p-2">
+        <div className="flex items-center justify-center gap-2 p-2">
           <img src="/ir-logo.png" alt="IR" className="h-6 w-auto dark:hidden" />
           <img src="/ir-logo-white.png" alt="IR" className="hidden h-6 w-auto dark:block" />
-          <span className="text-body-sm" style={{ color: "var(--fg-neutral-subtle)" }}>|</span>
-          <span className="text-body-sm" style={{ color: "var(--fg-neutral-subtle)" }}>Clarity</span>
+          <span className="text-body-lg" style={{ color: "var(--fg-neutral-emphasis)" }}>|</span>
+          <span className="text-body-lg" style={{ color: "var(--fg-neutral-emphasis)" }}>Clarity</span>
         </div>
       </div>
     </aside>
