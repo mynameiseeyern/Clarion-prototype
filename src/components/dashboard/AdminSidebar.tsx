@@ -51,14 +51,9 @@ export function AdminSidebar({
 
       {/* Footer */}
       <div className="flex flex-col gap-2 px-4 py-2">
-        <div className="flex items-center gap-2 p-2">
-          <span className="text-body-lg" style={{ color: "var(--fg-neutral-emphasis)" }}>Powered by</span>
-          <span
-            className="flex size-6 items-center justify-center rounded-[2px] text-[10px] font-bold tracking-tight"
-            style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)" }}
-          >
-            IR
-          </span>
+        <div className="flex items-center p-2">
+          <img src="/ir-logo.png" alt="IR" className="h-6 w-auto dark:hidden" />
+          <img src="/ir-logo-white.png" alt="IR" className="hidden h-6 w-auto dark:block" />
         </div>
       </div>
     </aside>
