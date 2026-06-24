@@ -62,7 +62,7 @@ export function Sidebar({
           <img src="/ir-logo.png" alt="IR" className="h-6 w-auto dark:hidden" />
           <img src="/ir-logo-white.png" alt="IR" className="hidden h-6 w-auto dark:block" />
           {/* nudge text down to sit on the IR mark's optical centre (its top dot pads the bbox) */}
-          <span className="flex translate-y-0.5 items-center gap-2 text-body-lg" style={{ color: "var(--fg-neutral-emphasis)" }}>
+          <span className="flex translate-y-0.5 items-center gap-2 text-heading-xs" style={{ color: "var(--fg-neutral-emphasis)" }}>
             <span>|</span>
             <span>Clarity</span>
           </span>
