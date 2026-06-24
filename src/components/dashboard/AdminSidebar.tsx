@@ -58,8 +58,11 @@ export function AdminSidebar({
         <div className="flex items-center gap-2 p-2">
           <img src="/ir-logo.png" alt="IR" className="h-6 w-auto dark:hidden" />
           <img src="/ir-logo-white.png" alt="IR" className="hidden h-6 w-auto dark:block" />
-          <span className="text-body-lg" style={{ color: "var(--fg-neutral-emphasis)" }}>|</span>
-          <span className="text-body-lg" style={{ color: "var(--fg-neutral-emphasis)" }}>Clarity</span>
+          {/* nudge text down to sit on the IR mark's optical centre (its top dot pads the bbox) */}
+          <span className="flex translate-y-0.5 items-center gap-2 text-body-lg" style={{ color: "var(--fg-neutral-emphasis)" }}>
+            <span>|</span>
+            <span>Clarity</span>
+          </span>
         </div>
       </div>
     </aside>
