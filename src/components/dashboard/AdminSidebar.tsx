@@ -55,13 +55,15 @@ export function AdminSidebar({
 
       {/* Footer */}
       <div className="flex flex-col gap-2 px-4 py-2">
-        {/* IR brand lockup — clear space + min 'i' height (≈20px) per brand book;
+        {/* Product attribution + IR logo (min 'i' height ≈20px per brand book).
             "Clarity" set in Poppins to match the Integrated Research wordmark. */}
-        <div className="flex items-center gap-3 p-2">
+        <div className="flex flex-col gap-2 p-2">
+          <span className="text-sm" style={{ fontFamily: "'Poppins', ui-sans-serif, sans-serif" }}>
+            <span style={{ fontWeight: 500, color: "var(--fg-neutral-emphasis)" }}>Clarity</span>
+            <span style={{ fontWeight: 400, color: "var(--fg-neutral-muted)" }}> powered by IRIS</span>
+          </span>
           <img src="/ir-logo.png" alt="Integrated Research" className="h-9 w-auto dark:hidden" />
           <img src="/ir-logo-white.png" alt="Integrated Research" className="hidden h-9 w-auto dark:block" />
-          <span className="h-5 w-px shrink-0" style={{ background: "var(--border-neutral-emphasis)" }} aria-hidden />
-          <span className="text-base" style={{ fontFamily: "'Poppins', ui-sans-serif, sans-serif", fontWeight: 500, color: "var(--fg-neutral-emphasis)" }}>Clarity</span>
         </div>
       </div>
     </aside>
