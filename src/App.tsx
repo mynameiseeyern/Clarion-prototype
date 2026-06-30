@@ -8,6 +8,7 @@ import { ThresholdsPage } from "@/pages/ThresholdsPage"
 import { GlossaryPage } from "@/pages/GlossaryPage"
 import { IssuesDocPage } from "@/pages/IssuesDocPage"
 import { DevicesModelPage } from "@/pages/DevicesModelPage"
+import { ScopePage } from "@/pages/ScopePage"
 import { ComponentsPage } from "@/pages/ComponentsPage"
 import { AdminApp } from "@/AdminApp"
 import { EndpointDrawer } from "@/components/endpoints/drawer/EndpointDrawer"
@@ -213,6 +214,7 @@ export default function App() {
           {page === "glossary" && <GlossaryPage />}
           {page === "devicesdoc" && <DevicesModelPage />}
           {page === "issuesdoc" && <IssuesDocPage />}
+          {page === "scopedoc" && <ScopePage />}
           {page === "components" && <ComponentsPage />}
         </div>
       </div>
