@@ -243,9 +243,9 @@ export function EndpointsTable({
     <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
       {/* header */}
       <div className="flex items-center gap-2 px-4 py-4">
-        <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Devices</h2>
+        <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Endpoints</h2>
         <Badge variant="secondary">
-          {rows.length.toLocaleString()} {issuesActive ? "with issues" : rows.length === 1 ? "device" : "devices"}
+          {rows.length.toLocaleString()} {issuesActive ? "with issues" : rows.length === 1 ? "endpoint" : "endpoints"}
         </Badge>
       </div>
 
@@ -256,7 +256,7 @@ export function EndpointsTable({
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); resetPage() }}
-            placeholder="Search device, user or event…"
+            placeholder="Search endpoint, user or event…"
             className="min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]"
             style={{ color: "var(--fg-neutral-emphasis)" }}
           />
