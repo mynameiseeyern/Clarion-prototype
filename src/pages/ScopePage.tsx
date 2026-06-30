@@ -18,8 +18,7 @@ const descoped: ScopeItem[] = [
   { title: "Client white-labelling", detail: "Per-client label and logo. For MVP the sidebar shows the Clarity product brand instead of the customer’s." },
   { title: "Alerts page", detail: "The dedicated Alerts list and its sidebar tab. Alerts still surface via the Overview “Endpoints needing attention” view." },
   { title: "Notifications bell", detail: "Real-time notifications in the top bar." },
-  { title: "Custom threshold rules", detail: "Per-scope threshold overrides. Replaced for MVP by an “Alert routing” placeholder." },
-  { title: "Alert routing", detail: "Present on the Thresholds page as a placeholder only — requirements are still being defined." },
+  { title: "Custom threshold rules", detail: "Per-scope threshold overrides. Replaced for MVP by the Alert routing section." },
 ]
 
 function ScopeRow({ item, kind }: { item: ScopeItem; kind: "in" | "out"; }) {
