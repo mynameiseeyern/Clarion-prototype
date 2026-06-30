@@ -26,15 +26,20 @@ export function OverviewPage({
   })
 
   return (
-    <div className="flex flex-col gap-4">
-      <StatsStrip live={live} />
-      <MapAndLocations
-        selectedId={selectedId}
-        onSelect={onSelect}
-        country={country}
-        onCountryChange={setCountry}
-        onViewEndpoints={onViewEndpoints}
-      />
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <div className="shrink-0">
+        <StatsStrip live={live} />
+      </div>
+      <div className="shrink-0">
+        <MapAndLocations
+          selectedId={selectedId}
+          onSelect={onSelect}
+          country={country}
+          onCountryChange={setCountry}
+          onViewEndpoints={onViewEndpoints}
+        />
+      </div>
+      {/* fills the rest of the page height; the table scrolls inside it */}
       <EndpointsAttentionCard onViewEndpoints={onViewEndpoints} onOpenEndpoint={onOpenEndpoint} />
     </div>
   )
