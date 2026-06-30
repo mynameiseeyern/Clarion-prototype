@@ -138,8 +138,8 @@ export function EndpointDrawer({
                   <span className="max-w-[160px] truncate">{backLabel ?? "Back"}</span>
                 </button>
               )}
-              <IconBtn label="Previous device" onClick={() => go(-1)} disabled={index === 0}><ChevronUp className="size-4" /></IconBtn>
-              <IconBtn label="Next device" onClick={() => go(1)} disabled={index === rows.length - 1}><ChevronDown className="size-4" /></IconBtn>
+              <IconBtn label="Previous endpoint" onClick={() => go(-1)} disabled={index === 0}><ChevronUp className="size-4" /></IconBtn>
+              <IconBtn label="Next endpoint" onClick={() => go(1)} disabled={index === rows.length - 1}><ChevronDown className="size-4" /></IconBtn>
               <span className="ml-1 text-xs font-medium tabular-nums" style={{ color: "var(--fg-neutral-muted)" }}>
                 {index + 1} <span style={{ color: "var(--fg-neutral-subtle)" }}>of {rows.length.toLocaleString()}</span>
               </span>
@@ -164,7 +164,7 @@ export function EndpointDrawer({
                 {!offline && <span className="truncate font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{e.machine}</span>}
               </div>
             </div>
-            <Dialog.Description className="sr-only">Device details for {e.machine}</Dialog.Description>
+            <Dialog.Description className="sr-only">Endpoint details for {e.machine}</Dialog.Description>
 
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
               <MetaItem icon={MapPin}>{detail.locationDetail}</MetaItem>

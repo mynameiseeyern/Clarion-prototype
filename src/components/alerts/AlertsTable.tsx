@@ -51,7 +51,7 @@ export function AlertsTable({
     <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
       <div className="flex items-center gap-2 px-4 py-4">
         <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Issues</h2>
-        <Badge variant="secondary">{rows.length} open · {totalAffected.toLocaleString()} devices</Badge>
+        <Badge variant="secondary">{rows.length} open · {totalAffected.toLocaleString()} endpoints</Badge>
       </div>
 
       {/* toolbar */}
