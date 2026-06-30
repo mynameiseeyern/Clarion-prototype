@@ -52,8 +52,8 @@ export function DevicesModelPage() {
           <ConceptRow icon={Users} title="Users on an endpoint">
             An endpoint can be shared by several users (hot-desking). The Endpoints table shows the current / primary user; the drilldown header lists everyone who uses the endpoint. Search matches any user on the endpoint.
           </ConceptRow>
-          <ConceptRow icon={Cable} title="Peripherals">
-            The hardware attached to an endpoint — audio, video, Bluetooth and USB — shown in the drilldown’s <strong style={{ color: "var(--fg-neutral-emphasis)" }}>Peripherals</strong> tab. Peripherals belong to an endpoint; they are not endpoints themselves.
+          <ConceptRow icon={Cable} title="Devices">
+            The hardware attached to an endpoint — audio, video, Bluetooth and USB — shown in the drilldown’s <strong style={{ color: "var(--fg-neutral-emphasis)" }}>Devices</strong> tab. Devices belong to an endpoint; they are not endpoints themselves.
           </ConceptRow>
         </div>
       </SectionCard>
