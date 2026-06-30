@@ -198,7 +198,7 @@ export default function App() {
           <h1 className="text-xl font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
             {page === "endpoints" && endpointFilters.length > 0 ? (
               <>
-                Devices{" "}
+                Endpoints{" "}
                 <span style={{ color: "var(--fg-neutral-subtle)" }}>
                   — {endpointFilters.length === 1 ? locationById(endpointFilters[0])?.name : `${endpointFilters.length} locations`}
                 </span>
