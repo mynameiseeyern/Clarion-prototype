@@ -127,7 +127,7 @@ export function AlertDrawer({
 
           {/* impacted endpoints */}
           <div className="min-h-px flex-1 overflow-y-auto" style={{ background: "var(--bg-app)" }}>
-            <div className="px-5 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Impacted devices</div>
+            <div className="px-5 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Impacted endpoints</div>
             <div className="flex flex-col px-2 pb-4">
               {rollup.endpoints.map((e, i) => (
                 <button key={e.id} type="button" onClick={() => onOpenEndpoint(rollup.endpoints, i)}
