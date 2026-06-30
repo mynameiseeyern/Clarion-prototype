@@ -9,6 +9,7 @@ const inScope: ScopeItem[] = [
   { title: "Overview dashboard", detail: "World map with country → city drill-down, the KPI strip (Active endpoints, Open alerts, Clarity Network Score) and the “Endpoints needing attention” table." },
   { title: "Endpoints", detail: "Searchable, filterable, lazy-loaded endpoint table with the endpoint drilldown (Network, Platforms, Devices and System tabs)." },
   { title: "Thresholds — default thresholds", detail: "Fleet-wide warning / critical bands per metric, with save-gated editing and reset to defaults." },
+  { title: "Alert routing", detail: "Route alerts to the right people and channels. The section is in place on the Thresholds page; detailed requirements are still being defined." },
   { title: "Product branding", detail: "“Clarity powered by IRIS” with the Integrated Research logo (per-client white-label is a Day-2 feature — see below)." },
 ]
 
