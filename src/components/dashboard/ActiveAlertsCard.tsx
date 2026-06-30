@@ -72,7 +72,7 @@ export function ActiveAlertsCard({
       {rollups.length > 0 ? (
         <>
           <div className="px-4 pt-3 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
-            {rollups.length} critical issue{rollups.length === 1 ? "" : "s"} · {totalAffected.toLocaleString()} critical device{totalAffected === 1 ? "" : "s"} in {name}
+            {rollups.length} critical issue{rollups.length === 1 ? "" : "s"} · {totalAffected.toLocaleString()} critical endpoint{totalAffected === 1 ? "" : "s"} in {name}
           </div>
           <div className="flex max-h-80 flex-col overflow-y-auto overscroll-contain p-2">
             {rollups.map((r, i) => {
@@ -94,7 +94,7 @@ export function ActiveAlertsCard({
                     <span className="flex items-center gap-2">
                       <span className="truncate text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{r.title}</span>
                       <Badge variant={r.severity === "critical" ? "danger" : "warning"}>
-                        {r.affected} device{r.affected === 1 ? "" : "s"}
+                        {r.affected} endpoint{r.affected === 1 ? "" : "s"}
                       </Badge>
                     </span>
                     <span className="truncate text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
