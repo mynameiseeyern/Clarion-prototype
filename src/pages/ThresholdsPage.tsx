@@ -75,7 +75,7 @@ export function ThresholdsPage() {
         <div className="flex flex-wrap items-start justify-between gap-3 px-5 py-4" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
           <div className="flex flex-col">
             <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Default thresholds</h2>
-            <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Applies to every device unless a custom rule overrides it</span>
+            <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Applies to every endpoint unless a custom rule overrides it</span>
           </div>
           {/* Save-gated: edits stay in a draft until committed. After save, a confirmation + Reset appears. */}
           <div className="flex items-center gap-2">
