@@ -6,6 +6,7 @@ import {
   Workflow,
   Laptop,
   Component,
+  ListChecks,
   Users,
   FolderTree,
   RadioTower,
@@ -21,7 +22,7 @@ export type PageId =
   | "overview" | "endpoints" | "alerts" | "thresholds"
   | "users" | "groups" | "widgets" | "subscription" | "audit"
   | "rbacdoc" | "groupsdoc" | "billingdoc"
-  | "glossary" | "issuesdoc" | "devicesdoc" | "components"
+  | "glossary" | "issuesdoc" | "devicesdoc" | "scopedoc" | "components"
 
 export interface NavItem {
   id: PageId
@@ -63,6 +64,7 @@ export const adminDocNavItems: NavItem[] = [
 
 // Internal — not shipped in the built product.
 export const devNavItems: NavItem[] = [
+  { id: "scopedoc", label: "Scope", icon: ListChecks },
   { id: "components", label: "Components", icon: Component },
   { id: "glossary", label: "Glossary", icon: BookOpen },
   { id: "devicesdoc", label: "Endpoints model", icon: Laptop },
@@ -106,6 +108,7 @@ export const pagePath: Record<PageId, string> = {
   glossary: "/glossary",
   devicesdoc: "/devices-model",
   issuesdoc: "/issues-model",
+  scopedoc: "/scope",
   components: "/components",
 }
 

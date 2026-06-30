@@ -39,23 +39,15 @@ export function EndpointsAttentionCard({
     return queryEndpoints({ statuses: effective, sortKey: "status", sortDir: "asc" })
   }, [statuses])
 
-  // Full attention universe (independent of the active filter) so the total and
-  // the severity breakdown are always shown upfront, even when filtered.
-  const attention = useMemo(() => {
-    const all = queryEndpoints({ statuses: ATTENTION_STATUSES })
-    let critical = 0, warning = 0
-    for (const e of all) { if (e.status === "critical") critical++; else if (e.status === "warning") warning++ }
-    return { critical, warning, total: all.length }
-  }, [])
-  const subtitle = `${attention.critical.toLocaleString()} critical · ${attention.warning.toLocaleString()} warning`
+  const hasCritical = rows.some((r) => r.status === "critical")
 
   return (
     <Card className="flex min-h-0 w-full flex-1 flex-col gap-0 overflow-hidden rounded-xl p-0">
       <div className="flex items-center justify-between gap-2 p-4" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
         <div className="flex items-center gap-2">
           <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Endpoints needing attention</h2>
-          {attention.total > 0 && (
-            <Badge variant={attention.critical > 0 ? "danger" : "warning"}>{attention.total.toLocaleString()}</Badge>
+          {rows.length > 0 && (
+            <Badge variant={hasCritical ? "danger" : "warning"}>{rows.length.toLocaleString()}</Badge>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -74,9 +66,7 @@ export function EndpointsAttentionCard({
       </div>
 
       {rows.length > 0 ? (
-        <>
-          <div className="px-4 pt-3 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{subtitle}</div>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             <table className="w-full border-collapse text-sm">
               <thead className="sticky top-0 z-10">
                 <tr style={{ color: "var(--fg-neutral-muted)" }}>
@@ -139,8 +129,7 @@ export function EndpointsAttentionCard({
                 ))}
               </tbody>
             </table>
-          </div>
-        </>
+        </div>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-0.5 px-4 py-10 text-center">
           <p className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
