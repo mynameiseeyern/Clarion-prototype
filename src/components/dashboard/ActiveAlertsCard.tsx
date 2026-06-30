@@ -143,7 +143,7 @@ export function EndpointsAttentionCard({
           </div>
         </>
       ) : (
-        <div className="flex flex-col gap-0.5 px-4 py-6">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-0.5 px-4 py-10 text-center">
           <p className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
             <CircleCheck className="size-4" style={{ color: "var(--fg-success-emphasis)" }} />
             No endpoints need attention
