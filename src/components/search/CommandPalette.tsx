@@ -136,7 +136,7 @@ export function CommandPalette({
             {locMatches.map(Row)}
             {epMatches.length > 0 && (
               <div className="px-2 pb-1 pt-3 text-xs font-medium uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>
-                {q.trim() ? "Devices" : "Needs attention"}
+                {q.trim() ? "Endpoints" : "Needs attention"}
               </div>
             )}
             {epMatches.map(Row)}
