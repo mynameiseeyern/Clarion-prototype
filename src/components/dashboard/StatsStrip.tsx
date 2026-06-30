@@ -47,7 +47,17 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
       </div>
 
       <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-stretch">
-        <KpiCard title="Active endpoints" icon={Monitor} value={`${live.online.toLocaleString()} / ${live.endpoints.toLocaleString()}`}>
+        <KpiCard
+          title="Active endpoints"
+          icon={Monitor}
+          value={
+            <>
+              {live.online.toLocaleString()}
+              <span style={{ color: "var(--fg-neutral-subtle)", margin: "0 0.08em" }}>/</span>
+              {live.endpoints.toLocaleString()}
+            </>
+          }
+        >
           <SegmentedBar
             segments={[
               { status: "healthy", flex: live.healthy, count: live.healthy },

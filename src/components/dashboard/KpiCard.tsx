@@ -14,7 +14,7 @@ export function KpiCard({
 }: {
   title: ReactNode
   icon: LucideIcon
-  value: string
+  value: ReactNode
   delta?: ReactNode
   children?: ReactNode
   className?: string

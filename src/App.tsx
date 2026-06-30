@@ -121,11 +121,6 @@ export default function App() {
     setEndpointsShowAll(true)
   }
 
-  const handleViewAllAlerts = () => {
-    setAlertFilter(selectedId === "all" ? "all" : selectedId)
-    navigate("alerts")
-  }
-
   const openEndpointId = drawer ? drawer.rows[drawer.index]?.id ?? null : null
   const openAlertId = alertDrawer ? alertDrawer.rows[alertDrawer.index]?.id ?? null : null
 
@@ -194,8 +189,7 @@ export default function App() {
               selectedId={selectedId}
               onSelect={setSelectedId}
               onViewEndpoints={handleViewEndpoints}
-              onViewAllAlerts={handleViewAllAlerts}
-              onOpenAlert={(rollups, index) => setAlertDrawer({ rows: rollups, index })}
+              onOpenEndpoint={(rows, index) => setDrawer({ rows, index })}
             />
           )}
           {page === "endpoints" && (

@@ -1,28 +1,25 @@
 import { useState } from "react"
 import { StatsStrip } from "@/components/dashboard/StatsStrip"
 import { MapAndLocations } from "@/components/dashboard/MapAndLocations"
-import { ActiveAlertsCard } from "@/components/dashboard/ActiveAlertsCard"
+import { EndpointsAttentionCard } from "@/components/dashboard/ActiveAlertsCard"
 import { locationById } from "@/data/dashboard"
 import type { LiveFleet } from "@/hooks/useStreaming"
-import type { Rollup } from "@/data/endpoints"
+import type { Endpoint } from "@/data/endpoints"
 
 export function OverviewPage({
   live,
   selectedId,
   onSelect,
   onViewEndpoints,
-  onViewAllAlerts,
-  onOpenAlert,
+  onOpenEndpoint,
 }: {
   live: LiveFleet
   selectedId: string
   onSelect: (id: string) => void
   onViewEndpoints: (loc?: string | string[]) => void
-  onViewAllAlerts: () => void
-  onOpenAlert: (rollups: Rollup[], index: number) => void
+  onOpenEndpoint: (rows: Endpoint[], index: number) => void
 }) {
-  // The drilled-into country is the map's scope; the alerts card mirrors it so a
-  // country drill-in (no specific city) still filters the critical-issues list.
+  // The drilled-into country is the map's scope (used only by the map now).
   const [country, setCountry] = useState<string | null>(() => {
     const loc = selectedId === "all" ? undefined : locationById(selectedId)
     return loc?.countryId ?? null
@@ -38,7 +35,7 @@ export function OverviewPage({
         onCountryChange={setCountry}
         onViewEndpoints={onViewEndpoints}
       />
-      <ActiveAlertsCard selectedId={selectedId} country={country} onViewAll={onViewAllAlerts} onOpenAlert={onOpenAlert} />
+      <EndpointsAttentionCard onViewEndpoints={onViewEndpoints} onOpenEndpoint={onOpenEndpoint} />
     </div>
   )
 }

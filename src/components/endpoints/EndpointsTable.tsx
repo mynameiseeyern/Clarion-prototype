@@ -1,13 +1,14 @@
-import { useMemo, useState, useEffect, type ReactNode } from "react"
-import { Search, X, Check, Monitor, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, CircleCheck } from "lucide-react"
+import { useMemo, useState, useEffect, useRef } from "react"
+import { Search, X, Check, Monitor, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, CircleCheck } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Chip } from "@/components/ui/chip"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { countries, citiesInCountry } from "@/data/dashboard"
 import { queryEndpoints, type Endpoint, type EndpointStatus, type SortKey, type SortDir } from "@/data/endpoints"
+import { StatusFilter, statusVar, statusBadge, cap, initials } from "./status"
 
 // Locations grouped under their country (label only — cities are selectable), all alphabetical.
 const countryGroups = [...countries]
@@ -82,75 +83,6 @@ function LocationFilter({ value, onChange }: { value: string[]; onChange: (ids: 
   )
 }
 
-const statusVar: Record<EndpointStatus, string> = {
-  healthy: "var(--status-healthy)",
-  warning: "var(--status-warning)",
-  critical: "var(--status-critical)",
-  offline: "var(--status-unknown)",
-}
-const statusBadge: Record<EndpointStatus, "success" | "warning" | "danger" | "secondary"> = {
-  healthy: "success", warning: "warning", critical: "danger", offline: "secondary",
-}
-const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
-const initials = (name: string) => name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
-
-// status options ordered worst-first, offline last
-const STATUS_OPTIONS: { id: EndpointStatus; label: string }[] = [
-  { id: "critical", label: "Critical" },
-  { id: "warning", label: "Warning" },
-  { id: "healthy", label: "Healthy" },
-  { id: "offline", label: "Offline" },
-]
-
-/** Multi-select status filter (empty = all statuses). */
-function StatusFilter({ value, onToggle, onClear }: { value: EndpointStatus[]; onToggle: (s: EndpointStatus) => void; onClear: () => void }) {
-  const [open, setOpen] = useState(false)
-  const label = value.length === 0 ? "All statuses" : value.length === 1 ? cap(value[0]) : `${value.length} statuses`
-  const rowCls = "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]"
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button type="button" className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm shadow-xs transition-colors hover:border-[var(--border-input-hovered)]"
-          style={{ background: "var(--bg-input-default)", border: "1px solid var(--border-input-default)", color: "var(--fg-neutral-emphasis)" }}>
-          <span>{label}</span>
-          <ChevronDown className="size-4" style={{ color: "var(--fg-neutral-muted)" }} />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-48 p-1">
-        {STATUS_OPTIONS.map((o) => {
-          const on = value.includes(o.id)
-          return (
-            <button key={o.id} type="button" role="option" aria-selected={on} onClick={() => onToggle(o.id)} className={rowCls} style={{ color: "var(--fg-neutral-emphasis)" }}>
-              <span className="flex size-4 shrink-0 items-center justify-center rounded" style={{ background: on ? "var(--bg-primary-emphasis)" : "var(--bg-input-default)", border: `1px solid ${on ? "var(--bg-primary-emphasis)" : "var(--border-input-default)"}` }}>
-                {on && <Check className="size-3" style={{ color: "var(--fg-on-primary-emphasis)" }} />}
-              </span>
-              <span className="size-2 shrink-0 rounded-full" style={{ background: statusVar[o.id] }} />
-              <span className="flex-1">{o.label}</span>
-            </button>
-          )
-        })}
-        {value.length > 0 && (
-          <div className="mt-1 pt-1" style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
-            <button type="button" onClick={onClear} className={rowCls} style={{ color: "var(--fg-link-default)" }}>Clear</button>
-          </div>
-        )}
-      </PopoverContent>
-    </Popover>
-  )
-}
-
-function pageList(current: number, total: number): (number | "…")[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-  const out: (number | "…")[] = [1]
-  const lo = Math.max(2, current - 1)
-  const hi = Math.min(total - 1, current + 1)
-  if (lo > 2) out.push("…")
-  for (let i = lo; i <= hi; i++) out.push(i)
-  if (hi < total - 1) out.push("…")
-  out.push(total)
-  return out
-}
-
 function SortHeader({
   label, col, sortKey, sortDir, onSort, className,
 }: {
@@ -174,7 +106,7 @@ function SortHeader({
   )
 }
 
-const PAGE_SIZES = [10, 15, 25, 50]
+const CHUNK = 25 // rows added per lazy-load step
 
 export function EndpointsTable({
   locationIds,
@@ -202,8 +134,8 @@ export function EndpointsTable({
   )
   const [sortKey, setSortKey] = useState<SortKey>("status")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(15)
+  const [visible, setVisible] = useState(CHUNK)
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
 
   // hide the Location column only when exactly one city is selected
   const showLocation = locationIds.length !== 1
@@ -217,27 +149,36 @@ export function EndpointsTable({
     [search, locationIds, statuses, sortKey, sortDir]
   )
 
-  // keep the table page in sync with the row open in the drawer (so flicking
-  // ↑/↓ past a page boundary keeps the in-view row visible & highlighted)
+  // ensure enough rows are rendered to include the row open in the drawer (so
+  // flicking ↑/↓ past the loaded set keeps the in-view row visible & highlighted)
   useEffect(() => {
     if (!openEndpointId) return
     const idx = rows.findIndex((e) => e.id === openEndpointId)
-    if (idx < 0) return
-    const target = Math.floor(idx / pageSize) + 1
-    setPage((p) => (p === target ? p : target))
-  }, [openEndpointId, rows, pageSize])
+    if (idx >= 0) setVisible((v) => (v > idx ? v : idx + 1))
+  }, [openEndpointId, rows])
 
-  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize))
-  const safePage = Math.min(page, totalPages)
-  const pageRows = rows.slice((safePage - 1) * pageSize, safePage * pageSize)
+  const shown = rows.slice(0, visible)
+  const hasMore = shown.length < rows.length
   const colCount = 2 + (showLocation ? 1 : 0) + 1 + 1 + 1
 
+  const resetPage = () => setVisible(CHUNK)
   const onSort = (c: SortKey) => {
     if (c === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"))
     else { setSortKey(c); setSortDir("asc") }
-    setPage(1)
+    resetPage()
   }
-  const resetPage = () => setPage(1)
+
+  // lazy-load: pull in more rows as the footer sentinel scrolls into view
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) setVisible((v) => Math.min(v + CHUNK, rows.length)) },
+      { rootMargin: "300px" }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [rows.length])
 
   return (
     <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
@@ -297,13 +238,12 @@ export function EndpointsTable({
             </tr>
           </thead>
           <tbody>
-            {pageRows.map((e, i) => {
-              const absoluteIndex = (safePage - 1) * pageSize + i
+            {shown.map((e, i) => {
               const isSel = openEndpointId === e.id
               return (
                 <tr
                   key={e.id}
-                  onClick={() => onOpenEndpoint(rows, absoluteIndex)}
+                  onClick={() => onOpenEndpoint(rows, i)}
                   className="group cursor-pointer transition-colors"
                   style={{
                     borderBottom: "1px solid var(--border-neutral-subtle)",
@@ -370,7 +310,7 @@ export function EndpointsTable({
                 </tr>
               )
             })}
-            {pageRows.length === 0 && (
+            {shown.length === 0 && (
               <tr>
                 <td colSpan={colCount} className="px-4 py-16">
                   <div className="flex flex-col items-center gap-2 text-center">
