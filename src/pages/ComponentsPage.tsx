@@ -240,7 +240,7 @@ export function ComponentsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Open issues</CardTitle>
+              <CardTitle>Open alerts</CardTitle>
               <CardDescription>Across all monitored locations.</CardDescription>
               <CardAction>
                 <Badge variant="danger">3 critical</Badge>
@@ -255,7 +255,7 @@ export function ComponentsPage() {
               </Chip>
             </CardContent>
             <CardFooter className="gap-2 pt-4">
-              <Button size="sm">View issues</Button>
+              <Button size="sm">View alerts</Button>
               <Button size="sm" variant="ghost">
                 Dismiss
               </Button>

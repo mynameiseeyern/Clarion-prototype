@@ -92,8 +92,8 @@ export function IssuesDocPage() {
         </div>
       </SectionCard>
 
-      {/* Alert types */}
-      <SectionCard title="Types of alert (and how they link to issues)">
+      {/* Notification types */}
+      <SectionCard title="Types of notification (and how they link to alerts)">
         <div className="flex flex-col gap-3">
           {alertTypes.map((a) => (
             <div key={a.label} className="flex items-center gap-3">
@@ -103,7 +103,7 @@ export function IssuesDocPage() {
           ))}
         </div>
         <p className="mt-4 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          An alert of a given type at a location feeds the issue that groups that <strong style={{ color: "var(--fg-neutral-emphasis)" }}>cause + location</strong>. The first alert opens the issue; later alerts update its affected count; an info/recovery alert can resolve it.
+          A notification of a given type at a location feeds the alert that groups that <strong style={{ color: "var(--fg-neutral-emphasis)" }}>cause + location</strong>. The first notification opens the alert; later notifications update its affected count; an info/recovery notification can resolve it.
         </p>
       </SectionCard>
 
@@ -113,11 +113,11 @@ export function IssuesDocPage() {
           Every endpoint has a <strong style={{ color: "var(--fg-neutral-emphasis)" }}>status</strong> — {sevPill("Critical", "var(--bg-danger-subtle)", "var(--fg-on-danger-subtle)")} {sevPill("Warning", "var(--bg-warning-subtle)", "var(--fg-on-warning-subtle)")} <span className="rounded-md px-1.5 py-0.5 text-xs font-semibold uppercase" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>Offline</span> Healthy — set by its worst metric vs. thresholds.
         </p>
         <p className="mt-3 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          Unhealthy endpoints (warning + critical) sharing the same <strong style={{ color: "var(--fg-neutral-emphasis)" }}>cause</strong> at the same <strong style={{ color: "var(--fg-neutral-emphasis)" }}>location</strong> are grouped into one issue — a <strong style={{ color: "var(--fg-neutral-emphasis)" }}>rollup</strong> with an affected-endpoint count. Offline endpoints are excluded from rollups.
+          Unhealthy endpoints (warning + critical) sharing the same <strong style={{ color: "var(--fg-neutral-emphasis)" }}>cause</strong> at the same <strong style={{ color: "var(--fg-neutral-emphasis)" }}>location</strong> are grouped into one alert — a <strong style={{ color: "var(--fg-neutral-emphasis)" }}>rollup</strong> with an affected-endpoint count. Offline endpoints are excluded from rollups.
         </p>
 
         <div className="mt-4 rounded-xl p-4 font-mono text-sm" style={{ background: "var(--bg-neutral-subtle)", border: "1px solid var(--border-neutral-subtle)", color: "var(--fg-neutral-emphasis)" }}>
-          issue.severity = <span style={{ color: "var(--fg-danger)" }}>CRITICAL</span> if (platform outage) OR (critical endpoints ≥ 50% of affected)<br />
+          alert.severity = <span style={{ color: "var(--fg-danger)" }}>CRITICAL</span> if (platform outage) OR (critical endpoints ≥ 50% of affected)<br />
           <span className="pl-[7.2em]" />else <span style={{ color: "var(--fg-warning)" }}>WARNING</span>
         </div>
 
@@ -131,7 +131,7 @@ export function IssuesDocPage() {
         </div>
 
         <p className="mt-4 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          Issues are ordered <strong style={{ color: "var(--fg-neutral-emphasis)" }}>worst-first</strong> (critical → warning), then by most endpoints affected.
+          Alerts are ordered <strong style={{ color: "var(--fg-neutral-emphasis)" }}>worst-first</strong> (critical → warning), then by most endpoints affected.
         </p>
       </SectionCard>
     </div>

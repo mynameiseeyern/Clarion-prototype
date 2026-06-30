@@ -90,7 +90,7 @@ const matrix: { domain: string; rows: { cap: string; access: [Access, Access, Ac
     { cap: "Register, move & revoke Widgets / tokens", access: ["full", "full", "none", "none"] },
   ] },
   { domain: "Monitoring", rows: [
-    { cap: "Monitor endpoints & issues", access: ["full", "full", "scoped", "none"] },
+    { cap: "Monitor endpoints & alerts", access: ["full", "full", "scoped", "none"] },
   ] },
   { domain: "Subscription & billing", rows: [
     { cap: "View plan, usage & invoices", access: ["full", "full", "none", "full"] },
@@ -174,7 +174,7 @@ export function RbacDocPage() {
             Full administrative control across the whole org: manage Members &amp; roles, Groups, Device management (Widgets), subscription, and read the audit log. Sees the entire estate.
           </ConceptRow>
           <ConceptRow icon={UserCog} title={<>CC Manager (Supervisor) <span>{tag("MVP", "MVP")}</span></>}>
-            Operational role scoped to assigned Group(s). Sees and acts on the Widgets/Issues in their Groups only — a subset of the org. No access to the Administration area.
+            Operational role scoped to assigned Group(s). Sees and acts on the Widgets/Alerts in their Groups only — a subset of the org. No access to the Administration area.
           </ConceptRow>
           <ConceptRow icon={Crown} title={<>Owner / Super Admin <span>{tag("Later", "Later")}</span></>}>
             Billing/ownership root: manages Admins, owns the subscription, can transfer ownership. Nearly every SaaS has exactly one (Slack Primary Owner, Atlassian Org admin). Planned, not in MVP.
