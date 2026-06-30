@@ -39,24 +39,23 @@ export function EndpointsAttentionCard({
     return queryEndpoints({ statuses: effective, sortKey: "status", sortDir: "asc" })
   }, [statuses])
 
-  const counts = useMemo(() => {
-    const c = { critical: 0, warning: 0 }
-    for (const r of rows) if (r.status === "critical") c.critical++
-    else if (r.status === "warning") c.warning++
-    return c
-  }, [rows])
-
-  const subtitle = ATTENTION_OPTIONS.filter((o) => counts[o.id as "critical" | "warning"] > 0)
-    .map((o) => `${counts[o.id as "critical" | "warning"].toLocaleString()} ${o.label.toLowerCase()}`)
-    .join(" · ")
+  // Full attention universe (independent of the active filter) so the total and
+  // the severity breakdown are always shown upfront, even when filtered.
+  const attention = useMemo(() => {
+    const all = queryEndpoints({ statuses: ATTENTION_STATUSES })
+    let critical = 0, warning = 0
+    for (const e of all) { if (e.status === "critical") critical++; else if (e.status === "warning") warning++ }
+    return { critical, warning, total: all.length }
+  }, [])
+  const subtitle = `${attention.critical.toLocaleString()} critical · ${attention.warning.toLocaleString()} warning`
 
   return (
     <Card className="flex min-h-0 w-full flex-1 flex-col gap-0 overflow-hidden rounded-xl p-0">
       <div className="flex items-center justify-between gap-2 p-4" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
         <div className="flex items-center gap-2">
           <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Endpoints needing attention</h2>
-          {rows.length > 0 && (
-            <Badge variant={counts.critical > 0 ? "danger" : "warning"}>{rows.length.toLocaleString()}</Badge>
+          {attention.total > 0 && (
+            <Badge variant={attention.critical > 0 ? "danger" : "warning"}>{attention.total.toLocaleString()}</Badge>
           )}
         </div>
         <div className="flex items-center gap-2">
