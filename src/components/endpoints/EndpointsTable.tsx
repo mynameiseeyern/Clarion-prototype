@@ -331,61 +331,17 @@ export function EndpointsTable({
         </table>
       </div>
 
-      {/* footer / pagination */}
-      <div className="flex flex-col items-center gap-3 px-4 py-3 sm:flex-row sm:justify-between" style={{ borderTop: "1px solid var(--border-neutral-muted)" }}>
-        <div className="flex items-center gap-3 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          <span>Page {safePage} of {totalPages}</span>
-          <span style={{ color: "var(--border-neutral-emphasis)" }}>·</span>
-          <span className="flex items-center gap-2">
-            Rows per page
-            <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1) }}>
-              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-              <SelectContent>{PAGE_SIZES.map((s) => <SelectItem key={s} value={String(s)}>{s}</SelectItem>)}</SelectContent>
-            </Select>
-          </span>
-        </div>
-        <div className="flex items-center gap-1">
-          <PagerBtn disabled={safePage === 1} onClick={() => setPage(1)}><ChevronsLeft className="size-4" /></PagerBtn>
-          <PagerBtn disabled={safePage === 1} onClick={() => setPage(safePage - 1)}><ChevronLeft className="size-4" /></PagerBtn>
-          {pageList(safePage, totalPages).map((p, i) =>
-            p === "…" ? (
-              <span key={`e${i}`} className="px-1 text-sm" style={{ color: "var(--fg-neutral-subtle)" }}>…</span>
-            ) : (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPage(p)}
-                className="flex size-8 items-center justify-center rounded-md text-sm font-medium transition-colors"
-                style={p === safePage
-                  ? { background: "var(--bg-selected-subtle)", color: "var(--fg-primary-emphasis)" }
-                  : { color: "var(--fg-neutral-muted)" }}
-                onMouseEnter={(ev) => { if (p !== safePage) ev.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)" }}
-                onMouseLeave={(ev) => { if (p !== safePage) ev.currentTarget.style.background = "transparent" }}
-              >
-                {p}
-              </button>
-            )
+      {/* lazy-load footer (sentinel auto-loads more as it scrolls into view) */}
+      {rows.length > 0 && (
+        <div ref={sentinelRef} className="flex items-center justify-between gap-3 px-4 py-3 text-sm" style={{ borderTop: "1px solid var(--border-neutral-muted)", color: "var(--fg-neutral-muted)" }}>
+          <span>Showing {shown.length.toLocaleString()} of {rows.length.toLocaleString()} endpoints</span>
+          {hasMore && (
+            <Button variant="outline" size="sm" onClick={() => setVisible((v) => Math.min(v + CHUNK, rows.length))}>
+              Load more
+            </Button>
           )}
-          <PagerBtn disabled={safePage === totalPages} onClick={() => setPage(safePage + 1)}><ChevronRight className="size-4" /></PagerBtn>
-          <PagerBtn disabled={safePage === totalPages} onClick={() => setPage(totalPages)}><ChevronsRight className="size-4" /></PagerBtn>
         </div>
-      </div>
+      )}
     </Card>
-  )
-}
-
-function PagerBtn({ children, disabled, onClick }: { children: ReactNode; disabled?: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className="flex size-8 items-center justify-center rounded-md transition-colors disabled:opacity-40"
-      style={{ color: "var(--fg-neutral-muted)" }}
-      onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)" }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent" }}
-    >
-      {children}
-    </button>
   )
 }
