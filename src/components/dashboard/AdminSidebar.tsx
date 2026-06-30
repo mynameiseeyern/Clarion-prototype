@@ -15,18 +15,11 @@ export function AdminSidebar({
 }) {
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col" style={{ background: "var(--bg-sidebar)" }}>
-      {/* Header — org brand */}
+      {/* Header — product brand (client white-label is a Day 2 feature) */}
       <div className="flex h-16 items-center px-2">
-        <div className="flex w-full items-center gap-2.5 p-2">
-          <CompanyLogo />
-          <span className="flex min-w-px flex-1 flex-col items-start gap-0.5 text-left">
-            <span className="w-full truncate text-sm font-semibold leading-none" style={{ color: "var(--fg-neutral-emphasis)" }}>
-              {fleet.workspace}
-            </span>
-            <span className="w-full truncate text-xs leading-none" style={{ color: "var(--fg-neutral-muted)" }}>
-              Administration
-            </span>
-          </span>
+        <div className="flex flex-col justify-center px-2 leading-tight" style={{ fontFamily: "'Poppins', ui-sans-serif, sans-serif" }}>
+          <span className="text-base" style={{ fontWeight: 500, color: "var(--fg-neutral-emphasis)" }}>Clarity</span>
+          <span className="text-xs" style={{ fontWeight: 400, color: "var(--fg-neutral-muted)" }}>powered by IRIS</span>
         </div>
       </div>
 
