@@ -92,10 +92,10 @@ export function AlertDrawer({
           {/* utility bar */}
           <div className="flex shrink-0 items-center justify-between px-3 py-2" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
             <div className="flex items-center gap-1">
-              <IconBtn label="Previous issue" onClick={() => go(-1)} disabled={index === 0}><ChevronUp className="size-4" /></IconBtn>
-              <IconBtn label="Next issue" onClick={() => go(1)} disabled={index === rows.length - 1}><ChevronDown className="size-4" /></IconBtn>
+              <IconBtn label="Previous alert" onClick={() => go(-1)} disabled={index === 0}><ChevronUp className="size-4" /></IconBtn>
+              <IconBtn label="Next alert" onClick={() => go(1)} disabled={index === rows.length - 1}><ChevronDown className="size-4" /></IconBtn>
               <span className="ml-1 inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--fg-neutral-subtle)" }}>
-                <Siren className="size-3.5" /> Issue {index + 1} <span style={{ color: "var(--fg-neutral-subtle)" }}>of {rows.length}</span>
+                <Siren className="size-3.5" /> Alert {index + 1} <span style={{ color: "var(--fg-neutral-subtle)" }}>of {rows.length}</span>
               </span>
             </div>
             <div className="flex items-center gap-1">
@@ -115,7 +115,7 @@ export function AlertDrawer({
                   <Dialog.Title className="truncate text-lg font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{rollup.title}</Dialog.Title>
                   <Badge variant={rollup.severity === "critical" ? "danger" : "warning"}>{cap(rollup.severity)}</Badge>
                 </div>
-                <Dialog.Description className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Issue · {rollup.affected} endpoints affected</Dialog.Description>
+                <Dialog.Description className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Alert · {rollup.affected} endpoints affected</Dialog.Description>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 pb-4 text-sm">

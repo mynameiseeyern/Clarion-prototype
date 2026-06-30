@@ -64,7 +64,7 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
           </div>
         </KpiCard>
 
-        <KpiCard title="Open issues" icon={Siren} value={String(issues.length)} delta={<IssueDelta delta={issuesDelta} />}>
+        <KpiCard title="Open alerts" icon={Siren} value={String(issues.length)} delta={<IssueDelta delta={issuesDelta} />}>
           <SegmentedBar segments={issueSegments} />
           <div className="flex items-center gap-2">
             <LegendItem status="warning" label="Warning" />

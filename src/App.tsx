@@ -16,17 +16,9 @@ import { CommandPalette } from "@/components/search/CommandPalette"
 import { Toaster } from "@/components/ui/toast"
 import { useStreaming } from "@/hooks/useStreaming"
 import { DEFAULT_LOCATION, locationById } from "@/data/dashboard"
-import type { Endpoint, Rollup, RollupCause } from "@/data/endpoints"
-import { rollupsForLocation, rollupsAll, queryEndpoints, endpointById } from "@/data/endpoints"
+import type { Endpoint, Rollup } from "@/data/endpoints"
+import { rollupsAll, queryEndpoints, endpointById } from "@/data/endpoints"
 import { pageLabel, pageSubtitle, pageFromPath, buildPath, readDrawerParams, experienceOf, defaultPageFor, type PageId, type Experience } from "@/nav"
-
-// map a real-time alert type to the issue cause it belongs to
-const alertTypeToCause: Record<string, RollupCause> = {
-  "Platform outage": "platform",
-  "High latency": "latency",
-  "Packet loss": "loss",
-  "Network jitter": "jitter",
-}
 
 type DeviceDrawer = { rows: Endpoint[]; index: number }
 type IssueDrawer = { rows: Rollup[]; index: number; expanded?: boolean }
@@ -175,23 +167,6 @@ export default function App() {
           onToggleSidebar={() => setSidebarOpen((v) => !v)}
           onOpenSearch={() => setSearchOpen(true)}
           onSwitchExperience={switchExperience}
-          onViewIssues={() => { setAlertFilter("all"); navigate("alerts") }}
-          onAlertNavigate={(a) => {
-            if (a.navTo === "endpoints") {
-              setEndpointFilters(a.locationId ? [a.locationId] : [])
-              navigate("endpoints")
-              return
-            }
-            // navigate to Issues (filtered) AND open the related issue drilldown
-            setAlertFilter(a.locationId ?? "all")
-            navigate("alerts")
-            const rows = a.locationId ? rollupsForLocation(a.locationId) : rollupsAll()
-            if (rows.length) {
-              const cause = alertTypeToCause[a.type]
-              const idx = Math.max(0, rows.findIndex((r) => r.cause === cause))
-              setAlertDrawer({ rows, index: idx, expanded: true })
-            }
-          }}
         />
 
         <div className="shrink-0 p-5" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>

@@ -245,7 +245,7 @@ export function EndpointsTable({
       <div className="flex items-center gap-2 px-4 py-4">
         <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Endpoints</h2>
         <Badge variant="secondary">
-          {rows.length.toLocaleString()} {issuesActive ? "with issues" : rows.length === 1 ? "endpoint" : "endpoints"}
+          {rows.length.toLocaleString()} {issuesActive ? "with alerts" : rows.length === 1 ? "endpoint" : "endpoints"}
         </Badge>
       </div>
 
@@ -274,7 +274,7 @@ export function EndpointsTable({
             leading={issuesActive ? <Check /> : undefined}
             onClick={() => { setStatuses(issuesActive ? [] : ["critical", "warning"]); resetPage() }}
           >
-            Issues only
+            Alerts only
           </Chip>
           {/* divider separating quick-filter presets from precise filters */}
           <span className="mx-0.5 hidden h-5 w-px sm:block" style={{ background: "var(--border-neutral-muted)" }} aria-hidden />
@@ -378,7 +378,7 @@ export function EndpointsTable({
                       <>
                         <CircleCheck className="size-6" style={{ color: "var(--fg-success)" }} />
                         <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>All clear</span>
-                        <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No endpoints with issues here. Turn off “Issues only” to see all.</span>
+                        <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No endpoints with alerts here. Turn off “Alerts only” to see all.</span>
                       </>
                     ) : (
                       <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No endpoints match your filters.</span>

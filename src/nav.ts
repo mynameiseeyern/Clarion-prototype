@@ -1,7 +1,6 @@
 import {
   LayoutDashboard,
   Monitor,
-  TriangleAlert,
   SlidersHorizontal,
   BookOpen,
   Workflow,
@@ -33,9 +32,15 @@ export interface NavItem {
 export const navItems: NavItem[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "endpoints", label: "Endpoints", icon: Monitor },
-  { id: "alerts", label: "Issues", icon: TriangleAlert },
   { id: "thresholds", label: "Thresholds", icon: SlidersHorizontal },
 ]
+
+// De-scoped from the sidebar for MVP (kept as a Day-2 route reachable via the
+// Overview card / command palette). Labels that aren't rendered in any nav list
+// but are still needed by pageLabel() / breadcrumbs live here.
+const offNavLabels: Partial<Record<PageId, string>> = {
+  alerts: "Alerts",
+}
 
 // Administration — shown only to Admins (role-gated within the one Fleet view).
 // "Members" is the scaffolded screen; the rest are placeholders mapping to the
@@ -61,11 +66,13 @@ export const devNavItems: NavItem[] = [
   { id: "components", label: "Components", icon: Component },
   { id: "glossary", label: "Glossary", icon: BookOpen },
   { id: "devicesdoc", label: "Endpoints model", icon: Laptop },
-  { id: "issuesdoc", label: "Issues model", icon: Workflow },
+  { id: "issuesdoc", label: "Alerts model", icon: Workflow },
 ]
 
 export const pageLabel = (id: PageId) =>
-  [...navItems, ...adminNavItems, ...adminDocNavItems, ...devNavItems].find((n) => n.id === id)?.label ?? "Overview"
+  [...navItems, ...adminNavItems, ...adminDocNavItems, ...devNavItems].find((n) => n.id === id)?.label
+    ?? offNavLabels[id]
+    ?? "Overview"
 
 // Optional one-line context under a page title (shown in the top chrome).
 // Add entries only where a subtitle is genuinely useful — keep pages lean otherwise.

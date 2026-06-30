@@ -23,14 +23,14 @@ const issueTypes: IssueType[] = [
   { icon: Activity, name: "Elevated packet loss", tone: "var(--status-warning)", detect: "Packet loss over threshold — warn ≥ 1%, crit ≥ 3%.", sev: "Warning or critical", eg: "Packet loss 7.2%" },
   { icon: Gauge, name: "High latency", tone: "var(--status-warning)", detect: "Round-trip latency over threshold — warn ≥ 80ms, crit ≥ 150ms.", sev: "Warning or critical", eg: "Latency 212ms" },
   { icon: Wifi, name: "Network jitter", tone: "var(--status-warning)", detect: "Latency variation over threshold — warn ≥ 30ms, crit ≥ 50ms.", sev: "Warning or critical", eg: "Wi-Fi · jitter 81ms" },
-  { icon: Cpu, name: "Isolated endpoint issue", tone: "var(--status-unknown)", detect: "A problem specific to one endpoint that doesn't pertain to others. Affects 1 endpoint.", sev: "Per endpoint", eg: "High CPU · Headset disconnected · Agent app crash" },
+  { icon: Cpu, name: "Isolated endpoint alert", tone: "var(--status-unknown)", detect: "A problem specific to one endpoint that doesn't pertain to others. Affects 1 endpoint.", sev: "Per endpoint", eg: "High CPU · Headset disconnected · Agent app crash" },
 ]
 
 interface AlertType { label: string; bg: string; fg: string; desc: string }
 const alertTypes: AlertType[] = [
-  { label: "Critical", bg: "var(--bg-danger-subtle)", fg: "var(--fg-on-danger-subtle)", desc: "A severe, real-time event — opens or escalates a critical Issue." },
-  { label: "Warning", bg: "var(--bg-warning-subtle)", fg: "var(--fg-on-warning-subtle)", desc: "A degradation crossing a warning threshold — opens or updates a warning Issue." },
-  { label: "Info", bg: "var(--bg-info-subtle)", fg: "var(--fg-on-info-subtle)", desc: "An informational event, e.g. recovery (“endpoint back online”) — can resolve an Issue." },
+  { label: "Critical", bg: "var(--bg-danger-subtle)", fg: "var(--fg-on-danger-subtle)", desc: "A severe, real-time event — opens or escalates a critical Alert." },
+  { label: "Warning", bg: "var(--bg-warning-subtle)", fg: "var(--fg-on-warning-subtle)", desc: "A degradation crossing a warning threshold — opens or updates a warning Alert." },
+  { label: "Info", bg: "var(--bg-info-subtle)", fg: "var(--fg-on-info-subtle)", desc: "An informational event, e.g. recovery (“endpoint back online”) — can resolve an Alert." },
 ]
 
 function FlowBox({ icon: Icon, title, sub }: { icon: LucideIcon; title: string; sub: string }) {
@@ -51,30 +51,30 @@ export function IssuesDocPage() {
           <Badge variant="info" className="uppercase tracking-wide">Internal</Badge>
           <span className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Product development · not shipped in the built product</span>
         </div>
-        <h2 className="mt-3 text-heading-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>Issues model</h2>
+        <h2 className="mt-3 text-heading-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>Alerts model</h2>
         <p className="mt-1 text-body-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          How real-time alerts become issues, the types of each, and how an issue's severity is calculated from the endpoints it rolls up.
+          How real-time notifications become alerts, the types of each, and how an alert's severity is calculated from the endpoints it rolls up.
         </p>
       </Card>
 
       {/* Flow */}
       <SectionCard title="How it fits together">
         <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-          <FlowBox icon={Bell} title="Alert" sub="real-time event (bell)" />
+          <FlowBox icon={Bell} title="Notification" sub="real-time event (bell)" />
           <ArrowRight className="mx-auto size-4 rotate-90 sm:rotate-0" style={{ color: "var(--fg-neutral-subtle)" }} />
-          <FlowBox icon={Siren} title="Issue" sub="persistent rollup" />
+          <FlowBox icon={Siren} title="Alert" sub="persistent rollup" />
           <ArrowRight className="mx-auto size-4 rotate-90 sm:rotate-0" style={{ color: "var(--fg-neutral-subtle)" }} />
           <FlowBox icon={Activity} title="Endpoints" sub="affected, each w/ an event" />
           <ArrowRight className="mx-auto size-4 rotate-90 sm:rotate-0" style={{ color: "var(--fg-neutral-subtle)" }} />
           <FlowBox icon={Info} title="Ticket" sub="ITSM (future)" />
         </div>
         <p className="mt-4 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          An <strong style={{ color: "var(--fg-neutral-emphasis)" }}>alert</strong> is an ephemeral, real-time signal on the bell. It <strong style={{ color: "var(--fg-neutral-emphasis)" }}>raises or updates an issue</strong> — the persistent record. Many alerts over time can map to one issue; the issue lives until resolved and can later escalate to a ticket.
+          A <strong style={{ color: "var(--fg-neutral-emphasis)" }}>notification</strong> is an ephemeral, real-time signal on the bell. It <strong style={{ color: "var(--fg-neutral-emphasis)" }}>raises or updates an alert</strong> — the persistent record. Many notifications over time can map to one alert; the alert lives until resolved and can later escalate to a ticket.
         </p>
       </SectionCard>
 
-      {/* Issue types */}
-      <SectionCard title="Types of issue">
+      {/* Alert types */}
+      <SectionCard title="Types of alert">
         <div className="flex flex-col gap-3">
           {issueTypes.map((t) => (
             <div key={t.name} className="flex items-start gap-3">

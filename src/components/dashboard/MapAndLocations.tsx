@@ -244,7 +244,7 @@ function LocationsPanel({
                       {(() => { const n = locationIssueCount(loc.id); return (<>
                         <span>{loc.endpoints.toLocaleString()} endpoints</span>
                         <span>·</span>
-                        <span>{n === 0 ? "No issues" : `${n} issue${n === 1 ? "" : "s"}`}</span>
+                        <span>{n === 0 ? "No alerts" : `${n} alert${n === 1 ? "" : "s"}`}</span>
                       </>) })()}
                     </span>
                   </button>
