@@ -68,13 +68,13 @@ export function DevicesModelPage() {
           <div className="flex items-start gap-3">
             <span className="mt-0.5 shrink-0">{pill("Unknown?", "var(--bg-info-subtle)", "var(--fg-on-info-subtle)")}</span>
             <p>
-              If data arrives <strong style={{ color: "var(--fg-neutral-emphasis)" }}>without a logged-in user</strong>, the device is <strong style={{ color: "var(--fg-neutral-emphasis)" }}>not</strong> offline — it should still be shown, potentially as “Unknown”.
+              If data arrives <strong style={{ color: "var(--fg-neutral-emphasis)" }}>without a logged-in user</strong>, the endpoint is <strong style={{ color: "var(--fg-neutral-emphasis)" }}>not</strong> offline — it should still be shown, potentially as “Unknown”.
               <span className="italic" style={{ color: "var(--fg-neutral-subtle)" }}> (label not finalised)</span>
             </p>
           </div>
           <div className="flex items-start gap-3">
             <span className="mt-0.5 shrink-0">{pill("Active", "var(--bg-success-subtle)", "var(--fg-on-success-subtle)")}</span>
-            <p>If a user is <strong style={{ color: "var(--fg-neutral-emphasis)" }}>locked or sleeping</strong> but still logged in and data is still being sent, the device is treated as <strong style={{ color: "var(--fg-neutral-emphasis)" }}>active</strong> (Healthy / Warning / Critical as usual) — not offline.</p>
+            <p>If a user is <strong style={{ color: "var(--fg-neutral-emphasis)" }}>locked or sleeping</strong> but still logged in and data is still being sent, the endpoint is treated as <strong style={{ color: "var(--fg-neutral-emphasis)" }}>active</strong> (Healthy / Warning / Critical as usual) — not offline.</p>
           </div>
         </div>
         <p className="mt-4 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
