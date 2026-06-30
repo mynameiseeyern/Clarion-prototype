@@ -115,7 +115,7 @@ export function AlertDrawer({
                   <Dialog.Title className="truncate text-lg font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{rollup.title}</Dialog.Title>
                   <Badge variant={rollup.severity === "critical" ? "danger" : "warning"}>{cap(rollup.severity)}</Badge>
                 </div>
-                <Dialog.Description className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Issue · {rollup.affected} devices affected</Dialog.Description>
+                <Dialog.Description className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Issue · {rollup.affected} endpoints affected</Dialog.Description>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 pb-4 text-sm">
