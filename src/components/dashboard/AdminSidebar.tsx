@@ -1,19 +1,4 @@
-import { fleet } from "@/data/dashboard"
 import { adminNavItems, adminDocNavItems, type NavItem, type PageId } from "@/nav"
-
-// Acme Contact Centre brand monogram (placeholder customer logo).
-function CompanyLogo() {
-  return (
-    <svg viewBox="0 0 32 32" className="size-8 shrink-0" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="#3730A3" />
-      <g stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none">
-        <path d="M16 8 L10 24" />
-        <path d="M16 8 L22 24" />
-        <path d="M12.4 18.6 H19.6" />
-      </g>
-    </svg>
-  )
-}
 
 /**
  * Sidebar for the Administration experience. Same chrome as the Fleet sidebar
