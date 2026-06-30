@@ -2,7 +2,6 @@ import { useMemo, useState, useEffect, useRef } from "react"
 import { Search, X, Check, Monitor, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, CircleCheck } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Chip } from "@/components/ui/chip"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
@@ -158,7 +157,6 @@ export function EndpointsTable({
   }, [openEndpointId, rows])
 
   const shown = rows.slice(0, visible)
-  const hasMore = shown.length < rows.length
   const colCount = 2 + (showLocation ? 1 : 0) + 1 + 1 + 1
 
   const resetPage = () => setVisible(CHUNK)
@@ -331,15 +329,10 @@ export function EndpointsTable({
         </table>
       </div>
 
-      {/* lazy-load footer (sentinel auto-loads more as it scrolls into view) */}
+      {/* footer doubles as the lazy-load sentinel — rows load automatically as it scrolls into view */}
       {rows.length > 0 && (
-        <div ref={sentinelRef} className="flex items-center justify-between gap-3 px-4 py-3 text-sm" style={{ borderTop: "1px solid var(--border-neutral-muted)", color: "var(--fg-neutral-muted)" }}>
-          <span>Showing {shown.length.toLocaleString()} of {rows.length.toLocaleString()} endpoints</span>
-          {hasMore && (
-            <Button variant="outline" size="sm" onClick={() => setVisible((v) => Math.min(v + CHUNK, rows.length))}>
-              Load more
-            </Button>
-          )}
+        <div ref={sentinelRef} className="flex items-center justify-center px-4 py-3 text-sm" style={{ borderTop: "1px solid var(--border-neutral-muted)", color: "var(--fg-neutral-muted)" }}>
+          Showing {shown.length.toLocaleString()} of {rows.length.toLocaleString()} endpoints
         </div>
       )}
     </Card>
