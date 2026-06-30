@@ -378,10 +378,10 @@ export function EndpointsTable({
                       <>
                         <CircleCheck className="size-6" style={{ color: "var(--fg-success)" }} />
                         <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>All clear</span>
-                        <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No devices with issues here. Turn off “Issues only” to see all.</span>
+                        <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No endpoints with issues here. Turn off “Issues only” to see all.</span>
                       </>
                     ) : (
-                      <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No devices match your filters.</span>
+                      <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No endpoints match your filters.</span>
                     )}
                   </div>
                 </td>
