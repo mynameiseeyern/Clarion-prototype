@@ -41,13 +41,8 @@ export function Sidebar({
             {secondsAgo === 0 ? "Streaming just now" : `Streaming ${secondsAgo}s ago`}
           </span>
         </div>
-        {/* Product attribution + IR logo (min 'i' height ≈20px per brand book).
-            "Clarity" set in Poppins to match the Integrated Research wordmark. */}
-        <div className="flex flex-col items-start gap-2 p-2">
-          <span className="text-sm" style={{ fontFamily: "'Poppins', ui-sans-serif, sans-serif" }}>
-            <span style={{ fontWeight: 500, color: "var(--fg-neutral-emphasis)" }}>Clarity</span>
-            <span style={{ fontWeight: 400, color: "var(--fg-neutral-muted)" }}> powered by IRIS</span>
-          </span>
+        {/* IR logo, bottom-left (min 'i' height ≈20px per brand book) */}
+        <div className="flex items-start p-2">
           <img src="/ir-logo.png" alt="Integrated Research" className="h-9 w-auto dark:hidden" />
           <img src="/ir-logo-white.png" alt="Integrated Research" className="hidden h-9 w-auto dark:block" />
         </div>
