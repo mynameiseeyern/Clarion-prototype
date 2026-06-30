@@ -39,7 +39,7 @@ export function DevicesModelPage() {
         </div>
         <h2 className="mt-3 text-heading-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>Endpoints model</h2>
         <p className="mt-1 text-body-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          What an endpoint is, how users and peripherals relate to it, and how we decide whether an endpoint is offline, active, or has no signed-in user.
+          What an endpoint is, how users and devices relate to it, and how we decide whether an endpoint is offline, active, or has no signed-in user.
         </p>
       </Card>
 
@@ -47,7 +47,7 @@ export function DevicesModelPage() {
       <SectionCard title="What an endpoint is">
         <div className="flex flex-col gap-4">
           <ConceptRow icon={Laptop} title="Endpoint">
-            A single monitored machine running the Clarity Widget (formerly “Device” / “User”). Identified by its machine name, e.g. <span className="font-mono text-xs">DESKTOP-MNL-0428</span>. The endpoint is the unit the fleet counts, statuses, and rolls up into issues.
+            A single monitored machine running the Clarity Widget. Identified by its machine name, e.g. <span className="font-mono text-xs">DESKTOP-MNL-0428</span>. The endpoint is the unit the fleet counts, statuses, and rolls up into issues.
           </ConceptRow>
           <ConceptRow icon={Users} title="Users on an endpoint">
             An endpoint can be shared by several users (hot-desking). The Endpoints table shows the current / primary user; the drilldown header lists everyone who uses the endpoint. Search matches any user on the endpoint.
