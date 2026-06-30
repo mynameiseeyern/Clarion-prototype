@@ -37,7 +37,7 @@ function IconBtn({ children, label, onClick, disabled }: { children: React.React
 const TABS = [
   { id: "network", label: "Network" },
   { id: "platforms", label: "UC/CC platforms" },
-  { id: "devices", label: "Peripherals" },
+  { id: "devices", label: "Devices" },
   { id: "system", label: "System" },
 ]
 

@@ -8,12 +8,12 @@ const groups: Group[] = [
   {
     title: "Core objects",
     terms: [
-      { term: "Device", def: "A single monitored machine/agent (formerly 'Endpoint' / 'User'). A device can be shared by several users (hot-desking); identified by its machine name.", eg: "DESKTOP-MNL-0428 · Anna Reyes" },
-      { term: "User", def: "A person who signs in to a device. One device can have multiple users.", eg: "Anna Reyes, Luis Mendoza" },
-      { term: "Peripheral", def: "Hardware attached to a device — audio / video / Bluetooth / USB — shown in the drilldown's Peripherals tab.", eg: "Jabra Evolve2 75 · Logitech Brio" },
-      { term: "Location", def: "A centre / city where devices are based.", eg: "Manila CC, Cebu, New York" },
-      { term: "Country (cluster)", def: "A grouping of one or more locations. The Overview map clusters devices by country, then drills down to its cities.", eg: "Philippines → Manila CC, Cebu" },
-      { term: "Issue", def: "A persistent, trackable problem the system has identified, affecting one or more devices. The feature formerly labelled 'Alerts'. Has a severity, affected devices, and (later) a lifecycle and ticket.", eg: "Elevated packet loss · 52 devices · Manila CC" },
+      { term: "Endpoint", def: "A single monitored machine/agent. An endpoint can be shared by several users (hot-desking); identified by its machine name.", eg: "DESKTOP-MNL-0428 · Anna Reyes" },
+      { term: "User", def: "A person who signs in to an endpoint. One endpoint can have multiple users.", eg: "Anna Reyes, Luis Mendoza" },
+      { term: "Peripheral", def: "Hardware attached to an endpoint — audio / video / Bluetooth / USB — shown in the drilldown's Peripherals tab.", eg: "Jabra Evolve2 75 · Logitech Brio" },
+      { term: "Location", def: "A centre / city where endpoints are based.", eg: "Manila CC, Cebu, New York" },
+      { term: "Country (cluster)", def: "A grouping of one or more locations. The Overview map clusters endpoints by country, then drills down to its cities.", eg: "Philippines → Manila CC, Cebu" },
+      { term: "Issue", def: "A persistent, trackable problem the system has identified, affecting one or more endpoints. The feature formerly labelled 'Alerts'. Has a severity, affected endpoints, and (later) a lifecycle and ticket.", eg: "Elevated packet loss · 52 endpoints · Manila CC" },
       { term: "Alert (notification)", def: "An ephemeral, real-time event that raises or updates an Issue. Surfaces on the bell. NOT the same as an Issue.", eg: "“Latency spike detected — New York” on the bell" },
       { term: "Ticket (future / ITSM)", def: "An Issue handed off to an external ITSM system (ServiceNow, Jira) for resolution. Issue → Ticket is the escalation bridge.", eg: "Not built yet" },
     ],
@@ -21,18 +21,18 @@ const groups: Group[] = [
   {
     title: "Status & health",
     terms: [
-      { term: "Status", def: "The health of a single device.", eg: "Healthy · Warning · Critical · Offline" },
+      { term: "Status", def: "The health of a single endpoint.", eg: "Healthy · Warning · Critical · Offline" },
       { term: "Healthy", def: "Reporting normally, all metrics within threshold." },
       { term: "Warning", def: "At least one metric in the warning band (e.g. latency ≥ 80ms)." },
       { term: "Critical", def: "At least one metric in the critical band, or a platform unreachable (e.g. latency ≥ 150ms, packet loss ≥ 3%)." },
       { term: "Offline", def: "Not reporting / unreachable. No live metrics. Lowest priority in sorts and filters; excluded from the online count and from Issue rollups." },
-      { term: "Active devices", def: "Devices currently reporting (active) = total − offline. Can never exceed total devices." },
+      { term: "Active endpoints", def: "Endpoints currently reporting (active) = total − offline. Can never exceed total endpoints." },
     ],
   },
   {
     title: "Metrics",
     terms: [
-      { term: "Clarity™ Network Score", def: "The headline 0–100 network-quality score for a device or aggregate (formerly 'MOS / Average MOS score'). Banded Excellent 80–100 · Good 60–79 · Fair 40–59 · Poor 0–39.", eg: "79 · Good" },
+      { term: "Clarity™ Network Score", def: "The headline 0–100 network-quality score for an endpoint or aggregate (formerly 'MOS / Average MOS score'). Banded Excellent 80–100 · Good 60–79 · Fair 40–59 · Poor 0–39.", eg: "79 · Good" },
       { term: "Latency", def: "Round-trip time in ms. Threshold: warn ≥ 80ms · crit ≥ 150ms." },
       { term: "Jitter", def: "Variation in latency in ms. Threshold: warn ≥ 30ms · crit ≥ 50ms." },
       { term: "Packet loss", def: "% of packets lost. Threshold: warn ≥ 1% · crit ≥ 3%." },
@@ -41,10 +41,10 @@ const groups: Group[] = [
   {
     title: "Concepts & behaviours",
     terms: [
-      { term: "Event", def: "A discrete condition observed on a device — the 'why' shown in the Devices table (formerly 'Symptom' / 'Primary issue'). The table shows the highest-priority event (critical before warning); when a device has several critical events, the most recent is shown. Events roll up into an Issue.", eg: "Genesys Cloud unreachable · Packet loss 7.2% · Audio device driver failed" },
-      { term: "Rollup", def: "How an Issue groups many affected devices by shared cause, shown as one row with an affected-device count instead of one row per device.", eg: "High latency · 38 devices" },
-      { term: "Affected devices", def: "The set of devices an Issue covers." },
-      { term: "Issues only", def: "Devices-table toggle (default on) that hides healthy devices to focus on what needs attention." },
+      { term: "Event", def: "A discrete condition observed on an endpoint — the 'why' shown in the Endpoints table (formerly 'Symptom' / 'Primary issue'). The table shows the highest-priority event (critical before warning); when an endpoint has several critical events, the most recent is shown. Events roll up into an Issue.", eg: "Genesys Cloud unreachable · Packet loss 7.2% · Audio device driver failed" },
+      { term: "Rollup", def: "How an Issue groups many affected endpoints by shared cause, shown as one row with an affected-endpoint count instead of one row per endpoint.", eg: "High latency · 38 endpoints" },
+      { term: "Affected endpoints", def: "The set of endpoints an Issue covers." },
+      { term: "Issues only", def: "Endpoints-table toggle (default on) that hides healthy endpoints to focus on what needs attention." },
       { term: "Mute (alert type)", def: "Silences a type of real-time alert for a chosen period (1 / 8 / 24 hours) from the bell." },
       { term: "Streaming", def: "The 'live' feel — fleet figures refresh on an interval and the sidebar shows 'Streaming Xs ago'." },
     ],

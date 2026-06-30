@@ -90,7 +90,7 @@ const matrix: { domain: string; rows: { cap: string; access: [Access, Access, Ac
     { cap: "Register, move & revoke Widgets / tokens", access: ["full", "full", "none", "none"] },
   ] },
   { domain: "Monitoring", rows: [
-    { cap: "Monitor devices & issues", access: ["full", "full", "scoped", "none"] },
+    { cap: "Monitor endpoints & issues", access: ["full", "full", "scoped", "none"] },
   ] },
   { domain: "Subscription & billing", rows: [
     { cap: "View plan, usage & invoices", access: ["full", "full", "none", "full"] },
