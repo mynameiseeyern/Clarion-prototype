@@ -37,33 +37,33 @@ export function DevicesModelPage() {
           <Badge variant="info" className="uppercase tracking-wide">Internal</Badge>
           <span className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Product development · not shipped in the built product</span>
         </div>
-        <h2 className="mt-3 text-heading-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>Devices model</h2>
+        <h2 className="mt-3 text-heading-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>Endpoints model</h2>
         <p className="mt-1 text-body-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          What a device is, how users and peripherals relate to it, and how we decide whether a device is offline, active, or has no signed-in user.
+          What an endpoint is, how users and peripherals relate to it, and how we decide whether an endpoint is offline, active, or has no signed-in user.
         </p>
       </Card>
 
-      {/* What a device is */}
-      <SectionCard title="What a device is">
+      {/* What an endpoint is */}
+      <SectionCard title="What an endpoint is">
         <div className="flex flex-col gap-4">
-          <ConceptRow icon={Laptop} title="Device">
-            A single monitored machine running the Clarity Widget (formerly “Endpoint” / “User”). Identified by its machine name, e.g. <span className="font-mono text-xs">DESKTOP-MNL-0428</span>. The device is the unit the fleet counts, statuses, and rolls up into issues.
+          <ConceptRow icon={Laptop} title="Endpoint">
+            A single monitored machine running the Clarity Widget (formerly “Device” / “User”). Identified by its machine name, e.g. <span className="font-mono text-xs">DESKTOP-MNL-0428</span>. The endpoint is the unit the fleet counts, statuses, and rolls up into issues.
           </ConceptRow>
-          <ConceptRow icon={Users} title="Users on a device">
-            A device can be shared by several users (hot-desking). The Devices table shows the current / primary user; the drilldown header lists everyone who uses the device. Search matches any user on the device.
+          <ConceptRow icon={Users} title="Users on an endpoint">
+            An endpoint can be shared by several users (hot-desking). The Endpoints table shows the current / primary user; the drilldown header lists everyone who uses the endpoint. Search matches any user on the endpoint.
           </ConceptRow>
           <ConceptRow icon={Cable} title="Peripherals">
-            The hardware attached to a device — audio, video, Bluetooth and USB — shown in the drilldown’s <strong style={{ color: "var(--fg-neutral-emphasis)" }}>Peripherals</strong> tab. Peripherals belong to a device; they are not devices themselves.
+            The hardware attached to an endpoint — audio, video, Bluetooth and USB — shown in the drilldown’s <strong style={{ color: "var(--fg-neutral-emphasis)" }}>Peripherals</strong> tab. Peripherals belong to an endpoint; they are not endpoints themselves.
           </ConceptRow>
         </div>
       </SectionCard>
 
-      {/* Device states */}
-      <SectionCard title="Device states — offline, active & “no user”">
+      {/* Endpoint states */}
+      <SectionCard title="Endpoint states — offline, active & “no user”">
         <div className="flex flex-col gap-3 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
           <div className="flex items-start gap-3">
             <span className="mt-0.5 shrink-0 rounded-md px-1.5 py-0.5 text-xs font-semibold uppercase" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>Offline</span>
-            <p><strong style={{ color: "var(--fg-neutral-emphasis)" }}>Offline</strong> means the widget / device is sending <strong style={{ color: "var(--fg-neutral-emphasis)" }}>no data at all</strong>.</p>
+            <p><strong style={{ color: "var(--fg-neutral-emphasis)" }}>Offline</strong> means the widget / endpoint is sending <strong style={{ color: "var(--fg-neutral-emphasis)" }}>no data at all</strong>.</p>
           </div>
           <div className="flex items-start gap-3">
             <span className="mt-0.5 shrink-0">{pill("Unknown?", "var(--bg-info-subtle)", "var(--fg-on-info-subtle)")}</span>
