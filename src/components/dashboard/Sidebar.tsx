@@ -1,19 +1,4 @@
-import { fleet } from "@/data/dashboard"
 import { navItems, devNavItems, type NavItem, type PageId } from "@/nav"
-
-// Acme Contact Centre brand monogram (placeholder customer logo).
-function CompanyLogo() {
-  return (
-    <svg viewBox="0 0 32 32" className="size-8 shrink-0" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="#3730A3" />
-      <g stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none">
-        <path d="M16 8 L10 24" />
-        <path d="M16 8 L22 24" />
-        <path d="M12.4 18.6 H19.6" />
-      </g>
-    </svg>
-  )
-}
 
 export function Sidebar({
   active,
@@ -29,13 +14,11 @@ export function Sidebar({
       className="flex h-full w-64 shrink-0 flex-col"
       style={{ background: "var(--bg-sidebar)" }}
     >
-      {/* Header — workspace brand */}
+      {/* Header — product brand (client white-label is a Day 2 feature) */}
       <div className="flex h-16 items-center px-2">
-        <div className="flex w-full items-center gap-2.5 p-2">
-          <CompanyLogo />
-          <span className="min-w-px flex-1 truncate text-sm font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>
-            {fleet.workspace}
-          </span>
+        <div className="flex flex-col justify-center px-2 leading-tight" style={{ fontFamily: "'Poppins', ui-sans-serif, sans-serif" }}>
+          <span className="text-base" style={{ fontWeight: 500, color: "var(--fg-neutral-emphasis)" }}>Clarity</span>
+          <span className="text-xs" style={{ fontWeight: 400, color: "var(--fg-neutral-muted)" }}>powered by IRIS</span>
         </div>
       </div>
 
