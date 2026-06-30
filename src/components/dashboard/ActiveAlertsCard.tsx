@@ -3,11 +3,13 @@ import { ArrowRight, ChevronRight, CircleCheck } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { StatusFilter, statusBadge, cap, initials, type StatusOption } from "@/components/endpoints/status"
+import { StatusFilter, statusVar, statusBadge, cap, initials, type StatusOption } from "@/components/endpoints/status"
 import { queryEndpoints, type Endpoint, type EndpointStatus } from "@/data/endpoints"
 
 // The Overview attention card only ever deals with unhealthy endpoints.
 const ATTENTION_STATUSES: EndpointStatus[] = ["critical", "warning"]
+// Default view = critical endpoints only (warning is opt-in via the filter).
+const DEFAULT_STATUSES: EndpointStatus[] = ["critical"]
 const ATTENTION_OPTIONS: StatusOption[] = [
   { id: "critical", label: "Critical" },
   { id: "warning", label: "Warning" },
@@ -26,7 +28,7 @@ export function EndpointsAttentionCard({
   onViewEndpoints: (loc?: string | string[]) => void
   onOpenEndpoint: (rows: Endpoint[], index: number) => void
 }) {
-  const [statuses, setStatuses] = useState<EndpointStatus[]>(ATTENTION_STATUSES)
+  const [statuses, setStatuses] = useState<EndpointStatus[]>(DEFAULT_STATUSES)
   const toggleStatus = (s: EndpointStatus) =>
     setStatuses((xs) => (xs.includes(s) ? xs.filter((x) => x !== s) : [...xs, s]))
 
@@ -84,20 +86,33 @@ export function EndpointsAttentionCard({
                 onMouseEnter={(ev) => (ev.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)")}
                 onMouseLeave={(ev) => (ev.currentTarget.style.background = "transparent")}
               >
+                {/* identity */}
                 <span className="flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-medium"
                   style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)" }}>
                   {initials(e.user)}
                 </span>
-                <div className="flex min-w-px flex-1 flex-col">
-                  <span className="flex items-center gap-2">
-                    <span className="truncate text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{e.user}</span>
-                    <Badge variant={statusBadge[e.status]}>{cap(e.status)}</Badge>
-                  </span>
-                  <span className="truncate text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
-                    {e.machine}{e.event ? ` · ${e.event}` : ""}
-                  </span>
+                <div className="flex w-44 shrink-0 flex-col">
+                  <span className="truncate text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{e.user}</span>
+                  <span className="truncate font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{e.machine}</span>
                 </div>
-                <span className="shrink-0 font-mono text-sm font-medium"
+                {/* status */}
+                <span className="w-24 shrink-0"><Badge variant={statusBadge[e.status]}>{cap(e.status)}</Badge></span>
+                {/* location */}
+                <span className="hidden w-36 shrink-0 truncate text-sm md:block" style={{ color: "var(--fg-neutral-muted)" }}>{e.locationName}</span>
+                {/* event */}
+                <span className="flex min-w-0 flex-1 items-center gap-1.5 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
+                  {e.event ? (
+                    <>
+                      <span className="size-1.5 shrink-0 rounded-full" style={{ background: statusVar[e.status] }} />
+                      <span className="truncate">{e.event}</span>
+                      {e.eventCount > 1 && <span className="shrink-0 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>+{e.eventCount - 1}</span>}
+                    </>
+                  ) : (
+                    <span style={{ color: "var(--fg-neutral-subtle)" }}>—</span>
+                  )}
+                </span>
+                {/* clarity network score */}
+                <span className="w-10 shrink-0 text-right font-mono text-sm font-medium"
                   style={{ color: e.status === "critical" ? "var(--fg-danger-emphasis)" : e.status === "warning" ? "var(--fg-warning-emphasis)" : "var(--fg-neutral-emphasis)" }}>
                   {e.score ?? "—"}
                 </span>
