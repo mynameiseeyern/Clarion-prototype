@@ -10,7 +10,7 @@ const groups: Group[] = [
     terms: [
       { term: "Endpoint", def: "A single monitored machine/agent. An endpoint can be shared by several users (hot-desking); identified by its machine name.", eg: "DESKTOP-MNL-0428 · Anna Reyes" },
       { term: "User", def: "A person who signs in to an endpoint. One endpoint can have multiple users.", eg: "Anna Reyes, Luis Mendoza" },
-      { term: "Peripheral", def: "Hardware attached to an endpoint — audio / video / Bluetooth / USB — shown in the drilldown's Peripherals tab.", eg: "Jabra Evolve2 75 · Logitech Brio" },
+      { term: "Device", def: "Hardware attached to an endpoint — audio / video / Bluetooth / USB — shown in the drilldown's Devices tab. A device belongs to an endpoint; it is not an endpoint itself.", eg: "Jabra Evolve2 75 · Logitech Brio" },
       { term: "Location", def: "A centre / city where endpoints are based.", eg: "Manila CC, Cebu, New York" },
       { term: "Country (cluster)", def: "A grouping of one or more locations. The Overview map clusters endpoints by country, then drills down to its cities.", eg: "Philippines → Manila CC, Cebu" },
       { term: "Issue", def: "A persistent, trackable problem the system has identified, affecting one or more endpoints. The feature formerly labelled 'Alerts'. Has a severity, affected endpoints, and (later) a lifecycle and ticket.", eg: "Elevated packet loss · 52 endpoints · Manila CC" },
