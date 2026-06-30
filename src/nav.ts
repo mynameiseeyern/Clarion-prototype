@@ -32,7 +32,7 @@ export interface NavItem {
 
 export const navItems: NavItem[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "endpoints", label: "Devices", icon: Monitor },
+  { id: "endpoints", label: "Endpoints", icon: Monitor },
   { id: "alerts", label: "Issues", icon: TriangleAlert },
   { id: "thresholds", label: "Thresholds", icon: SlidersHorizontal },
 ]
@@ -60,7 +60,7 @@ export const adminDocNavItems: NavItem[] = [
 export const devNavItems: NavItem[] = [
   { id: "components", label: "Components", icon: Component },
   { id: "glossary", label: "Glossary", icon: BookOpen },
-  { id: "devicesdoc", label: "Devices model", icon: Laptop },
+  { id: "devicesdoc", label: "Endpoints model", icon: Laptop },
   { id: "issuesdoc", label: "Issues model", icon: Workflow },
 ]
 
@@ -70,10 +70,10 @@ export const pageLabel = (id: PageId) =>
 // Optional one-line context under a page title (shown in the top chrome).
 // Add entries only where a subtitle is genuinely useful — keep pages lean otherwise.
 export const pageSubtitle: Partial<Record<PageId, string>> = {
-  thresholds: "Set when a device is flagged warning or critical.",
+  thresholds: "Set when an endpoint is flagged warning or critical.",
   users: "Invite people, set their role, and manage access.",
   groups: "Organise Widgets into Groups that scope what each Manager sees.",
-  widgets: "Register, assign and revoke endpoint Widgets. A Widget becomes a Device once it's set up and reporting.",
+  widgets: "Register, assign and revoke endpoint Widgets. A Widget becomes an Endpoint once it's set up and reporting.",
   subscription: "Review your plan, usage and billing.",
   audit: "Track who changed what, and when.",
   rbacdoc: "How roles, scope and permissions work.",
@@ -85,7 +85,7 @@ export const pageSubtitle: Partial<Record<PageId, string>> = {
 
 export const pagePath: Record<PageId, string> = {
   overview: "/",
-  endpoints: "/devices",
+  endpoints: "/endpoints",
   alerts: "/issues",
   thresholds: "/thresholds",
   users: "/admin/users",

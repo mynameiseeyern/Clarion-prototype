@@ -45,11 +45,11 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
         <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
           Entire fleet
         </span>
-        <Badge variant="secondary">{live.endpoints.toLocaleString()} total devices</Badge>
+        <Badge variant="secondary">{live.endpoints.toLocaleString()} total endpoints</Badge>
       </div>
 
       <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-stretch">
-        <KpiCard title="Active devices" icon={Monitor} value={live.online.toLocaleString()}>
+        <KpiCard title="Active endpoints" icon={Monitor} value={live.online.toLocaleString()}>
           <SegmentedBar
             segments={[
               { status: "healthy", flex: live.healthy, count: live.healthy },
