@@ -77,7 +77,7 @@ export function EndpointsAttentionCard({
       {rows.length > 0 ? (
         <>
           <div className="px-4 pt-3 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{subtitle}</div>
-          <div className="max-h-80 overflow-y-auto overscroll-contain" style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
             <table className="w-full border-collapse text-sm">
               <thead className="sticky top-0 z-10">
                 <tr style={{ color: "var(--fg-neutral-muted)" }}>
