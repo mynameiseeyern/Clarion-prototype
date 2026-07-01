@@ -70,7 +70,7 @@ export function EndpointsAttentionCard({
             <table className="w-full border-collapse text-sm">
               <thead className="sticky top-0 z-10">
                 <tr style={{ color: "var(--fg-neutral-muted)" }}>
-                  {["User / Machine", "Status", "Location", "Clarity Network Score", "Event"].map((h) => (
+                  {["User / Machine", "Status", "Location", "Clarity Network Score", "Alert"].map((h) => (
                     <th key={h} className="h-10 px-4 text-left text-xs font-medium"
                       style={{ background: "var(--bg-neutral-subtle)", borderBottom: "1px solid var(--border-neutral-muted)" }}>{h}</th>
                   ))}
