@@ -107,6 +107,18 @@ function SortHeader({
 
 const CHUNK = 25 // rows added per lazy-load step
 
+// nearest vertically-scrollable ancestor (the page content scroller), so the
+// lazy-load observer fires whether the page or a container is doing the scrolling
+function getScrollParent(node: HTMLElement | null): HTMLElement | null {
+  let el = node?.parentElement ?? null
+  while (el) {
+    const oy = getComputedStyle(el).overflowY
+    if (oy === "auto" || oy === "scroll") return el
+    el = el.parentElement
+  }
+  return null
+}
+
 export function EndpointsTable({
   locationIds,
   onLocationsChange,
@@ -166,17 +178,18 @@ export function EndpointsTable({
     resetPage()
   }
 
-  // lazy-load: pull in more rows as the footer sentinel scrolls into view
+  // lazy-load: pull in more rows as the footer sentinel scrolls into view.
+  // Re-armed on `visible` so it keeps filling while the sentinel stays in view.
   useEffect(() => {
     const el = sentinelRef.current
     if (!el) return
     const io = new IntersectionObserver(
       (entries) => { if (entries[0].isIntersecting) setVisible((v) => Math.min(v + CHUNK, rows.length)) },
-      { rootMargin: "300px" }
+      { root: getScrollParent(el), rootMargin: "400px" }
     )
     io.observe(el)
     return () => io.disconnect()
-  }, [rows.length])
+  }, [rows.length, visible])
 
   return (
     <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
