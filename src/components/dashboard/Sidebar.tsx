@@ -1,14 +1,24 @@
+import { useEffect, useState } from "react"
 import { navItems, devNavItems, type NavItem, type PageId } from "@/nav"
 
 export function Sidebar({
   active,
   onNavigate,
-  secondsAgo,
+  lastRefreshAt,
 }: {
   active: PageId
   onNavigate: (id: PageId) => void
-  secondsAgo: number
+  /** epoch ms of the last stream refresh; the "Ns ago" ticks locally here so the
+   *  per-second update doesn't re-render the whole app. */
+  lastRefreshAt: number
 }) {
+  const [secondsAgo, setSecondsAgo] = useState(0)
+  useEffect(() => {
+    const tick = () => setSecondsAgo(Math.max(0, Math.round((Date.now() - lastRefreshAt) / 1000)))
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [lastRefreshAt])
   return (
     <aside
       className="flex h-full w-64 shrink-0 flex-col"

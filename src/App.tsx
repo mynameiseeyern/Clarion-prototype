@@ -146,7 +146,7 @@ export default function App() {
   return (
     <div className="flex h-screen w-full items-start overflow-hidden" style={{ background: "var(--bg-app)" }}>
       {sidebarOpen && (
-        <Sidebar active={page} onNavigate={navigate} secondsAgo={live.secondsAgo} />
+        <Sidebar active={page} onNavigate={navigate} lastRefreshAt={live.lastRefreshAt} />
       )}
 
       <div

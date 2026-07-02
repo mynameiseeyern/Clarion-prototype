@@ -372,7 +372,13 @@ function categorize(e: Endpoint): { cause: RollupCause; key: string; title: stri
 // the number of devices of that severity — meaning critical-issue counts and
 // device totals reconcile exactly with the map tooltip's healthy/warning/critical
 // breakdown. The Overview card, Issues page, KPI and right-panel all read this.
+// The dataset is generated once and never mutates, so rollups are stable — cache
+// per location to avoid re-scanning all ~2,847 endpoints on every render.
+const rollupCache = new Map<string, Rollup[]>()
+
 export function rollupsForLocation(locId: string): Rollup[] {
+  const cached = rollupCache.get(locId)
+  if (cached) return cached
   const loc = locations.find((l) => l.id === locId)
   if (!loc) return []
   const unhealthy = endpoints.filter(
@@ -388,7 +394,7 @@ export function rollupsForLocation(locId: string): Rollup[] {
     groups.get(gkey)!.eps.push(e)
   }
 
-  return [...groups.entries()]
+  const result = [...groups.entries()]
     .map(([gkey, g], i) => ({
       id: `ru-${locId}-${gkey}`,
       locationId: locId,
@@ -401,12 +407,18 @@ export function rollupsForLocation(locId: string): Rollup[] {
       startedMinAgo: 6 + i * 11,
     }))
     .sort((a, b) => sev[a.severity] - sev[b.severity] || b.affected - a.affected)
+  rollupCache.set(locId, result)
+  return result
 }
 
+let rollupsAllCache: Rollup[] | null = null
 export function rollupsAll(): Rollup[] {
-  return locations
-    .flatMap((l) => rollupsForLocation(l.id))
-    .sort((a, b) => sev[a.severity] - sev[b.severity] || b.affected - a.affected)
+  if (!rollupsAllCache) {
+    rollupsAllCache = locations
+      .flatMap((l) => rollupsForLocation(l.id))
+      .sort((a, b) => sev[a.severity] - sev[b.severity] || b.affected - a.affected)
+  }
+  return rollupsAllCache
 }
 
 // The Overview "needs attention" card = the critical slice of the same model.

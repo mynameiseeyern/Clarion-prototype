@@ -76,7 +76,9 @@ export interface FleetTotals {
   score: number
 }
 
+let fleetTotalsCache: FleetTotals | null = null
 export function fleetTotals(): FleetTotals {
+  if (fleetTotalsCache) return fleetTotalsCache
   const t = locations.reduce(
     (a, l) => ({
       endpoints: a.endpoints + l.endpoints,
@@ -91,7 +93,8 @@ export function fleetTotals(): FleetTotals {
     { endpoints: 0, online: 0, offline: 0, healthy: 0, warning: 0, critical: 0, activeAlerts: 0, issues: 0 }
   )
   const score = locations.reduce((s, l) => s + l.score * l.endpoints, 0) / t.endpoints
-  return { ...t, score }
+  fleetTotalsCache = { ...t, score }
+  return fleetTotalsCache
 }
 
 export function locationById(id: string) {
@@ -145,8 +148,12 @@ export function countryStats(countryId: string): CountryStats | undefined {
   }
 }
 
+let countriesWithStatsCache: CountryStats[] | null = null
 export function countriesWithStats(): CountryStats[] {
-  return countries.map((c) => countryStats(c.id)!).filter(Boolean)
+  if (!countriesWithStatsCache) {
+    countriesWithStatsCache = countries.map((c) => countryStats(c.id)!).filter(Boolean)
+  }
+  return countriesWithStatsCache
 }
 
 // ---- Recent activity (per location, last 24h) ------------------------------
