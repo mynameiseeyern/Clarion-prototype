@@ -42,7 +42,7 @@ export function EndpointsAttentionCard({
   const selected = rows.find((r) => r.id === selectedId) ?? rows[0] ?? null
 
   return (
-    <Card className="flex min-h-0 w-full flex-1 flex-col gap-0 overflow-hidden rounded-xl p-0">
+    <Card className="flex w-full flex-col gap-0 overflow-hidden rounded-xl p-0">
       <div className="flex items-center justify-between gap-2 p-4" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
         <div className="flex items-center gap-2">
           <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Endpoints needing attention</h2>
@@ -66,9 +66,11 @@ export function EndpointsAttentionCard({
       </div>
 
       {rows.length > 0 ? (
-        <div className="flex min-h-0 flex-1">
-          {/* left — endpoint list (50%) */}
-          <div className="flex w-1/2 min-w-0 flex-col overflow-y-auto overscroll-contain" style={{ borderRight: "1px solid var(--border-neutral-muted)" }}>
+        <div className="flex">
+          {/* left — endpoint list (50%); height is capped to the detail pane via the
+              absolute inner, so a long list scrolls instead of growing the card */}
+          <div className="relative w-1/2 min-w-0" style={{ borderRight: "1px solid var(--border-neutral-muted)" }}>
+            <div className="absolute inset-0 overflow-y-auto overscroll-contain">
             {rows.map((e) => {
               const isSel = selected?.id === e.id
               const alertColor = e.status === "critical" ? "var(--fg-danger-emphasis)" : "var(--fg-warning-emphasis)"
@@ -103,15 +105,16 @@ export function EndpointsAttentionCard({
                 </button>
               )
             })}
+            </div>
           </div>
 
-          {/* right — inline drilldown (50%) */}
-          <div className="min-h-0 w-1/2 min-w-0">
+          {/* right — inline drilldown (50%), natural height drives the row */}
+          <div className="w-1/2 min-w-0">
             {selected && <EndpointDetailPanel endpoint={selected} />}
           </div>
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-0.5 px-4 py-10 text-center">
+        <div className="flex flex-col items-center justify-center gap-0.5 px-4 py-16 text-center">
           <p className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
             <CircleCheck className="size-4" style={{ color: "var(--fg-success-emphasis)" }} />
             No endpoints need attention
