@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Monitor, MapPin, Users, CloudOff } from "lucide-react"
+import { Monitor, MapPin, CloudOff } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { StatusBadge } from "@/components/endpoints/status"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -74,9 +74,6 @@ export function EndpointDetailPanel({ endpoint }: { endpoint: Endpoint }) {
 
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           <MetaItem icon={MapPin}>{detail.locationDetail}</MetaItem>
-          {(offline || endpoint.users.length > 1) && (
-            <MetaItem icon={Users}>{endpoint.users.join(", ")}{!offline && endpoint.users.length > 1 ? " · shared" : ""}</MetaItem>
-          )}
           <MetaItem icon={Monitor}>{endpoint.connection}</MetaItem>
         </div>
 

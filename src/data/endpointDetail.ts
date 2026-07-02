@@ -45,7 +45,7 @@ export interface EndpointDetail {
     interface: { name: string; detail: string }
   }
   platforms: { rows: PlatformRow[]; why: string }
-  devices: { audio: DeviceRow[]; video: DeviceRow[]; bluetooth: DeviceRow[]; usb: DeviceRow[] }
+  devices: { audio: DeviceRow[]; video: DeviceRow[] }
   system: { cpu: SysMetric; memory: SysMetric; disk: SysMetric; battery: { value: string; detail: string }; os: { name: string; detail: string }; agent: { name: string; detail: string } }
 }
 
@@ -124,12 +124,6 @@ export function getEndpointDetail(e: Endpoint): EndpointDetail {
         { name: "Realtek HD Audio (built-in)", meta: `Driver v6.0.${r(9000, 9300)}.1 · Fallback device`, state: "Standby", stateTone: "muted", kind: "audio-in" },
       ],
       video: [{ name: pick(cams), meta: "USB · 1080p · Driver up-to-date", state: "Active", stateTone: "good", kind: "video" }],
-      bluetooth: [{ name: "Bluetooth radio (Intel AX211)", meta: `${r(1, 3)} devices paired · Driver 22.180.0`, state: "On", stateTone: "good", kind: "bt" }],
-      usb: [
-        { name: "USB-C Dock (DK3120)", meta: `Hub 2 · ${r(3, 6)} downstream ports · Bus-powered`, state: "Connected", stateTone: "good", kind: "usb" },
-        { name: "Kingston DataTraveler 64GB", meta: "Hub 2, port 3 · Mass storage", state: "Connected", stateTone: "good", kind: "usb" },
-        { name: "Logitech Unifying Receiver", meta: "Port 1 · Keyboard & mouse", state: "Active", stateTone: "good", kind: "usb" },
-      ],
     },
     system: {
       cpu: { label: "CPU utilisation", value: String(r(8, 70)), unit: "%", fill: 0, meta: "Intel Core i7-1265U · 12 cores · 4.8 GHz" },

@@ -121,8 +121,6 @@ export function DevicesTab({ d }: { d: EndpointDetail }) {
     <div className="flex flex-col gap-6">
       <div><SectionLabel>Audio devices</SectionLabel><div className="flex flex-col gap-2">{d.devices.audio.map((r) => <Row key={r.name} r={r} />)}</div></div>
       <div><SectionLabel>Video devices</SectionLabel><div className="flex flex-col gap-2">{d.devices.video.map((r) => <Row key={r.name} r={r} />)}</div></div>
-      <div><SectionLabel>Bluetooth devices</SectionLabel><div className="flex flex-col gap-2">{d.devices.bluetooth.map((r) => <Row key={r.name} r={r} />)}</div></div>
-      <div><SectionLabel>USB devices</SectionLabel><div className="flex flex-col gap-2">{d.devices.usb.map((r) => <Row key={r.name} r={r} />)}</div></div>
     </div>
   )
 }
