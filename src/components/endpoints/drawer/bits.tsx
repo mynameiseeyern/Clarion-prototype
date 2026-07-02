@@ -5,14 +5,8 @@ import type { MetricStatus } from "@/data/endpointDetail"
 /** an issue severity shown as a badge on the card that has the problem */
 export type IssueStatus = "warning" | "critical"
 
-const statusColor: Record<MetricStatus, string> = {
-  good: "var(--status-healthy)",
-  warn: "var(--status-warning)",
-  crit: "var(--status-critical)",
-  none: "var(--bg-neutral-subtle-pressed)",
-}
-
 export function SegBar({ fill, status, segments = 10 }: { fill: number; status: MetricStatus; segments?: number }) {
+  // level indicator is neutral — severity is conveyed by the badge, not the bar
   const filled = Math.max(status === "none" ? 0 : 1, Math.round(fill * segments))
   return (
     <div className="flex items-center gap-1">
@@ -20,7 +14,7 @@ export function SegBar({ fill, status, segments = 10 }: { fill: number; status: 
         <span
           key={i}
           className="h-2 flex-1 rounded-sm"
-          style={{ background: i < filled ? statusColor[status] : "var(--bg-neutral-subtle-pressed)" }}
+          style={{ background: i < filled ? "var(--fg-neutral-muted)" : "var(--bg-neutral-subtle-pressed)" }}
         />
       ))}
     </div>

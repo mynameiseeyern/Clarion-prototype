@@ -14,12 +14,16 @@ export function NetworkTab({ d }: { d: EndpointDetail }) {
       <div>
         <SectionLabel>Internet health</SectionLabel>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {d.network.health.map((m) => (
-            <MetricBlock key={m.label} label={m.label} value={m.value} unit={m.unit} status={issueOf(m.status)}>
-              <SegBar fill={m.fill} status={m.status} />
-              <div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>Threshold: {m.threshold}</div>
-            </MetricBlock>
-          ))}
+          {d.network.health.map((m) => {
+            // raw network values are informational (no threshold text, no badge, neutral bar).
+            // Only the Clarity Network Score (derived from all four) keeps a badge for its level.
+            const isScore = m.label === "Clarity Network Score"
+            return (
+              <MetricBlock key={m.label} label={m.label} value={m.value} unit={m.unit} status={isScore ? issueOf(m.status) : undefined}>
+                <SegBar fill={m.fill} status={m.status} />
+              </MetricBlock>
+            )
+          })}
         </div>
       </div>
       <div>
