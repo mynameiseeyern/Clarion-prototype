@@ -158,7 +158,7 @@ export function EndpointDrawer({
               <div className="flex min-w-px flex-1 flex-col">
                 <div className="flex items-center gap-2.5">
                   <Dialog.Title className={`truncate text-lg font-semibold ${offline ? "font-mono" : ""}`} style={{ color: "var(--fg-neutral-emphasis)" }}>{offline ? e.machine : e.user}</Dialog.Title>
-                  <Badge variant={e.status === "critical" ? "danger" : e.status === "warning" ? "warning" : e.status === "healthy" ? "success" : "secondary"}>{cap(e.status)}</Badge>
+                  <StatusBadge status={e.status} />
                 </div>
                 {!offline && <span className="truncate font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{e.machine}</span>}
               </div>
