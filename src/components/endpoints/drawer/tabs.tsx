@@ -9,21 +9,21 @@ const issueOf = (s: MetricStatus): IssueStatus | undefined => (s === "crit" ? "c
 
 /* ---------------- Network ---------------- */
 export function NetworkTab({ d }: { d: EndpointDetail }) {
+  const mos = d.network.mos
+  const mosVariant = mos.status === "crit" ? "danger" : mos.status === "warn" ? "warning" : "success"
+  const mosLabel = mos.status === "crit" ? "Critical" : mos.status === "warn" ? "Warning" : "Good"
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <SectionLabel>Internet health</SectionLabel>
+        {/* Network MOS (combined 1–5 quality score) sits in the section header as its level badge */}
+        <SectionLabel right={<Badge variant={mosVariant}>Network MOS {mos.value} · {mosLabel}</Badge>}>Internet health</SectionLabel>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {d.network.health.map((m) => {
-            // raw network values are informational (no threshold text, no badge, neutral bar).
-            // Only the Clarity Network Score (derived from all four) keeps a badge for its level.
-            const isScore = m.label === "Clarity Network Score"
-            return (
-              <MetricBlock key={m.label} label={m.label} value={m.value} unit={m.unit} status={isScore ? issueOf(m.status) : undefined}>
-                <SegBar fill={m.fill} status={m.status} />
-              </MetricBlock>
-            )
-          })}
+          {d.network.health.map((m) => (
+            // raw network values are informational — no threshold text, no badge, neutral bar
+            <MetricBlock key={m.label} label={m.label} value={m.value} unit={m.unit}>
+              <SegBar fill={m.fill} status={m.status} />
+            </MetricBlock>
+          ))}
         </div>
       </div>
       <div>

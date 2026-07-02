@@ -38,11 +38,12 @@ export function Panel({ children, className, status }: { children: ReactNode; cl
   )
 }
 
-export function SectionLabel({ children }: { children: ReactNode }) {
+export function SectionLabel({ children, right }: { children: ReactNode; right?: ReactNode }) {
   return (
     <div className="mb-3 flex items-center gap-3">
       <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>{children}</span>
       <span className="h-px flex-1" style={{ background: "var(--border-neutral-subtle)" }} />
+      {right}
     </div>
   )
 }

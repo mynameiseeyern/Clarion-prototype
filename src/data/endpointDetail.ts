@@ -38,6 +38,8 @@ export interface EndpointDetail {
   locationDetail: string
   network: {
     health: Metric[]
+    // Network MOS: 1–5 score derived from latency / jitter / packet loss (thresholds: warn < 4, crit < 3)
+    mos: { value: string; status: MetricStatus }
     download: number
     upload: number
     interface: { name: string; detail: string }
@@ -78,8 +80,10 @@ export function getEndpointDetail(e: Endpoint): EndpointDetail {
     { label: "Latency", value: String(e.latency), unit: "ms", fill: Math.min(1, e.latency / 200), status: metricStatus(e.latency, 80, 150), threshold: "warn ≥ 80ms · crit ≥ 150ms" },
     { label: "Packet loss", value: String(e.packetLoss), unit: "%", fill: Math.min(1, e.packetLoss / 6), status: metricStatus(e.packetLoss, 1, 3), threshold: "warn ≥ 1% · crit ≥ 3%" },
     { label: "Jitter", value: String(e.jitter), unit: "ms", fill: Math.min(1, e.jitter / 70), status: metricStatus(e.jitter, 30, 50), threshold: "warn ≥ 30ms · crit ≥ 50ms" },
-    { label: "Clarity Network Score", value: e.score === null ? "—" : String(e.score), unit: "/ 100", fill: e.score === null ? 0 : e.score / 100, status: e.score === null ? "crit" : metricStatus(e.score, 60, 40, true), threshold: "warn < 60 · crit < 40" },
   ]
+  // Network MOS — a combined quality score (1–5) derived from the network values.
+  const mosVal = Math.max(1, Math.min(5, 5 - e.latency / 120 - e.jitter / 40 - e.packetLoss / 2))
+  const networkMos = { value: mosVal.toFixed(1), status: metricStatus(mosVal, 4, 3, true) }
 
   // platforms: the endpoint's primary platform reflects its issue; others mostly OK
   const all: Platform[] = ["Genesys Cloud", "Microsoft Teams", "Zoom", "Webex", "Nice CXone"]
@@ -108,6 +112,7 @@ export function getEndpointDetail(e: Endpoint): EndpointDetail {
     locationDetail: `${e.locationName} · ${e.site}${e.site === "Office" ? " · " + pick(pods) : ""}`,
     network: {
       health,
+      mos: networkMos,
       download: r(40, 240),
       upload: r(20, 90),
       interface: e.connection === "Ethernet"
