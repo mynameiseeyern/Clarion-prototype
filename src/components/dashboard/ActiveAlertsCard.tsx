@@ -66,7 +66,7 @@ export function EndpointsAttentionCard({
       </div>
 
       {rows.length > 0 ? (
-        <div className="flex flex-col lg:flex-row">
+        <div className="flex flex-col lg:h-[600px] lg:flex-row">
           {/* left — endpoint list. lg+: 50% side-by-side, height capped to the detail
               pane via the absolute inner (long lists scroll). Below lg: stacked
               full-width with a bounded scroll so it doesn't push the detail down. */}
