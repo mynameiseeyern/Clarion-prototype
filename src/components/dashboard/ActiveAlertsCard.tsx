@@ -129,7 +129,6 @@ export function EndpointsAttentionCard({
                     </div>
                     {e.event && (
                       <div className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: alertColor }}>
-                        <span className="size-1.5 shrink-0 rounded-full" style={{ background: statusVar[e.status] }} />
                         {e.event}
                         {e.eventCount > 1 && <span className="font-normal" style={{ color: "var(--fg-neutral-subtle)" }}> · +{e.eventCount - 1} more</span>}
                       </div>
