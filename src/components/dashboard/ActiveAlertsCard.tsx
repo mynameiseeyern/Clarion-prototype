@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { ArrowRight, CircleCheck, MapPin, Phone, Search, X } from "lucide-react"
+import { ArrowRight, CircleCheck, MapPin, Search, X } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -118,13 +118,14 @@ export function EndpointsAttentionCard({
                 >
                   <span className="mt-1.5 size-2.5 shrink-0 rounded-full" style={{ background: statusVar[e.status] }} />
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
-                    <div className="text-sm">
-                      <span className="font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{e.user}</span>
-                      <span style={{ color: "var(--fg-neutral-subtle)" }}> · {e.machine}</span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
-                      <span className="inline-flex items-center gap-1"><MapPin className="size-3 shrink-0" /> {e.locationName}</span>
-                      <span className="inline-flex items-center gap-1"><Phone className="size-3 shrink-0" /> {e.primaryPlatform}</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 truncate text-sm">
+                        <span className="font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{e.user}</span>
+                        <span style={{ color: "var(--fg-neutral-subtle)" }}> · {e.machine}</span>
+                      </span>
+                      <span className="inline-flex shrink-0 items-center gap-1 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
+                        <MapPin className="size-3 shrink-0" /> {e.locationName}
+                      </span>
                     </div>
                     {e.event && (
                       <div className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: alertColor }}>
