@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { ArrowRight, CircleCheck, MapPin, Phone } from "lucide-react"
+import { ArrowRight, CircleCheck, MapPin, Phone, Search, X } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -28,14 +28,25 @@ export function EndpointsAttentionCard({
 }) {
   const [statuses, setStatuses] = useState<EndpointStatus[]>(DEFAULT_STATUSES)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [search, setSearch] = useState("")
   const toggleStatus = (s: EndpointStatus) =>
     setStatuses((xs) => (xs.includes(s) ? xs.filter((x) => x !== s) : [...xs, s]))
 
-  // empty selection falls back to the full attention set (never healthy/offline)
+  // empty selection falls back to the full attention set (never healthy/offline);
+  // then a free-text search across endpoint, user, alert and location.
   const rows = useMemo(() => {
     const effective = statuses.length ? statuses : ATTENTION_STATUSES
-    return queryEndpoints({ statuses: effective, sortKey: "status", sortDir: "asc" })
-  }, [statuses])
+    const base = queryEndpoints({ statuses: effective, sortKey: "status", sortDir: "asc" })
+    const term = search.trim().toLowerCase()
+    if (!term) return base
+    return base.filter((e) =>
+      e.machine.toLowerCase().includes(term) ||
+      e.users.join(" ").toLowerCase().includes(term) ||
+      (e.event ?? "").toLowerCase().includes(term) ||
+      e.locationName.toLowerCase().includes(term) ||
+      e.site.toLowerCase().includes(term)
+    )
+  }, [statuses, search])
 
   const hasCritical = rows.some((r) => r.status === "critical")
   // selected row (defaults to the first / most critical) drives the detail pane
@@ -43,14 +54,30 @@ export function EndpointsAttentionCard({
 
   return (
     <Card className="flex w-full flex-col gap-0 overflow-hidden rounded-xl p-0">
-      <div className="flex items-center justify-between gap-2 p-4" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
+      <div className="flex flex-wrap items-center justify-between gap-2 p-4" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
         <div className="flex items-center gap-2">
           <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Endpoints needing attention</h2>
           {rows.length > 0 && (
             <Badge variant={hasCritical ? "danger" : "warning"}>{rows.length.toLocaleString()}</Badge>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
+          <div className="flex h-9 w-full items-center gap-1.5 rounded-lg px-2.5 sm:w-64" style={{ background: "var(--bg-input-default)", border: "1px solid var(--border-input-default)" }}>
+            <Search className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
+            <input
+              value={search}
+              onChange={(ev) => setSearch(ev.target.value)}
+              placeholder="Search by endpoint, user, alert, location"
+              className="min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]"
+              style={{ color: "var(--fg-neutral-emphasis)" }}
+            />
+            {search && (
+              <button type="button" aria-label="Clear search" onClick={() => setSearch("")}
+                className="flex size-5 shrink-0 items-center justify-center rounded-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }}>
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
           <StatusFilter
             value={statuses}
             onToggle={toggleStatus}
@@ -116,11 +143,20 @@ export function EndpointsAttentionCard({
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center gap-0.5 px-4 py-16 text-center">
-          <p className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
-            <CircleCheck className="size-4" style={{ color: "var(--fg-success-emphasis)" }} />
-            No endpoints need attention
-          </p>
-          <p className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>All endpoints are healthy right now.</p>
+          {search.trim() ? (
+            <>
+              <p className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>No matching endpoints</p>
+              <p className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Nothing matches “{search.trim()}”. Try a different search.</p>
+            </>
+          ) : (
+            <>
+              <p className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
+                <CircleCheck className="size-4" style={{ color: "var(--fg-success-emphasis)" }} />
+                No endpoints need attention
+              </p>
+              <p className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>All endpoints are healthy right now.</p>
+            </>
+          )}
         </div>
       )}
     </Card>
