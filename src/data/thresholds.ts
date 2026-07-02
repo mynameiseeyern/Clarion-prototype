@@ -38,7 +38,6 @@ export const METRICS: MetricDef[] = [
   { id: "cpu", category: "System", name: "CPU utilisation", icon: Cpu, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "higher", defaultWarn: 70, defaultCrit: 85 },
   { id: "memory", category: "System", name: "Memory utilisation", icon: MemoryStick, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "higher", defaultWarn: 75, defaultCrit: 90 },
   { id: "disk", category: "System", name: "Disk free space", icon: HardDrive, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "lower", defaultWarn: 15, defaultCrit: 5 },
-  { id: "battery", category: "System", name: "Battery (TBC)", icon: Battery, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "lower", defaultWarn: 20, defaultCrit: 10 },
   // Platform
   { id: "platformmos", category: "Platform", name: "Platform MOS", icon: Phone, min: 1, max: 5, step: 0.1, unit: "", decimals: 1, direction: "lower", defaultWarn: 4.0, defaultCrit: 3.0 },
 ]
