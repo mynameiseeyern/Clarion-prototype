@@ -8,13 +8,16 @@
 // TODO(eng): real engineering defaults (upper/lower/average per metric) needed;
 // the values below are placeholders driving "Reset to engineering defaults".
 
-import { Cpu, MemoryStick, Gauge, AudioLines, Activity, type LucideIcon } from "lucide-react"
+import { Cpu, MemoryStick, AudioLines, Wifi, HardDrive, Battery, Phone, type LucideIcon } from "lucide-react"
 import { locations } from "./dashboard"
 
 export type Direction = "higher" | "lower"
+export type MetricCategory = "Network" | "System" | "Platform"
+export const METRIC_CATEGORIES: MetricCategory[] = ["Network", "System", "Platform"]
 
 export interface MetricDef {
   id: string
+  category: MetricCategory
   name: string
   icon: LucideIcon
   min: number
@@ -28,11 +31,16 @@ export interface MetricDef {
 }
 
 export const METRICS: MetricDef[] = [
-  { id: "cpu", name: "CPU utilisation", icon: Cpu, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "higher", defaultWarn: 70, defaultCrit: 85 },
-  { id: "memory", name: "Memory utilisation", icon: MemoryStick, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "higher", defaultWarn: 75, defaultCrit: 90 },
-  { id: "latency", name: "Network latency", icon: Gauge, min: 0, max: 300, step: 1, unit: "ms", decimals: 0, direction: "higher", defaultWarn: 80, defaultCrit: 150 },
-  { id: "mos", name: "MOS score", icon: AudioLines, min: 1, max: 5, step: 0.1, unit: "", decimals: 1, direction: "lower", defaultWarn: 4.0, defaultCrit: 3.0 },
-  { id: "loss", name: "Packet loss", icon: Activity, min: 0, max: 5, step: 0.1, unit: "%", decimals: 1, direction: "higher", defaultWarn: 1.5, defaultCrit: 3.5 },
+  // Network
+  { id: "networkmos", category: "Network", name: "Network MOS", icon: AudioLines, min: 1, max: 5, step: 0.1, unit: "", decimals: 1, direction: "lower", defaultWarn: 4.0, defaultCrit: 3.0 },
+  { id: "wifi", category: "Network", name: "Wi-Fi signal", icon: Wifi, min: -90, max: -30, step: 1, unit: " dBm", decimals: 0, direction: "lower", defaultWarn: -70, defaultCrit: -80 },
+  // System
+  { id: "cpu", category: "System", name: "CPU utilisation", icon: Cpu, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "higher", defaultWarn: 70, defaultCrit: 85 },
+  { id: "memory", category: "System", name: "Memory utilisation", icon: MemoryStick, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "higher", defaultWarn: 75, defaultCrit: 90 },
+  { id: "disk", category: "System", name: "Disk free space", icon: HardDrive, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "lower", defaultWarn: 15, defaultCrit: 5 },
+  { id: "battery", category: "System", name: "Battery (TBC)", icon: Battery, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "lower", defaultWarn: 20, defaultCrit: 10 },
+  // Platform
+  { id: "platformmos", category: "Platform", name: "Platform MOS", icon: Phone, min: 1, max: 5, step: 0.1, unit: "", decimals: 1, direction: "lower", defaultWarn: 4.0, defaultCrit: 3.0 },
 ]
 
 export const metricById = (id: string) => METRICS.find((m) => m.id === id)
@@ -69,13 +77,13 @@ export const initialRules: ThresholdRule[] = [
     id: "rule-mnl-remote",
     name: "Manila remote workers",
     scopes: ["manilla"],
-    overrides: { latency: { warn: 60, crit: 120 }, loss: { warn: 1.0, crit: 2.5 } },
+    overrides: { cpu: { warn: 60, crit: 80 }, wifi: { warn: -65, crit: -78 } },
   },
   {
     id: "rule-india",
     name: "India centres",
     scopes: ["bangalore", "hyderabad"],
-    overrides: { mos: { warn: 4.1, crit: 3.2 } },
+    overrides: { networkmos: { warn: 4.1, crit: 3.2 } },
   },
 ]
 

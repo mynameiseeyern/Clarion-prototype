@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ThresholdSlider } from "@/components/thresholds/ThresholdSlider"
-import { METRICS, metricById, defaultPolicy, type ThresholdPolicy } from "@/data/thresholds"
+import { METRICS, METRIC_CATEGORIES, metricById, defaultPolicy, type ThresholdPolicy } from "@/data/thresholds"
 
 export function ThresholdsPage() {
   // default policy: `policy` is the working draft, `savedPolicy` is the committed state.
@@ -67,30 +67,42 @@ export function ThresholdsPage() {
           </div>
         </div>
 
-        {METRICS.map((m, i) => (
-          <div key={m.id} className="flex flex-col gap-3 px-5 py-5 sm:flex-row sm:items-center sm:gap-6" style={{ borderTop: i ? "1px solid var(--border-neutral-subtle)" : undefined }}>
-            <div className="flex items-start gap-2.5 sm:w-52 sm:shrink-0">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>
-                <m.icon className="size-4" />
-              </span>
-              <div className="flex flex-col">
-                <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{m.name}</span>
-                <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{m.direction === "higher" ? "Lower is better" : "Higher is better"}</span>
+        {METRIC_CATEGORIES.map((cat, ci) => {
+          const metrics = METRICS.filter((m) => m.category === cat)
+          if (!metrics.length) return null
+          return (
+            <div key={cat}>
+              <div className="px-5 pb-2 pt-4 text-xs font-medium uppercase tracking-wide"
+                style={{ color: "var(--fg-neutral-subtle)", borderTop: ci ? "1px solid var(--border-neutral-muted)" : "1px solid var(--border-neutral-subtle)" }}>
+                {cat}
               </div>
+              {metrics.map((m) => (
+                <div key={m.id} className="flex flex-col gap-3 px-5 py-5 sm:flex-row sm:items-center sm:gap-6" style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
+                  <div className="flex items-start gap-2.5 sm:w-52 sm:shrink-0">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>
+                      <m.icon className="size-4" />
+                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{m.name}</span>
+                      <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{m.direction === "higher" ? "Higher is worse" : "Lower is worse"}</span>
+                    </div>
+                  </div>
+                  <div className="min-w-px flex-1">
+                    <ThresholdSlider metric={m} warn={policy[m.id].warn} crit={policy[m.id].crit} onChange={(w, c) => setBand(m.id, w, c)} />
+                  </div>
+                  <div className="flex sm:w-8 sm:shrink-0 sm:justify-end">
+                    {(policy[m.id].warn !== m.defaultWarn || policy[m.id].crit !== m.defaultCrit) && (
+                      <button type="button" aria-label={`Set ${m.name} to default`} title="Set to default" onClick={() => resetMetric(m.id)}
+                        className="flex size-8 items-center justify-center rounded-md transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }}>
+                        <RotateCcw className="size-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="min-w-px flex-1">
-              <ThresholdSlider metric={m} warn={policy[m.id].warn} crit={policy[m.id].crit} onChange={(w, c) => setBand(m.id, w, c)} />
-            </div>
-            <div className="flex sm:w-8 sm:shrink-0 sm:justify-end">
-              {(policy[m.id].warn !== m.defaultWarn || policy[m.id].crit !== m.defaultCrit) && (
-                <button type="button" aria-label={`Set ${m.name} to default`} title="Set to default" onClick={() => resetMetric(m.id)}
-                  className="flex size-8 items-center justify-center rounded-md transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }}>
-                  <RotateCcw className="size-4" />
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </Card>
 
       {/* Section 2 — Alert routing (placeholder; requirements TBC for MVP) */}
