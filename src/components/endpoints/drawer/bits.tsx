@@ -31,7 +31,7 @@ export function Panel({ children, className, status }: { children: ReactNode; cl
   return (
     <div
       className={"relative rounded-xl p-4 " + (className ?? "")}
-      style={{ background: "var(--bg-neutral-subtle)", border: "1px solid var(--border-neutral-subtle)" }}
+      style={{ background: "var(--bg-card)", border: "1px solid var(--border-neutral-subtle)" }}
     >
       {/* cards share styling; a card with an issue shows its severity badge so you can see what's affected */}
       {status && (
