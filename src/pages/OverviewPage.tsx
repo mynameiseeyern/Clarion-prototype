@@ -4,20 +4,17 @@ import { MapAndLocations } from "@/components/dashboard/MapAndLocations"
 import { EndpointsAttentionCard } from "@/components/dashboard/ActiveAlertsCard"
 import { locationById } from "@/data/dashboard"
 import type { LiveFleet } from "@/hooks/useStreaming"
-import type { Endpoint } from "@/data/endpoints"
 
 export function OverviewPage({
   live,
   selectedId,
   onSelect,
   onViewEndpoints,
-  onOpenEndpoint,
 }: {
   live: LiveFleet
   selectedId: string
   onSelect: (id: string) => void
   onViewEndpoints: (loc?: string | string[]) => void
-  onOpenEndpoint: (rows: Endpoint[], index: number) => void
 }) {
   // The drilled-into country is the map's scope (used only by the map now).
   const [country, setCountry] = useState<string | null>(() => {
@@ -40,7 +37,7 @@ export function OverviewPage({
         />
       </div>
       {/* fills the rest of the page height; the table scrolls inside it */}
-      <EndpointsAttentionCard onViewEndpoints={onViewEndpoints} onOpenEndpoint={onOpenEndpoint} />
+      <EndpointsAttentionCard onViewEndpoints={onViewEndpoints} />
     </div>
   )
 }

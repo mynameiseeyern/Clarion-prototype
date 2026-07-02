@@ -190,7 +190,6 @@ export default function App() {
               selectedId={selectedId}
               onSelect={setSelectedId}
               onViewEndpoints={handleViewEndpoints}
-              onOpenEndpoint={(rows, index) => setDrawer({ rows, index })}
             />
           )}
           {page === "endpoints" && (
