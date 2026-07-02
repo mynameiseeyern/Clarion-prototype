@@ -43,7 +43,6 @@ export interface EndpointDetail {
     download: number
     upload: number
     interface: { name: string; detail: string }
-    ispNetwork: { name: string; detail: string }
   }
   platforms: { rows: PlatformRow[]; why: string }
   devices: { audio: DeviceRow[]; video: DeviceRow[]; bluetooth: DeviceRow[]; usb: DeviceRow[] }
@@ -64,7 +63,6 @@ const platformMeta: Record<Platform, { key: string; color: string }> = {
   "Webex": { key: "W", color: "#15B8A6" },
   "Nice CXone": { key: "N", color: "#0B6BCB" },
 }
-const pods = ["Floor 2, Pod A", "Floor 3, Pod C", "Floor 4, Pod B", "Floor 1, Pod D", "Floor 5, Pod A"]
 
 function metricStatus(value: number, warn: number, crit: number, lowerIsWorse = false): MetricStatus {
   if (lowerIsWorse) return value < crit ? "crit" : value < warn ? "warn" : "good"
@@ -109,7 +107,7 @@ export function getEndpointDetail(e: Endpoint): EndpointDetail {
   const cams = ["Logitech C920 HD Pro", "Logitech Brio 4K", "Poly Studio P5", "Dell UltraSharp WB7022"]
 
   return {
-    locationDetail: `${e.locationName} · ${e.site}${e.site === "Office" ? " · " + pick(pods) : ""}`,
+    locationDetail: e.locationName,
     network: {
       health,
       mos: networkMos,
@@ -118,7 +116,6 @@ export function getEndpointDetail(e: Endpoint): EndpointDetail {
       interface: e.connection === "Ethernet"
         ? { name: "Ethernet", detail: "Wired · 1Gbps · MTU 1500" }
         : { name: "Wi-Fi", detail: `802.11ax · ${r(35, 95)}% signal · 5GHz` },
-      ispNetwork: { name: `${e.isp} Enterprise`, detail: `${e.locationName} ${e.site} VLAN-${String(r(1, 40)).padStart(2, "0")}` },
     },
     platforms: { rows, why },
     devices: {

@@ -43,8 +43,7 @@ export function EndpointsAttentionCard({
       e.machine.toLowerCase().includes(term) ||
       e.users.join(" ").toLowerCase().includes(term) ||
       (e.event ?? "").toLowerCase().includes(term) ||
-      e.locationName.toLowerCase().includes(term) ||
-      e.site.toLowerCase().includes(term)
+      e.locationName.toLowerCase().includes(term)
     )
   }, [statuses, search])
 
@@ -124,7 +123,7 @@ export function EndpointsAttentionCard({
                       <span style={{ color: "var(--fg-neutral-subtle)" }}> · {e.machine}</span>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
-                      <span className="inline-flex items-center gap-1"><MapPin className="size-3 shrink-0" /> {e.locationName} · {e.site}</span>
+                      <span className="inline-flex items-center gap-1"><MapPin className="size-3 shrink-0" /> {e.locationName}</span>
                       <span className="inline-flex items-center gap-1"><Phone className="size-3 shrink-0" /> {e.primaryPlatform}</span>
                     </div>
                     {e.event && (

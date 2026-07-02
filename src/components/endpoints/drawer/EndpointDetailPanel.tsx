@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Monitor, MapPin, Globe, User, Users, CloudOff } from "lucide-react"
+import { Monitor, MapPin, Users, CloudOff } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { StatusBadge } from "@/components/endpoints/status"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -77,8 +77,6 @@ export function EndpointDetailPanel({ endpoint }: { endpoint: Endpoint }) {
           {(offline || endpoint.users.length > 1) && (
             <MetaItem icon={Users}>{endpoint.users.join(", ")}{!offline && endpoint.users.length > 1 ? " · shared" : ""}</MetaItem>
           )}
-          <MetaItem icon={Globe}>{endpoint.isp} · <span className="font-mono text-xs">{endpoint.ip}</span></MetaItem>
-          <MetaItem icon={User}>{endpoint.team}</MetaItem>
           <MetaItem icon={Monitor}>{endpoint.connection}</MetaItem>
         </div>
 

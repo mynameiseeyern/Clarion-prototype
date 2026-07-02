@@ -291,7 +291,7 @@ export function EndpointsTable({
                   </td>
                   {showLocation && (
                     <td className="px-4 py-3">
-                      <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>{e.locationName} · {e.site}</span>
+                      <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>{e.locationName}</span>
                     </td>
                   )}
                   <td className="px-4 py-3">

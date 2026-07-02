@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import * as Dialog from "@radix-ui/react-dialog"
-import { Monitor, MapPin, Globe, User, Users, ChevronUp, ChevronDown, Maximize2, Minimize2, X, ArrowLeft, CloudOff } from "lucide-react"
+import { Monitor, MapPin, Users, ChevronUp, ChevronDown, Maximize2, Minimize2, X, ArrowLeft, CloudOff } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { StatusBadge } from "@/components/endpoints/status"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -170,8 +170,6 @@ export function EndpointDrawer({
               {(offline || e.users.length > 1) && (
                 <MetaItem icon={Users}>{e.users.join(", ")}{!offline && e.users.length > 1 ? " · shared" : ""}</MetaItem>
               )}
-              <MetaItem icon={Globe}>{e.isp} · <span className="font-mono text-xs">{e.ip}</span></MetaItem>
-              <MetaItem icon={User}>{e.team}</MetaItem>
               <MetaItem icon={Monitor}>{e.connection}</MetaItem>
             </div>
 

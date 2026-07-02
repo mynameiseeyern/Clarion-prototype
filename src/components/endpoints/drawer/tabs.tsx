@@ -34,11 +34,6 @@ export function NetworkTab({ d }: { d: EndpointDetail }) {
             <div className="text-lg font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{d.network.interface.name}</div>
             <div className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{d.network.interface.detail}</div>
           </Panel>
-          <Panel>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>ISP / Network</div>
-            <div className="text-lg font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{d.network.ispNetwork.name}</div>
-            <div className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{d.network.ispNetwork.detail}</div>
-          </Panel>
         </div>
       </div>
     </div>
