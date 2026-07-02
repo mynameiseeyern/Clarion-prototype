@@ -39,7 +39,7 @@ export interface EndpointDetail {
   network: {
     health: Metric[]
     // Network MOS: 1–5 score derived from latency / jitter / packet loss (thresholds: warn < 4, crit < 3)
-    mos: { value: string; status: MetricStatus }
+    mos: { value: string; status: MetricStatus; fill: number }
     download: number
     upload: number
     interface: { name: string; detail: string }
