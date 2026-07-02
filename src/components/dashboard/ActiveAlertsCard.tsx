@@ -66,12 +66,12 @@ export function EndpointsAttentionCard({
       </div>
 
       {rows.length > 0 ? (
-        <div className="flex flex-col lg:h-[600px] lg:flex-row">
+        <div className="flex flex-col xl:h-[600px] xl:flex-row">
           {/* left — endpoint list. lg+: 50% side-by-side, height capped to the detail
               pane via the absolute inner (long lists scroll). Below lg: stacked
               full-width with a bounded scroll so it doesn't push the detail down. */}
-          <div className="w-full min-w-0 border-b border-[var(--border-neutral-muted)] lg:relative lg:w-1/2 lg:border-b-0 lg:border-r">
-            <div className="overflow-y-auto overscroll-contain lg:absolute lg:inset-0">
+          <div className="w-full min-w-0 border-b border-[var(--border-neutral-muted)] xl:relative xl:w-1/2 xl:border-b-0 xl:border-r">
+            <div className="max-h-80 overflow-y-auto overscroll-contain xl:absolute xl:inset-0 xl:max-h-none">
             {rows.map((e) => {
               const isSel = selected?.id === e.id
               const alertColor = e.status === "critical" ? "var(--fg-danger-emphasis)" : "var(--fg-warning-emphasis)"
@@ -109,8 +109,8 @@ export function EndpointsAttentionCard({
             </div>
           </div>
 
-          {/* right — inline drilldown (50%), natural height drives the row */}
-          <div className="w-1/2 min-w-0">
+          {/* right — inline drilldown (50% on xl, full width when stacked) */}
+          <div className="w-full min-w-0 xl:w-1/2">
             {selected && <EndpointDetailPanel endpoint={selected} />}
           </div>
         </div>
