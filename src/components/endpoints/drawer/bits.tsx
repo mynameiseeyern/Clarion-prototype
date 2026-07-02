@@ -6,7 +6,7 @@ import type { MetricStatus } from "@/data/endpointDetail"
 export type IssueStatus = "warning" | "critical"
 
 export function SegBar({ fill, status, segments = 10 }: { fill: number; status: MetricStatus; segments?: number }) {
-  // level indicator is neutral — severity is conveyed by the badge, not the bar
+  // level indicator uses the brand colour — severity is conveyed by the badge, not the bar
   const filled = Math.max(status === "none" ? 0 : 1, Math.round(fill * segments))
   return (
     <div className="flex items-center gap-1">
@@ -14,7 +14,7 @@ export function SegBar({ fill, status, segments = 10 }: { fill: number; status: 
         <span
           key={i}
           className="h-2 flex-1 rounded-sm"
-          style={{ background: i < filled ? "var(--fg-neutral-muted)" : "var(--bg-neutral-subtle-pressed)" }}
+          style={{ background: i < filled ? "var(--fg-primary-muted)" : "var(--bg-neutral-subtle-pressed)" }}
         />
       ))}
     </div>
