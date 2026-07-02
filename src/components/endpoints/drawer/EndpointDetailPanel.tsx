@@ -61,20 +61,22 @@ export function EndpointDetailPanel({ endpoint }: { endpoint: Endpoint }) {
     <div className="flex h-full min-h-0 flex-col">
       {/* identity header */}
       <div className="shrink-0 px-5 pt-4" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
-        <div className="flex items-center gap-3">
-          <Avatar className="size-10"><AvatarFallback>{offline ? <Monitor className="size-5" /> : initials(endpoint.user)}</AvatarFallback></Avatar>
-          <div className="flex min-w-px flex-1 flex-col">
-            <div className="flex items-center gap-2.5">
-              <span className={`truncate text-lg font-semibold ${offline ? "font-mono" : ""}`} style={{ color: "var(--fg-neutral-emphasis)" }}>{offline ? endpoint.machine : endpoint.user}</span>
-              <StatusBadge status={endpoint.status} />
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <Avatar className="size-10"><AvatarFallback>{offline ? <Monitor className="size-5" /> : initials(endpoint.user)}</AvatarFallback></Avatar>
+            <div className="flex min-w-0 flex-col">
+              <div className="flex items-center gap-2.5">
+                <span className={`truncate text-lg font-semibold ${offline ? "font-mono" : ""}`} style={{ color: "var(--fg-neutral-emphasis)" }}>{offline ? endpoint.machine : endpoint.user}</span>
+                <StatusBadge status={endpoint.status} />
+              </div>
+              {!offline && <span className="truncate font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{endpoint.machine}</span>}
             </div>
-            {!offline && <span className="truncate font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{endpoint.machine}</span>}
           </div>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-          <MetaItem icon={MapPin}>{detail.locationDetail}</MetaItem>
-          <MetaItem icon={Monitor}>{endpoint.connection}</MetaItem>
+          {/* location + connection moved to the right of the identity to save a line */}
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-4 gap-y-1 text-sm">
+            <MetaItem icon={MapPin}>{detail.locationDetail}</MetaItem>
+            <MetaItem icon={Monitor}>{endpoint.connection}</MetaItem>
+          </div>
         </div>
 
         <Tabs value={tab} onValueChange={setTab} className="mt-3">
