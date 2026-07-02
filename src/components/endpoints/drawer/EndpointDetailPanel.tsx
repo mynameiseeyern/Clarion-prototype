@@ -59,7 +59,7 @@ export function EndpointDetailPanel({ endpoint }: { endpoint: Endpoint }) {
   const offline = endpoint.status === "offline"
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex flex-col">
       {/* identity header */}
       <div className="shrink-0 px-5 pt-4" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
         <div className="flex items-center gap-3">
@@ -98,7 +98,7 @@ export function EndpointDetailPanel({ endpoint }: { endpoint: Endpoint }) {
       </div>
 
       {/* body */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5" style={{ background: "var(--bg-app)" }}>
+      <div className="px-5 py-5" style={{ background: "var(--bg-app)" }}>
         <Tabs value={tab} onValueChange={setTab}>
           <TabsContent value="network">{stale ? <StaleBanner mins={endpoint.lastSeenMinAgo} /> : <NetworkTab d={detail} />}</TabsContent>
           <TabsContent value="platforms">{stale ? <StaleBanner mins={endpoint.lastSeenMinAgo} /> : <PlatformsTab d={detail} />}</TabsContent>
