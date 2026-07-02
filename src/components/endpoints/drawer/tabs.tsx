@@ -1,11 +1,8 @@
 import { Headphones, Mic, Video, Bluetooth, Usb, Info } from "lucide-react"
 import type { Endpoint } from "@/data/endpoints"
-import type { EndpointDetail, PlatformStatus, MetricStatus } from "@/data/endpointDetail"
-import { SegBar, Panel, SectionLabel, MetricBlock, type IssueStatus } from "./bits"
+import type { EndpointDetail, PlatformStatus } from "@/data/endpointDetail"
+import { SegBar, Panel, SectionLabel, MetricBlock } from "./bits"
 import { Badge } from "@/components/ui/badge"
-
-// a metric's own status → the badge severity shown on its card (healthy → no badge)
-const issueOf = (s: MetricStatus): IssueStatus | undefined => (s === "crit" ? "critical" : s === "warn" ? "warning" : undefined)
 
 /* ---------------- Network ---------------- */
 export function NetworkTab({ d }: { d: EndpointDetail }) {
