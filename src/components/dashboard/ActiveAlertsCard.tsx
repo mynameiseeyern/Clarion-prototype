@@ -1,10 +1,9 @@
 import { useMemo, useState } from "react"
-import { ArrowRight, ChevronRight, CircleCheck } from "lucide-react"
+import { ArrowRight, ChevronRight, CircleCheck, MapPin, Globe, Phone } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { StatusFilter, statusVar, statusBadge, cap, initials, type StatusOption } from "@/components/endpoints/status"
+import { StatusFilter, statusVar, type StatusOption } from "@/components/endpoints/status"
 import { queryEndpoints, type Endpoint, type EndpointStatus } from "@/data/endpoints"
 
 // The Overview attention card only ever deals with unhealthy endpoints.
@@ -67,68 +66,46 @@ export function EndpointsAttentionCard({
 
       {rows.length > 0 ? (
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-            <table className="w-full border-collapse text-sm">
-              <thead className="sticky top-0 z-10">
-                <tr style={{ color: "var(--fg-neutral-muted)" }}>
-                  {["User / Machine", "Status", "Location", "Clarity Network Score", "Alert"].map((h) => (
-                    <th key={h} className="h-10 px-4 text-left text-xs font-medium"
-                      style={{ background: "var(--bg-neutral-subtle)", borderBottom: "1px solid var(--border-neutral-muted)" }}>{h}</th>
-                  ))}
-                  <th className="w-10" style={{ background: "var(--bg-neutral-subtle)", borderBottom: "1px solid var(--border-neutral-muted)" }} />
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((e, i) => (
-                  <tr
-                    key={e.id}
-                    onClick={() => onOpenEndpoint(rows, i)}
-                    className="group cursor-pointer transition-colors"
-                    style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}
-                    onMouseEnter={(ev) => (ev.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)")}
-                    onMouseLeave={(ev) => (ev.currentTarget.style.background = "transparent")}
-                  >
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="size-8"><AvatarFallback>{initials(e.user)}</AvatarFallback></Avatar>
-                        <div className="flex min-w-px flex-col">
-                          <span className="truncate text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{e.user}</span>
-                          <span className="truncate font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{e.machine}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge variant={statusBadge[e.status]} className="gap-1.5">
-                        <span className="size-1.5 rounded-full" style={{ background: statusVar[e.status] }} />
-                        {cap(e.status)}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3"><span className="whitespace-nowrap text-sm" style={{ color: "var(--fg-neutral-muted)" }}>{e.locationName} · {e.site}</span></td>
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-sm font-medium"
-                        style={{ color: e.score === null ? "var(--fg-neutral-subtle)" : e.status === "critical" ? "var(--fg-danger-emphasis)" : e.status === "warning" ? "var(--fg-warning-emphasis)" : "var(--fg-neutral-emphasis)" }}>
-                        {e.score === null ? "—" : e.score}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {e.event ? (
-                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-                          <span className="size-1.5 shrink-0 rounded-full" style={{ background: statusVar[e.status] }} />
-                          {e.event}
-                          {e.eventCount > 1 && e.eventAgo !== null && (
-                            <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>· {e.eventAgo}m ago · +{e.eventCount - 1}</span>
-                          )}
-                        </span>
-                      ) : (
-                        <span className="text-sm" style={{ color: "var(--fg-neutral-subtle)" }}>—</span>
-                      )}
-                    </td>
-                    <td className="pr-3">
-                      <ChevronRight className="size-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color: "var(--fg-neutral-subtle)" }} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {rows.map((e, i) => {
+            const alertColor = e.status === "critical" ? "var(--fg-danger-emphasis)" : "var(--fg-warning-emphasis)"
+            return (
+              <button
+                key={e.id}
+                type="button"
+                onClick={() => onOpenEndpoint(rows, i)}
+                className="group flex w-full items-start gap-3 px-4 py-3 text-left transition-colors"
+                style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}
+                onMouseEnter={(ev) => (ev.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)")}
+                onMouseLeave={(ev) => (ev.currentTarget.style.background = "transparent")}
+              >
+                <span className="mt-1.5 size-2.5 shrink-0 rounded-full" style={{ background: statusVar[e.status] }} />
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <div className="text-sm">
+                    <span className="font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{e.user}</span>
+                    <span style={{ color: "var(--fg-neutral-subtle)" }}> · {e.machine}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
+                    <span className="inline-flex items-center gap-1"><MapPin className="size-3 shrink-0" /> {e.locationName} · {e.site}</span>
+                    <span className="inline-flex items-center gap-1"><Globe className="size-3 shrink-0" /> {e.isp} · {e.ip}</span>
+                    <span className="inline-flex items-center gap-1"><Phone className="size-3 shrink-0" /> {e.primaryPlatform}</span>
+                  </div>
+                  {e.event && (
+                    <div className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: alertColor }}>
+                      <span className="size-1.5 shrink-0 rounded-full" style={{ background: statusVar[e.status] }} />
+                      {e.event}
+                      {e.eventCount > 1 && <span className="font-normal" style={{ color: "var(--fg-neutral-subtle)" }}> · +{e.eventCount - 1} more</span>}
+                    </div>
+                  )}
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                  <span className="font-mono text-sm font-medium" style={{ color: e.score === null ? "var(--fg-neutral-subtle)" : alertColor }}>
+                    {e.score ?? "—"}
+                  </span>
+                  <ChevronRight className="size-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color: "var(--fg-neutral-subtle)" }} />
+                </div>
+              </button>
+            )
+          })}
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-0.5 px-4 py-10 text-center">
