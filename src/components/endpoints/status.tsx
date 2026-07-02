@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Check, ChevronDown } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import { Badge } from "@/components/ui/badge"
 import type { EndpointStatus } from "@/data/endpoints"
 
 export const statusVar: Record<EndpointStatus, string> = {
@@ -14,6 +15,19 @@ export const statusBadge: Record<EndpointStatus, "success" | "warning" | "danger
 }
 export const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
 export const initials = (name: string) => name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
+
+/**
+ * Canonical status/severity pill — coloured dot + label — so status is shown the
+ * same way everywhere (matches the status dots on the map, list tiles and legend).
+ */
+export function StatusBadge({ status, label, className }: { status: EndpointStatus; label?: string; className?: string }) {
+  return (
+    <Badge variant={statusBadge[status]} className={`gap-1.5 ${className ?? ""}`}>
+      <span className="size-1.5 rounded-full" style={{ background: statusVar[status] }} />
+      {label ?? cap(status)}
+    </Badge>
+  )
+}
 
 export type StatusOption = { id: EndpointStatus; label: string }
 // worst-first, offline last

@@ -2,13 +2,12 @@ import { useEffect, useMemo, useState } from "react"
 import * as Dialog from "@radix-ui/react-dialog"
 import { Monitor, MapPin, Globe, User, Users, ChevronUp, ChevronDown, Maximize2, Minimize2, X, ArrowLeft, CloudOff } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/endpoints/status"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getEndpointDetail } from "@/data/endpointDetail"
 import type { Endpoint } from "@/data/endpoints"
 import { NetworkTab, PlatformsTab, DevicesTab, SystemTab } from "./tabs"
 
-const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
 const initials = (name: string) => name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
 
 function MetaItem({ icon: Icon, children }: { icon: typeof Monitor; children: React.ReactNode }) {
