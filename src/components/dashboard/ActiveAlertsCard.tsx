@@ -66,11 +66,12 @@ export function EndpointsAttentionCard({
       </div>
 
       {rows.length > 0 ? (
-        <div className="flex">
-          {/* left — endpoint list (50%); height is capped to the detail pane via the
-              absolute inner, so a long list scrolls instead of growing the card */}
-          <div className="relative w-1/2 min-w-0" style={{ borderRight: "1px solid var(--border-neutral-muted)" }}>
-            <div className="absolute inset-0 overflow-y-auto overscroll-contain">
+        <div className="flex flex-col lg:flex-row">
+          {/* left — endpoint list. lg+: 50% side-by-side, height capped to the detail
+              pane via the absolute inner (long lists scroll). Below lg: stacked
+              full-width with a bounded scroll so it doesn't push the detail down. */}
+          <div className="w-full min-w-0 border-b border-[var(--border-neutral-muted)] lg:relative lg:w-1/2 lg:border-b-0 lg:border-r">
+            <div className="max-h-80 overflow-y-auto overscroll-contain lg:absolute lg:inset-0 lg:max-h-none">
             {rows.map((e) => {
               const isSel = selected?.id === e.id
               const alertColor = e.status === "critical" ? "var(--fg-danger-emphasis)" : "var(--fg-warning-emphasis)"
