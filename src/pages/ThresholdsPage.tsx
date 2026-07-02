@@ -77,7 +77,7 @@ export function ThresholdsPage() {
                 {cat}
               </div>
               {metrics.map((m) => (
-                <div key={m.id} className="flex flex-col gap-3 px-5 py-5 sm:flex-row sm:items-center sm:gap-6" style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
+                <div key={m.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:gap-6" style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
                   <div className="flex items-start gap-2.5 sm:w-52 sm:shrink-0">
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-lg" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>
                       <m.icon className="size-4" />

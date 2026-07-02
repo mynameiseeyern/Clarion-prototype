@@ -54,30 +54,39 @@ export function EndpointsAttentionCard({
 
   return (
     <Card className="flex w-full flex-col gap-0 overflow-hidden rounded-xl p-0">
-      <div className="flex flex-wrap items-center justify-between gap-2 p-4" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
+      {/* row 1 — title + CTA */}
+      <div className="flex items-center justify-between gap-2 px-4 py-4">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Endpoints needing attention</h2>
           {rows.length > 0 && (
             <Badge variant={hasCritical ? "danger" : "warning"}>{rows.length.toLocaleString()}</Badge>
           )}
         </div>
-        <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
-          <div className="flex h-9 w-full items-center gap-1.5 rounded-lg px-2.5 sm:w-64" style={{ background: "var(--bg-input-default)", border: "1px solid var(--border-input-default)" }}>
-            <Search className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
-            <input
-              value={search}
-              onChange={(ev) => setSearch(ev.target.value)}
-              placeholder="Search by endpoint, user, alert, location"
-              className="min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]"
-              style={{ color: "var(--fg-neutral-emphasis)" }}
-            />
-            {search && (
-              <button type="button" aria-label="Clear search" onClick={() => setSearch("")}
-                className="flex size-5 shrink-0 items-center justify-center rounded-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }}>
-                <X className="size-3.5" />
-              </button>
-            )}
-          </div>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => onViewEndpoints("all")}>
+          View all endpoints
+          <ArrowRight className="size-4" />
+        </Button>
+      </div>
+
+      {/* row 2 — search + filter */}
+      <div className="flex flex-col gap-2 px-4 pb-4 sm:flex-row sm:items-center" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
+        <div className="flex h-9 w-full items-center gap-1.5 rounded-lg px-2.5 sm:max-w-xs" style={{ background: "var(--bg-input-default)", border: "1px solid var(--border-input-default)" }}>
+          <Search className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
+          <input
+            value={search}
+            onChange={(ev) => setSearch(ev.target.value)}
+            placeholder="Search by endpoint, user, alert, location"
+            className="min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]"
+            style={{ color: "var(--fg-neutral-emphasis)" }}
+          />
+          {search && (
+            <button type="button" aria-label="Clear search" onClick={() => setSearch("")}
+              className="flex size-5 shrink-0 items-center justify-center rounded-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }}>
+              <X className="size-3.5" />
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2 sm:ml-auto">
           <StatusFilter
             value={statuses}
             onToggle={toggleStatus}
@@ -85,10 +94,6 @@ export function EndpointsAttentionCard({
             options={ATTENTION_OPTIONS}
             allLabel="All"
           />
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => onViewEndpoints("all")}>
-            View all endpoints
-            <ArrowRight className="size-4" />
-          </Button>
         </div>
       </div>
 
