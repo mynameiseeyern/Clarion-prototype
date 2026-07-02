@@ -83,7 +83,7 @@ export function getEndpointDetail(e: Endpoint): EndpointDetail {
   ]
   // Network MOS — a combined quality score (1–5) derived from the network values.
   const mosVal = Math.max(1, Math.min(5, 5 - e.latency / 120 - e.jitter / 40 - e.packetLoss / 2))
-  const networkMos = { value: mosVal.toFixed(1), status: metricStatus(mosVal, 4, 3, true) }
+  const networkMos = { value: mosVal.toFixed(1), status: metricStatus(mosVal, 4, 3, true), fill: (mosVal - 1) / 4 }
 
   // platforms: the endpoint's primary platform reflects its issue; others mostly OK
   const all: Platform[] = ["Genesys Cloud", "Microsoft Teams", "Zoom", "Webex", "Nice CXone"]

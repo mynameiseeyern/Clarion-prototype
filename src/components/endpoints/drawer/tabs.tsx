@@ -7,14 +7,15 @@ import { Badge } from "@/components/ui/badge"
 /* ---------------- Network ---------------- */
 export function NetworkTab({ d }: { d: EndpointDetail }) {
   const mos = d.network.mos
-  const mosVariant = mos.status === "crit" ? "danger" : mos.status === "warn" ? "warning" : "success"
-  const mosLabel = mos.status === "crit" ? "Critical" : mos.status === "warn" ? "Warning" : "Good"
   return (
     <div className="flex flex-col gap-6">
       <div>
-        {/* Network MOS (combined 1–5 quality score) sits in the section header as its level badge */}
-        <SectionLabel right={<Badge variant={mosVariant}>Network MOS {mos.value} · {mosLabel}</Badge>}>Internet health</SectionLabel>
+        <SectionLabel>Internet health</SectionLabel>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {/* Network MOS — combined 1–5 quality score; the one tile that keeps a level badge */}
+          <MetricBlock label="Network MOS" value={mos.value} unit="/ 5" status={mos.status === "crit" ? "critical" : mos.status === "warn" ? "warning" : undefined}>
+            <SegBar fill={mos.fill} status={mos.status} />
+          </MetricBlock>
           {d.network.health.map((m) => (
             // raw network values are informational — no threshold text, no badge, neutral bar
             <MetricBlock key={m.label} label={m.label} value={m.value} unit={m.unit}>
