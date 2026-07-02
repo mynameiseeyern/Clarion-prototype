@@ -8,7 +8,7 @@
 // TODO(eng): real engineering defaults (upper/lower/average per metric) needed;
 // the values below are placeholders driving "Reset to engineering defaults".
 
-import { Cpu, MemoryStick, AudioLines, Wifi, HardDrive, Battery, Phone, type LucideIcon } from "lucide-react"
+import { Cpu, MemoryStick, AudioLines, Wifi, HardDrive, Phone, type LucideIcon } from "lucide-react"
 import { locations } from "./dashboard"
 
 export type Direction = "higher" | "lower"
