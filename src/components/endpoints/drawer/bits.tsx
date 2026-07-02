@@ -5,8 +5,15 @@ import type { MetricStatus } from "@/data/endpointDetail"
 /** an issue severity shown as a badge on the card that has the problem */
 export type IssueStatus = "warning" | "critical"
 
+// bar colour reflects the network MOS status (healthy / warning / critical)
+const segColor: Record<MetricStatus, string> = {
+  good: "var(--status-healthy)",
+  warn: "var(--status-warning)",
+  crit: "var(--status-critical)",
+  none: "var(--fg-neutral-muted)",
+}
+
 export function SegBar({ fill, status, segments = 10 }: { fill: number; status: MetricStatus; segments?: number }) {
-  // level indicator uses the brand colour — severity is conveyed by the badge, not the bar
   const filled = Math.max(status === "none" ? 0 : 1, Math.round(fill * segments))
   return (
     <div className="flex items-center gap-1">
@@ -14,7 +21,7 @@ export function SegBar({ fill, status, segments = 10 }: { fill: number; status: 
         <span
           key={i}
           className="h-2 flex-1 rounded-sm"
-          style={{ background: i < filled ? "var(--fg-primary-muted)" : "var(--bg-neutral-subtle-pressed)" }}
+          style={{ background: i < filled ? segColor[status] : "var(--bg-neutral-subtle-pressed)" }}
         />
       ))}
     </div>

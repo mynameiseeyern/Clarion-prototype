@@ -17,9 +17,10 @@ export function NetworkTab({ d }: { d: EndpointDetail }) {
             <SegBar fill={mos.fill} status={mos.status} />
           </MetricBlock>
           {d.network.health.map((m) => (
-            // raw network values are informational — no threshold text, no badge, neutral bar
+            // raw network values are informational — no threshold text, no badge.
+            // bar length reflects the metric; bar colour reflects the Network MOS status.
             <MetricBlock key={m.label} label={m.label} value={m.value} unit={m.unit}>
-              <SegBar fill={m.fill} status={m.status} />
+              <SegBar fill={m.fill} status={mos.status} />
             </MetricBlock>
           ))}
         </div>
