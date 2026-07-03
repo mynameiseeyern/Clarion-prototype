@@ -26,10 +26,8 @@ export function NetworkTab({ d }: { d: EndpointDetail }) {
         </div>
       </div>
       <div>
-        <SectionLabel>Speed &amp; connection</SectionLabel>
+        <SectionLabel>Connection</SectionLabel>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <MetricBlock label="Download" value={String(d.network.download)} unit="Mbps" />
-          <MetricBlock label="Upload" value={String(d.network.upload)} unit="Mbps" />
           <Panel>
             <div className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Interface</div>
             <div className="text-lg font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{d.network.interface.name}</div>
@@ -45,7 +43,7 @@ export function NetworkTab({ d }: { d: EndpointDetail }) {
 const platBadge: Record<PlatformStatus, { variant: "success" | "warning" | "danger"; label: string }> = {
   ok: { variant: "success", label: "OK" },
   degraded: { variant: "warning", label: "Degraded" },
-  down: { variant: "danger", label: "Down" },
+  disconnected: { variant: "danger", label: "Disconnected" },
 }
 const fmt = (v: number | null, u: string) => (v === null ? "—" : `${v}${u}`)
 
@@ -68,7 +66,7 @@ export function PlatformsTab({ d }: { d: EndpointDetail }) {
           <tbody>
             {d.platforms.rows.map((p) => {
               const badge = platBadge[p.status]
-              const dim = p.status === "down"
+              const dim = p.status === "disconnected"
               const col = dim ? "var(--fg-neutral-subtle)" : p.status === "degraded" ? "var(--fg-warning-emphasis)" : "var(--fg-neutral-emphasis)"
               return (
                 <tr key={p.name} style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>

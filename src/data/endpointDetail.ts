@@ -4,7 +4,7 @@
 import type { Endpoint, Platform } from "./endpoints"
 
 export type MetricStatus = "good" | "warn" | "crit" | "none"
-export type PlatformStatus = "ok" | "degraded" | "down"
+export type PlatformStatus = "ok" | "degraded" | "disconnected"
 
 export interface Metric {
   label: string
@@ -40,8 +40,6 @@ export interface EndpointDetail {
     health: Metric[]
     // Network MOS: 1–5 score derived from latency / jitter / packet loss (thresholds: warn < 4, crit < 3)
     mos: { value: string; status: MetricStatus; fill: number }
-    download: number
-    upload: number
     interface: { name: string; detail: string }
   }
   platforms: { rows: PlatformRow[]; why: string }
@@ -83,18 +81,26 @@ export function getEndpointDetail(e: Endpoint): EndpointDetail {
   const mosVal = Math.max(1, Math.min(5, 5 - e.latency / 120 - e.jitter / 40 - e.packetLoss / 2))
   const networkMos = { value: mosVal.toFixed(1), status: metricStatus(mosVal, 4, 3, true), fill: (mosVal - 1) / 4 }
 
-  // platforms: the endpoint's primary platform reflects its issue; others mostly OK
+  // Platform status rules:
+  //  · Disconnected — not connected to the platform
+  //  · OK           — connected AND platform MOS is good (≥ 4)
+  //  · Degraded     — connected AND platform MOS is not good (< 4)
+  const PLATFORM_MOS_GOOD = 4
   const all: Platform[] = ["Genesys Cloud", "Microsoft Teams", "Zoom", "Webex", "Nice CXone"]
   const downName = e.primaryIssue?.endsWith("down") ? e.primaryPlatform : null
   const rows: PlatformRow[] = all.map((name) => {
     const m = platformMeta[name]
-    if (name === downName) return { name, ...m, latency: null, loss: null, jitter: null, mos: null, status: "down" }
-    const degraded = e.status !== "healthy" && name === e.primaryPlatform && !downName
-    const lat = degraded ? r(55, 75) : r(20, 40)
-    const jit = degraded ? r(18, 26) : r(6, 14)
-    const loss = degraded ? r(0.3, 0.6, 1) : r(0, 0.2, 1)
-    const mos = degraded ? r(3.6, 3.9, 1) : r(4.2, 4.6, 1)
-    return { name, ...m, latency: lat, loss, jitter: jit, mos, status: degraded ? "degraded" : "ok" }
+    // disconnected from the platform → no live media metrics
+    if (name === downName) return { name, ...m, latency: null, loss: null, jitter: null, mos: null, status: "disconnected" }
+    // shape realistic media metrics; the endpoint's primary platform runs hot
+    const strained = e.status !== "healthy" && name === e.primaryPlatform && !downName
+    const lat = strained ? r(55, 75) : r(20, 40)
+    const jit = strained ? r(18, 26) : r(6, 14)
+    const loss = strained ? r(0.3, 0.6, 1) : r(0, 0.2, 1)
+    const mos = strained ? r(3.6, 3.9, 1) : r(4.2, 4.6, 1)
+    // status is derived from the platform MOS (connected either way)
+    const status: PlatformStatus = mos >= PLATFORM_MOS_GOOD ? "ok" : "degraded"
+    return { name, ...m, latency: lat, loss, jitter: jit, mos, status }
   })
   const okPlatforms = rows.filter((p) => p.status === "ok").map((p) => p.name)
   const why = downName
@@ -111,8 +117,6 @@ export function getEndpointDetail(e: Endpoint): EndpointDetail {
     network: {
       health,
       mos: networkMos,
-      download: r(40, 240),
-      upload: r(20, 90),
       interface: e.connection === "Ethernet"
         ? { name: "Ethernet", detail: "Wired · 1Gbps · MTU 1500" }
         : { name: "Wi-Fi", detail: `802.11ax · ${r(35, 95)}% signal · 5GHz` },
@@ -127,7 +131,7 @@ export function getEndpointDetail(e: Endpoint): EndpointDetail {
     },
     system: {
       cpu: { label: "CPU utilisation", value: String(r(8, 70)), unit: "%", fill: 0, meta: "Intel Core i7-1265U · 12 cores · 4.8 GHz" },
-      memory: (() => { const used = r(5, 14, 1); return { label: "Memory", value: String(used), unit: "/ 16 GB", fill: used / 16, meta: `${Math.round((used / 16) * 100)}% utilised · Threshold: warn ≥ 80%` } })(),
+      memory: (() => { const used = r(5, 14, 1); return { label: "Memory", value: String(used), unit: "/ 16 GB", fill: used / 16, meta: `${Math.round((used / 16) * 100)}% utilised` } })(),
       disk: (() => { const used = r(180, 420); return { label: "Disk", value: String(used), unit: "/ 512 GB", fill: used / 512, meta: `${Math.round((used / 512) * 100)}% used · NVMe SSD` } })(),
       battery: rand() > 0.5 ? { value: "AC", detail: `Charging · ${r(60, 99)}%` } : { value: `${r(35, 95)}%`, detail: "On battery · Discharging" },
       os: { name: "Windows 11 Pro", detail: "Build 23H2 · Patch 2026.04" },
