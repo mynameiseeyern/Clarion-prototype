@@ -15,6 +15,10 @@ const statusVar: Record<Status, string> = {
   critical: "var(--status-critical)",
 }
 
+// Active = online endpoints (healthy + warning + critical); excludes offline.
+const activeEndpoints = (x: { healthy: number; warning: number; critical: number }) =>
+  x.healthy + x.warning + x.critical
+
 /* Hover tooltip shown on a map pin: name + endpoint count, then the
    healthy / warning / critical breakdown by number. */
 function PinTooltip({
@@ -38,7 +42,7 @@ function PinTooltip({
       style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)", boxShadow: "var(--shadow-md)" }}
     >
       <span className="block text-xs font-medium">
-        {name} · {endpoints.toLocaleString()} endpoints
+        {name} · {endpoints.toLocaleString()} active endpoints
       </span>
       <span className="mt-1 flex items-center gap-2.5 font-mono text-[11px]">
         <span className="flex items-center gap-1"><span className="size-1.5 rounded-full" style={{ background: "var(--status-healthy)" }} />{healthy.toLocaleString()}</span>
@@ -128,11 +132,11 @@ function MapPanel({
               <button key={c.id} type="button" onClick={() => onEnterCountry(c.id)} aria-label={c.name}
                 className="group absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 hover:z-20 focus:z-20 focus:outline-none"
                 style={{ left: `${c.x}%`, top: `${c.y}%` }}>
-                <PinTooltip name={c.name} endpoints={c.endpoints} healthy={c.healthy} warning={c.warning} critical={c.critical} />
+                <PinTooltip name={c.name} endpoints={activeEndpoints(c)} healthy={c.healthy} warning={c.warning} critical={c.critical} />
                 <span className="flex items-center gap-1.5 rounded-full px-2 py-1 shadow-md transition-transform hover:scale-105"
                   style={{ background: "var(--bg-card)", border: `2px solid ${statusVar[cSev]}` }}>
                   <span className="size-2 rounded-full" style={{ background: statusVar[cSev] }} />
-                  <span className="font-mono text-xs font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{c.endpoints.toLocaleString()}</span>
+                  <span className="font-mono text-xs font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{activeEndpoints(c).toLocaleString()}</span>
                 </span>
                 <span className="rounded px-1 text-[10px] font-medium" style={{ color: "var(--fg-neutral-muted)" }}>{c.name}</span>
               </button>
@@ -150,7 +154,7 @@ function MapPanel({
               <button key={m.id} type="button" onClick={() => onSelect(m.id)} aria-label={m.name}
                 onMouseEnter={() => setHoveredCity(m.id)} onMouseLeave={() => setHoveredCity(null)}
                 className="group absolute -translate-x-1/2 -translate-y-1/2 hover:z-20 focus:z-20 focus:outline-none" style={{ left: `${pos.x}%`, top: `${pos.y}%` }}>
-                <PinTooltip name={m.name} endpoints={m.endpoints} healthy={m.healthy} warning={m.warning} critical={m.critical} show={show} />
+                <PinTooltip name={m.name} endpoints={activeEndpoints(m)} healthy={m.healthy} warning={m.warning} critical={m.critical} show={show} />
                 {isActive ? (
                   <span className="flex size-4 items-center justify-center rounded-full" style={{ border: `2px solid ${statusVar[mSev]}`, background: "var(--bg-card)" }}>
                     <span className="size-2 rounded-full" style={{ background: statusVar[mSev] }} />
@@ -222,7 +226,7 @@ function LocationsPanel({
                   <span className="shrink-0 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{c.cityCount} cities</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-2 whitespace-nowrap font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
-                  <span>{c.endpoints.toLocaleString()} endpoints</span>
+                  <span>{activeEndpoints(c).toLocaleString()} active endpoints</span>
                   <ChevronRight className="size-4 opacity-40 transition-opacity group-hover:opacity-100" />
                 </span>
               </button>
@@ -242,7 +246,7 @@ function LocationsPanel({
                     </span>
                     <span className="flex shrink-0 items-center gap-1 whitespace-nowrap font-mono text-xs" style={{ color: isSelected ? "var(--fg-neutral-emphasis)" : "var(--fg-neutral-muted)" }}>
                       {(() => { const n = locationIssueCount(loc.id); return (<>
-                        <span>{loc.endpoints.toLocaleString()} endpoints</span>
+                        <span>{activeEndpoints(loc).toLocaleString()} active endpoints</span>
                         <span>·</span>
                         <span>{n === 0 ? "No alerts" : `${n} alert${n === 1 ? "" : "s"}`}</span>
                       </>) })()}
