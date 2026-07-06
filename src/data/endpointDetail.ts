@@ -44,7 +44,7 @@ export interface EndpointDetail {
   }
   platforms: { rows: PlatformRow[]; why: string }
   devices: { audio: DeviceRow[]; video: DeviceRow[] }
-  system: { cpu: SysMetric; memory: SysMetric; disk: SysMetric; battery: { value: string; detail: string }; os: { name: string; detail: string }; agent: { name: string; detail: string } }
+  system: { cpu: SysMetric; memory: SysMetric; disk: SysMetric; os: { name: string; detail: string }; agent: { name: string; detail: string } }
 }
 
 function seedFrom(id: string) {
@@ -124,16 +124,15 @@ export function getEndpointDetail(e: Endpoint): EndpointDetail {
     platforms: { rows, why },
     devices: {
       audio: [
-        { name: pick(headsets), meta: `Bluetooth · Driver v2.${r(10, 20)}.${r(1, 9)} · Default speaker & mic`, state: "Active", stateTone: "good", kind: "audio-out" },
-        { name: "Realtek HD Audio (built-in)", meta: `Driver v6.0.${r(9000, 9300)}.1 · Fallback device`, state: "Standby", stateTone: "muted", kind: "audio-in" },
+        { name: pick(headsets), meta: `Bluetooth · Driver v2.${r(10, 20)}.${r(1, 9)} · Default speaker & mic`, state: "In-use", stateTone: "good", kind: "audio-out" },
+        { name: "Realtek HD Audio (built-in)", meta: `Driver v6.0.${r(9000, 9300)}.1 · Fallback device`, state: "Active", stateTone: "muted", kind: "audio-in" },
       ],
-      video: [{ name: pick(cams), meta: "USB · 1080p · Driver up-to-date", state: "Active", stateTone: "good", kind: "video" }],
+      video: [{ name: pick(cams), meta: "USB · 1080p · Driver up-to-date", state: "In-use", stateTone: "good", kind: "video" }],
     },
     system: {
       cpu: { label: "CPU utilisation", value: String(r(8, 70)), unit: "%", fill: 0, meta: "Intel Core i7-1265U · 12 cores · 4.8 GHz" },
       memory: (() => { const used = r(5, 14, 1); return { label: "Memory", value: String(used), unit: "/ 16 GB", fill: used / 16, meta: `${Math.round((used / 16) * 100)}% utilised` } })(),
       disk: (() => { const used = r(180, 420); return { label: "Disk", value: String(used), unit: "/ 512 GB", fill: used / 512, meta: `${Math.round((used / 512) * 100)}% used · NVMe SSD` } })(),
-      battery: rand() > 0.5 ? { value: "AC", detail: `Charging · ${r(60, 99)}%` } : { value: `${r(35, 95)}%`, detail: "On battery · Discharging" },
       os: { name: "Windows 11 Pro", detail: "Build 23H2 · Patch 2026.04" },
       agent: { name: "v2.4.1", detail: `Last heartbeat ${r(1, 9)}s ago · Up-to-date` },
     },

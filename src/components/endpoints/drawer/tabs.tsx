@@ -142,11 +142,6 @@ export function SystemTab({ d }: { d: EndpointDetail }) {
           <MetricBlock label={s.cpu.label} value={s.cpu.value} unit={s.cpu.unit}><Bar fill={Number(s.cpu.value) / 100} /><div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.cpu.meta}</div></MetricBlock>
           <MetricBlock label={s.memory.label} value={s.memory.value} unit={s.memory.unit}><Bar fill={s.memory.fill} /><div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.memory.meta}</div></MetricBlock>
           <MetricBlock label={s.disk.label} value={s.disk.value} unit={s.disk.unit}><Bar fill={s.disk.fill} /><div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.disk.meta}</div></MetricBlock>
-          <Panel>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Battery</div>
-            <div className="text-2xl font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{s.battery.value}</div>
-            <div className="mt-2 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{s.battery.detail}</div>
-          </Panel>
         </div>
       </div>
       <div>
