@@ -128,9 +128,14 @@ export function EndpointsAttentionCard({
                       </span>
                     </div>
                     {e.event && (
-                      <div className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: alertColor }}>
-                        {e.event}
-                        {e.eventCount > 1 && <span className="font-normal" style={{ color: "var(--fg-neutral-subtle)" }}> · +{e.eventCount - 1} more</span>}
+                      <div className="flex flex-wrap items-center gap-x-1.5 text-sm">
+                        <span className="font-medium" style={{ color: alertColor }}>{e.event}</span>
+                        {e.eventAgo !== null && (
+                          <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>· {e.eventAgo}m ago</span>
+                        )}
+                        {e.eventCount > 1 && (
+                          <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>· +{e.eventCount - 1} more</span>
+                        )}
                       </div>
                     )}
                   </div>
