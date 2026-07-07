@@ -39,11 +39,14 @@ export function EndpointsAttentionCard({
   // top endpoint of the newly-selected location).
   useEffect(() => { setSelectedId(null) }, [selectedLocationId])
 
-  // empty selection falls back to the full attention set (never healthy/offline);
+  // whole fleet unless a specific location is picked on the map (then scoped to it);
+  // empty status falls back to the full attention set (never healthy/offline);
   // then a free-text search across endpoint, user and alert.
+  const locationScoped = !!selectedLocationId && selectedLocationId !== "all"
   const rows = useMemo(() => {
     const effective = statuses.length ? statuses : ATTENTION_STATUSES
-    let base = queryEndpoints({ statuses: effective, sortKey: "status", sortDir: "asc" })
+    const locationIds = locationScoped ? [selectedLocationId!] : undefined
+    let base = queryEndpoints({ statuses: effective, locationIds, sortKey: "status", sortDir: "asc" })
     const term = search.trim().toLowerCase()
     if (term) {
       base = base.filter((e) =>
@@ -52,16 +55,8 @@ export function EndpointsAttentionCard({
         (e.event ?? "").toLowerCase().includes(term)
       )
     }
-    // coupled to the map: bring the selected location's endpoints to the top,
-    // preserving critical-first order within each group (stable sort).
-    if (selectedLocationId && selectedLocationId !== "all") {
-      base = [...base].sort(
-        (a, b) =>
-          (a.locationId === selectedLocationId ? 0 : 1) - (b.locationId === selectedLocationId ? 0 : 1)
-      )
-    }
     return base
-  }, [statuses, search, selectedLocationId])
+  }, [statuses, search, selectedLocationId, locationScoped])
 
   const hasCritical = rows.some((r) => r.status === "critical")
   // selected row (defaults to the first / most critical) drives the detail pane
@@ -173,6 +168,11 @@ export function EndpointsAttentionCard({
               <p className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>No matching endpoints</p>
               <p className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Nothing matches “{search.trim()}”. Try a different search.</p>
             </>
+          ) : locationScoped ? (
+            <p className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
+              <CircleCheck className="size-4" style={{ color: "var(--fg-success-emphasis)" }} />
+              No endpoints needing attention for this contact centre location.
+            </p>
           ) : (
             <>
               <p className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>

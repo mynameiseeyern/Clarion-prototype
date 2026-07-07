@@ -32,7 +32,7 @@ export function OverviewPage({
         onCountryChange={setCountry}
         onViewEndpoints={onViewEndpoints}
       />
-      {/* coupled to the map: the selected location's endpoints sort to the top */}
+      {/* coupled to the map: a specific location scopes the list to it (else whole fleet) */}
       <EndpointsAttentionCard selectedLocationId={selectedId} onViewEndpoints={onViewEndpoints} />
     </div>
   )
