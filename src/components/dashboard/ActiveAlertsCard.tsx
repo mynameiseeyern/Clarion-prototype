@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { ArrowRight, CircleCheck, MapPin, Search, X } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -22,8 +22,11 @@ const ATTENTION_OPTIONS: StatusOption[] = [
  * inline on the right (no modal). "View all endpoints" jumps to the Endpoints tab.
  */
 export function EndpointsAttentionCard({
+  selectedLocationId,
   onViewEndpoints,
 }: {
+  /** location picked on the map ("all" = whole fleet); its endpoints sort to the top */
+  selectedLocationId?: string
   onViewEndpoints: (loc?: string | string[]) => void
 }) {
   const [statuses, setStatuses] = useState<EndpointStatus[]>(DEFAULT_STATUSES)
@@ -32,20 +35,33 @@ export function EndpointsAttentionCard({
   const toggleStatus = (s: EndpointStatus) =>
     setStatuses((xs) => (xs.includes(s) ? xs.filter((x) => x !== s) : [...xs, s]))
 
+  // changing the map location resets the detail so it follows the map (shows the
+  // top endpoint of the newly-selected location).
+  useEffect(() => { setSelectedId(null) }, [selectedLocationId])
+
   // empty selection falls back to the full attention set (never healthy/offline);
-  // then a free-text search across endpoint, user, alert and location.
+  // then a free-text search across endpoint, user and alert.
   const rows = useMemo(() => {
     const effective = statuses.length ? statuses : ATTENTION_STATUSES
-    const base = queryEndpoints({ statuses: effective, sortKey: "status", sortDir: "asc" })
+    let base = queryEndpoints({ statuses: effective, sortKey: "status", sortDir: "asc" })
     const term = search.trim().toLowerCase()
-    if (!term) return base
-    return base.filter((e) =>
-      e.machine.toLowerCase().includes(term) ||
-      e.users.join(" ").toLowerCase().includes(term) ||
-      (e.event ?? "").toLowerCase().includes(term) ||
-      e.locationName.toLowerCase().includes(term)
-    )
-  }, [statuses, search])
+    if (term) {
+      base = base.filter((e) =>
+        e.machine.toLowerCase().includes(term) ||
+        e.users.join(" ").toLowerCase().includes(term) ||
+        (e.event ?? "").toLowerCase().includes(term)
+      )
+    }
+    // coupled to the map: bring the selected location's endpoints to the top,
+    // preserving critical-first order within each group (stable sort).
+    if (selectedLocationId && selectedLocationId !== "all") {
+      base = [...base].sort(
+        (a, b) =>
+          (a.locationId === selectedLocationId ? 0 : 1) - (b.locationId === selectedLocationId ? 0 : 1)
+      )
+    }
+    return base
+  }, [statuses, search, selectedLocationId])
 
   const hasCritical = rows.some((r) => r.status === "critical")
   // selected row (defaults to the first / most critical) drives the detail pane
@@ -74,7 +90,7 @@ export function EndpointsAttentionCard({
           <input
             value={search}
             onChange={(ev) => setSearch(ev.target.value)}
-            placeholder="Search by endpoint, user, alert, location"
+            placeholder="Search by endpoint, user, alert"
             className="min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]"
             style={{ color: "var(--fg-neutral-emphasis)" }}
           />

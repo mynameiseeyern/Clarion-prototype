@@ -298,9 +298,13 @@ export function queryEndpoints(q: EndpointQuery): Endpoint[] {
       case "event": return mul * (a.event ?? "").localeCompare(b.event ?? "")
       case "status":
       default: {
-        // worst-first: severity, then lowest score
+        // worst-first: severity, then most recent alert, then lowest score
         const s = severity[a.status] - severity[b.status]
         if (s !== 0) return mul * s
+        // most recent alert first (smaller minutesAgo = more recent; no alert sorts last)
+        const at = a.eventAgo ?? Infinity
+        const bt = b.eventAgo ?? Infinity
+        if (at !== bt) return mul * (at - bt)
         return mul * ((a.score ?? 99) - (b.score ?? 99))
       }
     }

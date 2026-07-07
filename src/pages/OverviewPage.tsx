@@ -32,8 +32,8 @@ export function OverviewPage({
         onCountryChange={setCountry}
         onViewEndpoints={onViewEndpoints}
       />
-      {/* height is driven by the drilldown detail; the list scrolls to match */}
-      <EndpointsAttentionCard onViewEndpoints={onViewEndpoints} />
+      {/* coupled to the map: the selected location's endpoints sort to the top */}
+      <EndpointsAttentionCard selectedLocationId={selectedId} onViewEndpoints={onViewEndpoints} />
     </div>
   )
 }
