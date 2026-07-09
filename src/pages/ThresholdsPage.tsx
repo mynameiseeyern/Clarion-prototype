@@ -1,9 +1,9 @@
 import { useState } from "react"
-import { RotateCcw, Route } from "lucide-react"
+import { RotateCcw } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { ThresholdSlider } from "@/components/thresholds/ThresholdSlider"
+import { AlertRouting } from "@/components/thresholds/AlertRouting"
 import { METRICS, METRIC_CATEGORIES, metricById, defaultPolicy, type ThresholdPolicy } from "@/data/thresholds"
 
 export function ThresholdsPage() {
@@ -105,26 +105,8 @@ export function ThresholdsPage() {
         })}
       </Card>
 
-      {/* Section 2 — Alert routing (placeholder; requirements TBC for MVP) */}
-      <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
-        <div className="flex flex-col px-5 py-4" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
-          <div className="flex items-center gap-2">
-            <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Alert routing</h2>
-            <Badge variant="secondary">Coming soon</Badge>
-          </div>
-          <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Decide where alerts go — who gets notified, and how.</span>
-        </div>
-
-        <div className="flex flex-col items-center gap-2 px-5 py-12 text-center">
-          <span className="flex size-10 items-center justify-center rounded-full" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>
-            <Route className="size-5" />
-          </span>
-          <p className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Alert routing isn’t available yet</p>
-          <p className="max-w-md text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-            This section will let you route alerts to the right people and channels. Requirements are still being defined — content to come.
-          </p>
-        </div>
-      </Card>
+      {/* Section 2 — Alert routing */}
+      <AlertRouting />
     </div>
   )
 }
