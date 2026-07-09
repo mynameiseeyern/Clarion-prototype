@@ -93,7 +93,7 @@ function EmailChips({
           <span className="text-xs font-medium" style={{ color: "var(--fg-danger-emphasis)" }}>{error}</span>
         )}
 
-        {value.length > 0 && (
+        {value.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {value.map((email) => (
               <span
@@ -112,6 +112,8 @@ function EmailChips({
               </span>
             ))}
           </div>
+        ) : (
+          <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>No recipients added</span>
         )}
       </div>
     </div>
