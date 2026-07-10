@@ -6,18 +6,10 @@ import { Button } from "@/components/ui/button"
 // well-formed email check (MVP: format only, email-only channel)
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export interface Routing {
-  critical: string[]
-  itReports: string[]
-}
-
-// Seed so the page opens in the populated + saved state (per the design).
+// Seed so the page opens in the populated + saved state.
 // TODO(api): GET tenancy routing config; this is the source of truth for the
 // widget (IROS-147) and the Alerts flow.
-const INITIAL_ROUTING: Routing = {
-  critical: ["sara.t@acme.com", "michael.k@acme.com"],
-  itReports: ["lisa.p@acme.com", "david.s@acme.com", "emily.r@acme.com"],
-}
+const INITIAL_RECIPIENTS: string[] = ["lisa.p@acme.com", "david.s@acme.com", "emily.r@acme.com"]
 
 /**
  * One routing purpose: a chip-style multi-email field.
@@ -121,15 +113,13 @@ function EmailChips({
 }
 
 /**
- * Alert routing — tenancy-level, email-only (MVP). Two purposes are routed from
- * here: critical alerts and worker-submitted "Send report to IT" emails. Edits
- * stay in a draft until Save (consistent with the threshold sliders); Cancel
- * reverts to the last-saved config.
+ * Alert routing — tenancy-level, email-only (MVP). For now this routes just the
+ * worker-submitted "Send report to IT" emails. Edits stay in a draft until Save
+ * (consistent with the threshold sliders); Cancel reverts to the last-saved list.
  */
 export function AlertRouting() {
-  const clone = (r: Routing): Routing => ({ critical: [...r.critical], itReports: [...r.itReports] })
-  const [saved, setSaved] = useState<Routing>(() => clone(INITIAL_ROUTING))
-  const [draft, setDraft] = useState<Routing>(() => clone(INITIAL_ROUTING))
+  const [saved, setSaved] = useState<string[]>(() => [...INITIAL_RECIPIENTS])
+  const [draft, setDraft] = useState<string[]>(() => [...INITIAL_RECIPIENTS])
   const [saving, setSaving] = useState(false)
   const [justSaved, setJustSaved] = useState(false)
   const [resetSignal, setResetSignal] = useState(0)
@@ -141,7 +131,7 @@ export function AlertRouting() {
   const save = () => {
     setSaving(true)
     window.setTimeout(() => {
-      setSaved(clone(draft))
+      setSaved([...draft])
       setSaving(false)
       setJustSaved(true)
       setResetSignal((n) => n + 1) // drop any uncommitted input text
@@ -149,7 +139,7 @@ export function AlertRouting() {
     }, 700) // mock backend round-trip
   }
   const cancel = () => {
-    setDraft(clone(saved))
+    setDraft([...saved])
     setResetSignal((n) => n + 1)
     setJustSaved(false)
   }
@@ -159,7 +149,7 @@ export function AlertRouting() {
       <div className="flex flex-wrap items-start justify-between gap-3 px-5 py-4" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
         <div className="flex flex-col">
           <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Alert routing</h2>
-          <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Decide where alerts go — who gets notified, and how</span>
+          <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Decide where alerts go and who gets notified</span>
         </div>
         <div className="flex items-center gap-2">
           {saving ? (
@@ -177,21 +167,12 @@ export function AlertRouting() {
 
       <div className="flex flex-col px-5">
         <EmailChips
-          label="Critical alerts"
-          description="The recipient of these automated emails are received when critical thresholds are reached."
-          value={draft.critical}
-          onChange={(v) => setDraft((d) => ({ ...d, critical: v }))}
+          label="IT reports"
+          description="These emails are sent from IT alerts, allowing users to send reports directly."
+          value={draft}
+          onChange={setDraft}
           resetSignal={resetSignal}
         />
-        <div style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
-          <EmailChips
-            label="IT reports"
-            description="The recipient of these emails are from IT alerts that gives the widget user the option to send reports to their IT administrator."
-            value={draft.itReports}
-            onChange={(v) => setDraft((d) => ({ ...d, itReports: v }))}
-            resetSignal={resetSignal}
-          />
-        </div>
       </div>
     </Card>
   )
