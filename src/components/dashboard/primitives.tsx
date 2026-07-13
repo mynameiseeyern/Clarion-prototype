@@ -73,7 +73,7 @@ export function SegmentedBar({
   className?: string
 }) {
   return (
-    <div className={cn("flex h-1 w-full items-center rounded-full", className)}>
+    <div className={cn("flex h-3 w-full items-center rounded-full", className)}>
       {segments.map((s, i) => (
         <div
           key={i}
