@@ -81,7 +81,7 @@ export function SegmentedBar({
           style={{ flex: `${s.flex} 0 0` }}
         >
           <span
-            className="block size-full first:rounded-l-full last:rounded-r-full"
+            className={cn("block size-full", i === 0 && "rounded-l-full", i === segments.length - 1 && "rounded-r-full")}
             style={{ backgroundColor: statusVar[s.status] }}
           />
           {/* enlarged, invisible hit area so the thin bar is easy to hover */}
