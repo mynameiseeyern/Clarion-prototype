@@ -26,7 +26,7 @@ export function Sidebar({
     >
       {/* Header — product brand on the IR watercolour banner (client white-label is a Day 2 feature) */}
       <div
-        className="relative flex h-24 shrink-0 items-end overflow-hidden"
+        className="relative flex h-24 shrink-0 items-end overflow-hidden rounded-t-2xl"
         style={{ backgroundImage: "url('/sidebar-header.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}
       >
         <span className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.28), rgba(0,0,0,0) 55%)" }} />
