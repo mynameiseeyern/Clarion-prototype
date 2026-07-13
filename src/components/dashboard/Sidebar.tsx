@@ -27,7 +27,7 @@ export function Sidebar({
       {/* Header — product brand (client white-label is a Day 2 feature) */}
       <div className="flex h-16 items-center px-2">
         <div className="flex flex-col justify-center px-2 leading-tight" style={{ fontFamily: "'Poppins', ui-sans-serif, sans-serif" }}>
-          <span className="text-base" style={{ fontWeight: 500, color: "var(--fg-neutral-emphasis)" }}>Clarity</span>
+          <span className="text-lg" style={{ fontFamily: "'Oswald', ui-sans-serif, sans-serif", fontWeight: 600, letterSpacing: "0.02em", textTransform: "uppercase", color: "var(--fg-neutral-emphasis)" }}>Clarity</span>
           <span className="text-xs" style={{ fontWeight: 400, color: "var(--fg-neutral-muted)" }}>powered by IRIS</span>
         </div>
       </div>
