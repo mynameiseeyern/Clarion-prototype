@@ -10,11 +10,11 @@ function InfoTip({ text }: { text: string }) {
       <Info className="size-4 cursor-help" style={{ color: "var(--fg-neutral-subtle)" }} />
       <span
         role="tooltip"
-        className="pointer-events-none absolute bottom-full right-0 z-40 mb-2 hidden w-64 rounded-xl px-3 py-2.5 text-xs font-normal leading-relaxed group-hover/info:block"
+        className="pointer-events-none absolute top-full right-0 z-40 mt-2 hidden w-64 rounded-xl px-3 py-2.5 text-xs font-normal leading-relaxed group-hover/info:block"
         style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)", boxShadow: "var(--shadow-md)" }}
       >
         {text}
-        <span className="absolute right-2.5 top-full size-2.5 -translate-y-1/2 rotate-45" style={{ background: "var(--bg-neutral-emphasis)" }} />
+        <span className="absolute bottom-full right-2.5 size-2.5 translate-y-1/2 rotate-45" style={{ background: "var(--bg-neutral-emphasis)" }} />
       </span>
     </span>
   )
