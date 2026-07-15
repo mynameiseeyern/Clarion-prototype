@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { StatusFilter, statusVar, type StatusOption } from "@/components/endpoints/status"
+import { formatAgo } from "@/lib/utils"
 import { EndpointDetailPanel } from "@/components/endpoints/drawer/EndpointDetailPanel"
 import { queryEndpoints, type EndpointStatus } from "@/data/endpoints"
 
