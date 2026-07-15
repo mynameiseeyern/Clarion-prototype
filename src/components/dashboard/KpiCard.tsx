@@ -1,13 +1,31 @@
 import type { ReactNode } from "react"
-import type { LucideIcon } from "lucide-react"
+import { Info, type LucideIcon } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+
+/** Small info affordance: an (i) icon that reveals an explanatory tooltip on hover. */
+function InfoTip({ text }: { text: string }) {
+  return (
+    <span className="group/info relative flex shrink-0 items-center">
+      <Info className="size-4 cursor-help" style={{ color: "var(--fg-neutral-subtle)" }} />
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute bottom-full right-0 z-40 mb-2 hidden w-64 rounded-xl px-3 py-2.5 text-xs font-normal leading-relaxed group-hover/info:block"
+        style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)", boxShadow: "var(--shadow-md)" }}
+      >
+        {text}
+        <span className="absolute right-2.5 top-full size-2.5 -translate-y-1/2 rotate-45" style={{ background: "var(--bg-neutral-emphasis)" }} />
+      </span>
+    </span>
+  )
+}
 
 export function KpiCard({
   title,
   icon: Icon,
   value,
   delta,
+  info,
   children,
   className,
   fixedWidth = false,
@@ -16,6 +34,8 @@ export function KpiCard({
   icon: LucideIcon
   value: ReactNode
   delta?: ReactNode
+  /** optional explanatory tooltip shown via an (i) icon next to the title */
+  info?: string
   children?: ReactNode
   className?: string
   fixedWidth?: boolean
@@ -29,12 +49,15 @@ export function KpiCard({
       )}
     >
       <div className="flex items-start gap-2 p-4">
-        <h3
-          className="text-heading-sm flex-1 truncate"
-          style={{ color: "var(--fg-neutral-emphasis)" }}
-        >
-          {title}
-        </h3>
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+          <h3
+            className="text-heading-sm truncate"
+            style={{ color: "var(--fg-neutral-emphasis)" }}
+          >
+            {title}
+          </h3>
+          {info && <InfoTip text={info} />}
+        </div>
         <Icon className="size-4 shrink-0" style={{ color: "var(--fg-neutral-subtle)" }} />
       </div>
       <div className="flex flex-col gap-2 px-4 pb-4">

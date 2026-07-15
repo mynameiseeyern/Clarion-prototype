@@ -71,6 +71,7 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
           }
           icon={Tally5}
           value={String(live.score)}
+          info="A composite of network health out of 100 combining Wi-Fi signal, latency, packet loss, jitter and Network MOS. Excellent 80–100 · Good 60–79 · Fair 40–59 · Poor 0–39."
         >
           {(() => {
             const b = cnsBand(live.score)
