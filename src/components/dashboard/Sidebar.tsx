@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { HelpCircle, ExternalLink } from "lucide-react"
 import { navItems, devNavItems, type NavItem, type PageId } from "@/nav"
 
 export function Sidebar({
@@ -42,6 +43,23 @@ export function Sidebar({
         <div className="mt-3">
           <NavGroup label="Product development" items={devNavItems} active={active} onNavigate={onNavigate} />
         </div>
+      </div>
+
+      {/* Support — opens the external support page (content + link TBD) */}
+      <div className="p-2">
+        <a
+          href="/support.html"
+          target="_blank"
+          rel="noreferrer"
+          className="flex h-8 w-full items-center gap-2 rounded-md p-2 text-left text-sm transition-colors"
+          style={{ color: "var(--fg-neutral-emphasis)" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)" }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent" }}
+        >
+          <HelpCircle className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
+          <span className="truncate">Support</span>
+          <ExternalLink className="ml-auto size-3.5 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
+        </a>
       </div>
 
       {/* Footer */}
