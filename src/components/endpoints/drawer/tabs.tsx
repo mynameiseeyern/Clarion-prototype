@@ -1,4 +1,4 @@
-import { Headphones, Mic, Video, Bluetooth, Usb, Info } from "lucide-react"
+import { Headphones, Mic, Video, Bluetooth, Usb } from "lucide-react"
 import type { Endpoint } from "@/data/endpoints"
 import type { EndpointDetail, PlatformStatus } from "@/data/endpointDetail"
 import { SegBar, Panel, SectionLabel, MetricBlock } from "./bits"
@@ -88,12 +88,6 @@ export function PlatformsTab({ d }: { d: EndpointDetail }) {
             })}
           </tbody>
         </table>
-      </div>
-      <div className="flex gap-3 rounded-xl p-3" style={{ background: "var(--bg-info-subtle)", border: "1px solid var(--border-info-muted)" }}>
-        <Info className="mt-0.5 size-4 shrink-0" style={{ color: "var(--fg-info-emphasis)" }} />
-        <p className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          <span className="font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>Why this matters: </span>{d.platforms.why}
-        </p>
       </div>
     </div>
   )
