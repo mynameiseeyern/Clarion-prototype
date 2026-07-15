@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
-import { HelpCircle, ExternalLink } from "lucide-react"
+import { HelpCircle, ExternalLink, ChevronDown } from "lucide-react"
 import { navItems, devNavItems, type NavItem, type PageId } from "@/nav"
+import { cn } from "@/lib/utils"
 
 export function Sidebar({
   active,
@@ -41,7 +42,7 @@ export function Sidebar({
       <div className="flex-1 overflow-y-auto p-2">
         <NavGroup label="Workspace" items={navItems} active={active} onNavigate={onNavigate} />
         <div className="mt-3">
-          <NavGroup label="Product development" items={devNavItems} active={active} onNavigate={onNavigate} />
+          <NavGroup label="Product development" items={devNavItems} active={active} onNavigate={onNavigate} collapsible defaultOpen={false} />
         </div>
       </div>
 
@@ -84,18 +85,36 @@ export function Sidebar({
 }
 
 function NavGroup({
-  label, items, active, onNavigate,
+  label, items, active, onNavigate, collapsible = false, defaultOpen = true,
 }: {
   label: string
   items: NavItem[]
   active: PageId
   onNavigate: (id: PageId) => void
+  collapsible?: boolean
+  defaultOpen?: boolean
 }) {
+  const [open, setOpen] = useState(defaultOpen)
+  const showItems = !collapsible || open
   return (
     <>
-      <div className="flex h-8 items-center px-2 text-xs font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
-        {label}
-      </div>
+      {collapsible ? (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="flex h-8 w-full items-center rounded-md px-2 text-xs font-medium transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]"
+          style={{ color: "var(--fg-neutral-emphasis)" }}
+        >
+          {label}
+          <ChevronDown className={cn("ml-auto size-3.5 transition-transform", !open && "-rotate-90")} style={{ color: "var(--fg-neutral-muted)" }} />
+        </button>
+      ) : (
+        <div className="flex h-8 items-center px-2 text-xs font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
+          {label}
+        </div>
+      )}
+      {showItems && (
       <nav className="flex flex-col gap-1">
         {items.map(({ id, label: itemLabel, icon: Icon }) => {
           const isActive = id === active
@@ -122,6 +141,7 @@ function NavGroup({
           )
         })}
       </nav>
+      )}
     </>
   )
 }

@@ -8,6 +8,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { countries, citiesInCountry } from "@/data/dashboard"
 import { queryEndpoints, type Endpoint, type EndpointStatus, type SortKey, type SortDir } from "@/data/endpoints"
 import { StatusFilter, statusVar, statusBadge, cap, initials } from "./status"
+import { formatAgo } from "@/lib/utils"
 
 // Locations grouped under their country (label only — cities are selectable), all alphabetical.
 const countryGroups = [...countries]
@@ -299,7 +300,7 @@ export function EndpointsTable({
                         <span className="size-1.5 shrink-0 rounded-full" style={{ background: statusVar[e.status] }} />
                         {e.event}
                         {e.eventCount > 1 && e.eventAgo !== null && (
-                          <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>· {e.eventAgo}m ago · +{e.eventCount - 1}</span>
+                          <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>· {formatAgo(e.eventAgo)} ago · +{e.eventCount - 1}</span>
                         )}
                       </span>
                     ) : (
