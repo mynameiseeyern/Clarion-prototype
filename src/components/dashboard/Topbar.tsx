@@ -80,6 +80,12 @@ export function Topbar({
           </kbd>
         </button>
         <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <a href="/support.html" target="_blank" rel="noreferrer">
+              <HelpCircle />
+              Help
+            </a>
+          </Button>
           <IconButton label="Toggle theme" onClick={onToggleTheme}>
             {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </IconButton>
