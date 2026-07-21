@@ -1,7 +1,8 @@
 import type { ReactNode } from "react"
-import { PanelLeft, ChevronRight, Search, Sun, Moon } from "lucide-react"
+import { PanelLeft, ChevronRight, Search, Sun, Moon, HelpCircle } from "lucide-react"
 import { fleet } from "@/data/dashboard"
 import { pageLabel, type PageId, type Experience } from "@/nav"
+import { Button } from "@/components/ui/button"
 import { ExperienceMenu } from "./ExperienceMenu"
 
 function IconButton({ children, label, onClick }: { children: ReactNode; label: string; onClick?: () => void }) {
