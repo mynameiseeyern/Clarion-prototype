@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { HelpCircle, ExternalLink, ChevronDown } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import { navItems, devNavItems, type NavItem, type PageId } from "@/nav"
 import { cn } from "@/lib/utils"
 
