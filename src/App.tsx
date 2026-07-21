@@ -13,7 +13,6 @@ import { ComponentsPage } from "@/pages/ComponentsPage"
 import { AdminApp } from "@/AdminApp"
 import { EndpointDrawer } from "@/components/endpoints/drawer/EndpointDrawer"
 import { AlertDrawer } from "@/components/alerts/AlertDrawer"
-import { CommandPalette } from "@/components/search/CommandPalette"
 import { Toaster } from "@/components/ui/toast"
 import { useStreaming } from "@/hooks/useStreaming"
 import { DEFAULT_LOCATION, locationById } from "@/data/dashboard"
@@ -55,7 +54,6 @@ export default function App() {
   const [drawer, setDrawer] = useState<DeviceDrawer | null>(() => deviceDrawerFromUrl())
   const [alertDrawer, setAlertDrawer] = useState<IssueDrawer | null>(() => issueDrawerFromUrl())
   const [backAlert, setBackAlert] = useState<IssueDrawer | null>(null)
-  const [searchOpen, setSearchOpen] = useState(false)
   const live = useStreaming()
   // remembers the last synced page + open-drawer flags, to decide push vs replace
   const histPrev = useRef({ page, device: drawer !== null, issue: alertDrawer !== null })
@@ -90,18 +88,6 @@ export default function App() {
     }
     window.addEventListener("popstate", onPop)
     return () => window.removeEventListener("popstate", onPop)
-  }, [])
-
-  // ⌘K / Ctrl-K opens the command palette
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault()
-        setSearchOpen((v) => !v)
-      }
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
   }, [])
 
   // Navigating to another page closes any open drawer (a drilldown belongs to
@@ -156,7 +142,6 @@ export default function App() {
           dark={dark}
           onToggleTheme={() => setDark((v) => !v)}
           onToggleSidebar={() => setSidebarOpen((v) => !v)}
-          onOpenSearch={() => setSearchOpen(true)}
           onSwitchExperience={switchExperience}
         />
 
@@ -236,14 +221,6 @@ export default function App() {
 
       {/* transient toasts (save confirmations, etc.) */}
       <Toaster />
-
-      {/* global command palette */}
-      <CommandPalette
-        open={searchOpen}
-        onOpenChange={setSearchOpen}
-        onPickEndpoint={(e) => setDrawer({ rows: [e], index: 0 })}
-        onPickLocation={(id) => { setEndpointFilters([id]); navigate("endpoints") }}
-      />
     </div>
   )
 }

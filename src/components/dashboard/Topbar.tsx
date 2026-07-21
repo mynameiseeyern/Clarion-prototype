@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { PanelLeft, ChevronRight, Search, Sun, Moon, HelpCircle } from "lucide-react"
+import { PanelLeft, ChevronRight, Sun, Moon, HelpCircle } from "lucide-react"
 import { fleet } from "@/data/dashboard"
 import { pageLabel, type PageId, type Experience } from "@/nav"
 import { Button } from "@/components/ui/button"
@@ -26,14 +26,12 @@ export function Topbar({
   dark,
   onToggleTheme,
   onToggleSidebar,
-  onOpenSearch,
   onSwitchExperience,
 }: {
   page: PageId
   dark: boolean
   onToggleTheme: () => void
   onToggleSidebar: () => void
-  onOpenSearch: () => void
   onSwitchExperience: (e: Experience) => void
 }) {
   return (
@@ -60,25 +58,6 @@ export function Topbar({
       </div>
 
       <div className="flex items-center gap-4">
-        <button
-          type="button"
-          onClick={onOpenSearch}
-          className="flex h-8 w-[373px] max-w-[40vw] items-center gap-1.5 rounded-lg px-2.5 py-1 text-left transition-colors"
-          style={{ background: "var(--bg-input-default)", border: "1px solid var(--border-input-default)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--border-input-hovered)")}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border-input-default)")}
-        >
-          <Search className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
-          <span className="min-w-px flex-1 truncate text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-            Search endpoints, locations...
-          </span>
-          <kbd
-            className="flex h-5 min-w-5 items-center justify-center gap-1 rounded-sm px-1 text-xs font-medium"
-            style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}
-          >
-            ⌘K
-          </kbd>
-        </button>
         <div className="flex items-center gap-2">
           <Button asChild variant="outline" size="sm">
             <a href="/support.html" target="_blank" rel="noreferrer">
