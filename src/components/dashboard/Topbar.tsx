@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import { PanelLeft, ChevronRight, Sun, Moon, HelpCircle } from "lucide-react"
 import { fleet } from "@/data/dashboard"
-import { pageLabel, type PageId, type Experience } from "@/nav"
+import { pageLabel, type PageId } from "@/nav"
 import { Button } from "@/components/ui/button"
 import { ExperienceMenu } from "./ExperienceMenu"
 
@@ -26,13 +26,11 @@ export function Topbar({
   dark,
   onToggleTheme,
   onToggleSidebar,
-  onSwitchExperience,
 }: {
   page: PageId
   dark: boolean
   onToggleTheme: () => void
   onToggleSidebar: () => void
-  onSwitchExperience: (e: Experience) => void
 }) {
   return (
     <header
@@ -67,7 +65,7 @@ export function Topbar({
           <IconButton label="Toggle theme" onClick={onToggleTheme}>
             {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </IconButton>
-          <ExperienceMenu experience="fleet" onSwitch={onSwitchExperience} />
+          <ExperienceMenu />
         </div>
       </div>
     </header>

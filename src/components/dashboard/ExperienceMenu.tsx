@@ -1,27 +1,17 @@
-import { CircleUserRound, LayoutDashboard, ShieldCheck, Check, Settings, LogOut } from "lucide-react"
+import { CircleUserRound, LogOut } from "lucide-react"
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { experienceLabel, type Experience } from "@/nav"
 
-/**
- * Top-right account menu. Switches between the two experiences (Fleet ↔ Admin).
- * Distinct from the top-left sidebar, which switches org. Visible to Admins.
- */
-export function ExperienceMenu({
-  experience,
-  onSwitch,
-}: {
-  experience: Experience
-  onSwitch: (e: Experience) => void
-}) {
+/** Top-right account menu — signed-in identity + sign out. */
+export function ExperienceMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label="Account and experience"
+          aria-label="Account"
           className="flex size-8 shrink-0 items-center justify-center rounded-full transition-colors"
           style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}
           onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)")}
@@ -38,17 +28,6 @@ export function ExperienceMenu({
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-xs">Switch experience</DropdownMenuLabel>
-        <DropdownMenuItem onSelect={() => onSwitch("fleet")}>
-          <LayoutDashboard /> {experienceLabel.fleet}
-          {experience === "fleet" && <Check className="ml-auto" />}
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onSwitch("admin")}>
-          <ShieldCheck /> {experienceLabel.admin}
-          {experience === "admin" && <Check className="ml-auto" />}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem><Settings /> Account settings</DropdownMenuItem>
         <DropdownMenuItem><LogOut /> Sign out</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
