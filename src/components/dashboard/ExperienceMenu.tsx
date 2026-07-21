@@ -1,11 +1,22 @@
-import { CircleUserRound, LogOut } from "lucide-react"
+import { CircleUserRound, LayoutDashboard, ShieldCheck, Check, LogOut } from "lucide-react"
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import { experienceLabel, type Experience } from "@/nav"
 
-/** Top-right account menu — signed-in identity + sign out. */
-export function ExperienceMenu() {
+/**
+ * Top-right account menu — signed-in identity + sign out.
+ * The experience switcher (Fleet ↔ Admin) only appears when `onSwitch` is passed
+ * (used by the Admin shell); the fleet top bar renders it as sign-out only.
+ */
+export function ExperienceMenu({
+  experience,
+  onSwitch,
+}: {
+  experience?: Experience
+  onSwitch?: (e: Experience) => void
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -28,6 +39,20 @@ export function ExperienceMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {onSwitch && (
+          <>
+            <DropdownMenuLabel className="text-xs">Switch experience</DropdownMenuLabel>
+            <DropdownMenuItem onSelect={() => onSwitch("fleet")}>
+              <LayoutDashboard /> {experienceLabel.fleet}
+              {experience === "fleet" && <Check className="ml-auto" />}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onSwitch("admin")}>
+              <ShieldCheck /> {experienceLabel.admin}
+              {experience === "admin" && <Check className="ml-auto" />}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem><LogOut /> Sign out</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
