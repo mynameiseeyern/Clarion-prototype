@@ -59,10 +59,9 @@ export function Topbar({
 
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline" size="sm">
-            <a href="/support.html" target="_blank" rel="noreferrer">
+          <Button asChild variant="ghost" size="icon">
+            <a href="/support.html" target="_blank" rel="noreferrer" aria-label="Help">
               <HelpCircle />
-              Help
             </a>
           </Button>
           <IconButton label="Toggle theme" onClick={onToggleTheme}>
