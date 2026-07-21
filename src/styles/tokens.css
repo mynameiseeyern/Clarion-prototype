@@ -196,6 +196,7 @@
   --bg-primary-emphasis: var(--palette-brand-600);
   --bg-primary-emphasis-hovered: var(--palette-brand-700);
   --bg-primary-emphasis-pressed: var(--palette-brand-800);
+  --bg-primary-disabled: var(--palette-brand-200);
   --bg-success-subtle: var(--palette-success-50);
   --bg-success-subtle-hovered: var(--palette-success-100);
   --bg-success-subtle-pressed: var(--palette-success-200);
@@ -206,8 +207,8 @@
   --bg-warning-subtle-hovered: var(--palette-warning-100);
   --bg-warning-subtle-pressed: var(--palette-warning-200);
   --bg-warning-emphasis: var(--palette-warning-600);
-  --bg-warning-emphasis-hovered: var(--palette-warning-700);
-  --bg-warning-emphasis-pressed: var(--palette-warning-800);
+  --bg-warning-emphasis-hovered: var(--palette-warning-500);
+  --bg-warning-emphasis-pressed: var(--palette-warning-400);
   --bg-danger-subtle: var(--palette-danger-50);
   --bg-danger-subtle-hovered: var(--palette-danger-100);
   --bg-danger-subtle-pressed: var(--palette-danger-200);
@@ -256,7 +257,7 @@
   --fg-on-neutral-emphasis: var(--palette-white);
   --fg-on-primary-emphasis: var(--palette-white);
   --fg-on-success-emphasis: var(--palette-white);
-  --fg-on-warning-emphasis: var(--palette-warning-950);
+  --fg-on-warning-emphasis: var(--palette-neutral-950);
   --fg-on-danger-emphasis: var(--palette-white);
   --fg-on-info-emphasis: var(--palette-white);
   --fg-on-selected-emphasis: var(--palette-white);
@@ -436,6 +437,7 @@
   --bg-primary-emphasis: var(--palette-brand-500);
   --bg-primary-emphasis-hovered: var(--palette-brand-400);
   --bg-primary-emphasis-pressed: var(--palette-brand-300);
+  --bg-primary-disabled: var(--palette-brand-800);
   --bg-success-subtle: var(--palette-success-950);
   --bg-success-subtle-hovered: var(--palette-success-900);
   --bg-success-subtle-pressed: var(--palette-success-800);
