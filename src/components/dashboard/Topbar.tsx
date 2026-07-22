@@ -34,7 +34,7 @@ export function Topbar({
 }) {
   return (
     <header
-      className="flex h-24 items-center justify-between px-4"
+      className="flex h-20 items-center justify-between px-4"
       style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}
     >
       <div className="flex items-center gap-2">
