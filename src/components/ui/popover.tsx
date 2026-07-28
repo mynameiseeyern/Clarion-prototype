@@ -13,8 +13,8 @@ function PopoverContent({ className, align = "center", sideOffset = 6, container
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          // z-[60] so combobox dropdowns sit above z-50 dialogs/side panels (e.g. the rule editor)
-          "z-[60] rounded-xl border outline-none shadow-lg data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+          // z-[100] so combobox dropdowns sit above dialogs/side panels (house Dialog is z-90)
+          "z-[100] rounded-xl border outline-none shadow-lg data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
           className
         )}
         // merge caller style so a passed width can't clobber the solid background/border
