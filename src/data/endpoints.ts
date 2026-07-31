@@ -176,6 +176,8 @@ function makeEndpoint(locId: string, locName: string, status: EndpointStatus, n:
   if (status === "warning") {
     const label = deriveIssue(status, connection, latency, jitter, loss, downPlatform) ?? "Degraded performance"
     events.push({ severity: "warning", label, minutesAgo: round(between(2, 90)) })
+    // some warning endpoints carry a second, minor warning
+    if (rand() < 0.35) events.push({ severity: "warning", label: pick(["Wi-Fi signal weak", "Elevated latency", "Minor packet loss"]), minutesAgo: round(between(5, 180)) })
   } else if (status === "critical") {
     const crit: string[] = []
     if (downPlatform) crit.push(`${downPlatform} unreachable`)
@@ -185,6 +187,13 @@ function makeEndpoint(locId: string, locName: string, status: EndpointStatus, n:
     if (rand() < 0.35) crit.push(pick(deviceCriticalEvents))
     if (crit.length === 0) crit.push(deriveIssue(status, connection, latency, jitter, loss, downPlatform) ?? "Degraded performance")
     for (const label of [...new Set(crit)]) events.push({ severity: "critical", label, minutesAgo: round(between(1, 180)) })
+    // secondary warning-level alerts often coexist with the criticals
+    const warnPool = ["Wi-Fi signal weak", "Elevated latency", "Minor packet loss", "Headset battery low", "High memory usage"]
+    const nWarn = rand() < 0.45 ? 0 : rand() < 0.8 ? 1 : 2
+    for (let i = 0; i < nWarn && warnPool.length; i++) {
+      const [label] = warnPool.splice(Math.floor(rand() * warnPool.length), 1)
+      events.push({ severity: "warning", label, minutesAgo: round(between(5, 240)) })
+    }
   }
   // shown event: criticals take priority; pick the most recent within the chosen priority
   let event: string | null = null, eventCount = 0, eventAgo: number | null = null
@@ -195,7 +204,8 @@ function makeEndpoint(locId: string, locName: string, status: EndpointStatus, n:
     const pool = crit.length ? crit : events
     if (pool.length) {
       const chosen = pool.reduce((a, b) => (b.minutesAgo < a.minutesAgo ? b : a))
-      event = chosen.label; eventCount = pool.length; eventAgo = chosen.minutesAgo
+      // shown label = most recent of the highest priority; count = ALL alerts on the endpoint
+      event = chosen.label; eventCount = events.length; eventAgo = chosen.minutesAgo
     }
   }
 

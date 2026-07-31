@@ -118,6 +118,9 @@ export function EndpointsAttentionCard({
             {rows.map((e) => {
               const isSel = selected?.id === e.id
               const alertColor = e.status === "critical" ? "var(--fg-danger-emphasis)" : "var(--fg-warning-emphasis)"
+              const critN = e.events.filter((ev) => ev.severity === "critical").length
+              const warnN = e.events.filter((ev) => ev.severity === "warning").length
+              const moreBreakdown = [critN ? `${critN} critical` : "", warnN ? `${warnN} warning` : ""].filter(Boolean).join(" · ")
               return (
                 <button
                   key={e.id}
@@ -146,7 +149,16 @@ export function EndpointsAttentionCard({
                           <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>· {formatAgo(e.eventAgo)} ago</span>
                         )}
                         {e.eventCount > 1 && (
-                          <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>· +{e.eventCount - 1} more</span>
+                          <span className="group/more relative text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>
+                            · +{e.eventCount - 1} more
+                            <span
+                              role="tooltip"
+                              className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium group-hover/more:block"
+                              style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)", boxShadow: "var(--shadow-md)" }}
+                            >
+                              {moreBreakdown}
+                            </span>
+                          </span>
                         )}
                       </div>
                     )}
