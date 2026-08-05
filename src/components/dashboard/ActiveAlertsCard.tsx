@@ -120,7 +120,11 @@ export function EndpointsAttentionCard({
               const alertColor = e.status === "critical" ? "var(--fg-danger-emphasis)" : "var(--fg-warning-emphasis)"
               const critN = e.events.filter((ev) => ev.severity === "critical").length
               const warnN = e.events.filter((ev) => ev.severity === "warning").length
-              const moreBreakdown = [critN ? `${critN} critical` : "", warnN ? `${warnN} warning` : ""].filter(Boolean).join(" · ")
+              // the shown alert is the top-priority one (critical if any, else warning);
+              // the "+N more" tooltip breaks down only the ADDITIONAL alerts.
+              const extraCrit = critN - (critN > 0 ? 1 : 0)
+              const extraWarn = warnN - (critN > 0 ? 0 : 1)
+              const moreBreakdown = [extraCrit ? `${extraCrit} critical` : "", extraWarn ? `${extraWarn} warning` : ""].filter(Boolean).join(" · ")
               return (
                 <button
                   key={e.id}
