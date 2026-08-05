@@ -33,7 +33,7 @@ export interface MetricDef {
 export const METRICS: MetricDef[] = [
   // Network
   { id: "networkmos", category: "Network", name: "Network MOS", icon: AudioLines, min: 1, max: 5, step: 0.1, unit: "", decimals: 1, direction: "lower", defaultWarn: 4.0, defaultCrit: 3.0 },
-  { id: "wifi", category: "Network", name: "Wi-Fi signal", icon: Wifi, min: -90, max: -30, step: 1, unit: " dBm", decimals: 0, direction: "lower", defaultWarn: -70, defaultCrit: -80 },
+  { id: "wifi", category: "Network", name: "Wi-Fi signal", icon: Wifi, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "lower", defaultWarn: 50, defaultCrit: 25 },
   // System
   { id: "cpu", category: "System", name: "CPU utilisation", icon: Cpu, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "higher", defaultWarn: 70, defaultCrit: 85 },
   { id: "memory", category: "System", name: "Memory utilisation", icon: MemoryStick, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "higher", defaultWarn: 75, defaultCrit: 90 },
@@ -76,7 +76,7 @@ export const initialRules: ThresholdRule[] = [
     id: "rule-mnl-remote",
     name: "Manila remote workers",
     scopes: ["manilla"],
-    overrides: { cpu: { warn: 60, crit: 80 }, wifi: { warn: -65, crit: -78 } },
+    overrides: { cpu: { warn: 60, crit: 80 }, wifi: { warn: 55, crit: 35 } },
   },
   {
     id: "rule-india",
