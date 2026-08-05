@@ -243,6 +243,12 @@ export function EndpointsTable({
           <tbody>
             {shown.map((e, i) => {
               const isSel = openEndpointId === e.id
+              const critN = e.events.filter((ev) => ev.severity === "critical").length
+              const warnN = e.events.filter((ev) => ev.severity === "warning").length
+              // tooltip on +N breaks down only the ADDITIONAL alerts (shown one excluded)
+              const extraCrit = critN - (critN > 0 ? 1 : 0)
+              const extraWarn = warnN - (critN > 0 ? 0 : 1)
+              const moreBreakdown = [extraCrit ? `${extraCrit} critical` : "", extraWarn ? `${extraWarn} warning` : ""].filter(Boolean).join(" · ")
               return (
                 <tr
                   key={e.id}
@@ -300,7 +306,19 @@ export function EndpointsTable({
                         <span className="size-1.5 shrink-0 rounded-full" style={{ background: statusVar[e.status] }} />
                         {e.event}
                         {e.eventCount > 1 && e.eventAgo !== null && (
-                          <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>· {formatAgo(e.eventAgo)} ago · +{e.eventCount - 1}</span>
+                          <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>· {formatAgo(e.eventAgo)} ago · </span>
+                        )}
+                        {e.eventCount > 1 && (
+                          <span className="group/more relative text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>
+                            +{e.eventCount - 1}
+                            <span
+                              role="tooltip"
+                              className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium group-hover/more:block"
+                              style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)", boxShadow: "var(--shadow-md)" }}
+                            >
+                              {moreBreakdown}
+                            </span>
+                          </span>
                         )}
                       </span>
                     ) : (
