@@ -3,6 +3,7 @@ import { RotateCcw } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ThresholdSlider } from "@/components/thresholds/ThresholdSlider"
+import { InfoTip } from "@/components/ui/info-tip"
 import { AlertRouting } from "@/components/thresholds/AlertRouting"
 import { METRICS, METRIC_CATEGORIES, metricById, defaultPolicy, type ThresholdPolicy } from "@/data/thresholds"
 
@@ -83,7 +84,10 @@ export function ThresholdsPage() {
                       <m.icon className="size-4" />
                     </span>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{m.name}</span>
+                      <span className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
+                        {m.name}
+                        {m.tooltip && <InfoTip text={m.tooltip} />}
+                      </span>
                       <span className="text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{m.direction === "higher" ? "Higher is worse" : "Lower is worse"}</span>
                     </div>
                   </div>

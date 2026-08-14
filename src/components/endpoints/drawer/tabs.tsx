@@ -3,6 +3,7 @@ import type { Endpoint } from "@/data/endpoints"
 import type { EndpointDetail, PlatformStatus } from "@/data/endpointDetail"
 import { SegBar, Panel, SectionLabel, MetricBlock } from "./bits"
 import { Badge } from "@/components/ui/badge"
+import { InfoTip } from "@/components/ui/info-tip"
 
 /* ---------------- Network ---------------- */
 export function NetworkTab({ d }: { d: EndpointDetail }) {
@@ -12,8 +13,8 @@ export function NetworkTab({ d }: { d: EndpointDetail }) {
       <div>
         <SectionLabel>Internet health</SectionLabel>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {/* Network MOS — combined 1–5 quality score; the one tile that keeps a level badge */}
-          <MetricBlock label="Network MOS" value={mos.value} unit="/ 5" status={mos.status === "crit" ? "critical" : mos.status === "warn" ? "warning" : undefined}>
+          {/* Network Quality Index — combined 1–5 quality score; the one tile that keeps a level badge */}
+          <MetricBlock label="Quality Index" info="Predicted call quality score for this network, based on latency, jitter and packet loss." value={mos.value} unit="/ 5" status={mos.status === "crit" ? "critical" : mos.status === "warn" ? "warning" : undefined}>
             <SegBar fill={mos.fill} status={mos.status} />
           </MetricBlock>
           {d.network.health.map((m) => (
@@ -59,7 +60,9 @@ export function PlatformsTab({ d }: { d: EndpointDetail }) {
               <th className="px-3 pb-2 text-right text-xs font-medium uppercase tracking-wide">Latency</th>
               <th className="px-3 pb-2 text-right text-xs font-medium uppercase tracking-wide">Loss</th>
               <th className="px-3 pb-2 text-right text-xs font-medium uppercase tracking-wide">Jitter</th>
-              <th className="px-3 pb-2 text-right text-xs font-medium uppercase tracking-wide">MOS</th>
+              <th className="px-3 pb-2 text-right text-xs font-medium uppercase tracking-wide">
+                <span className="inline-flex items-center gap-1.5 whitespace-nowrap">Quality Index<InfoTip text="Predicted call quality score for the platform, based on latency, jitter and packet loss." side="bottom" /></span>
+              </th>
               <th className="px-3 pb-2 text-right text-xs font-medium uppercase tracking-wide">Status</th>
             </tr>
           </thead>

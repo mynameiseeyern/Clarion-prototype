@@ -1,5 +1,6 @@
 import { type ReactNode } from "react"
 import { Badge } from "@/components/ui/badge"
+import { InfoTip } from "@/components/ui/info-tip"
 import type { MetricStatus } from "@/data/endpointDetail"
 
 /** an issue severity shown as a badge on the card that has the problem */
@@ -55,10 +56,13 @@ export function SectionLabel({ children, right }: { children: ReactNode; right?:
   )
 }
 
-export function MetricBlock({ label, value, unit, children, status }: { label: string; value: string; unit: string; children?: ReactNode; status?: IssueStatus }) {
+export function MetricBlock({ label, value, unit, children, status, info }: { label: string; value: string; unit: string; children?: ReactNode; status?: IssueStatus; info?: string }) {
   return (
     <Panel status={status}>
-      <div className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>{label}</div>
+      <div className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>
+        {label}
+        {info && <InfoTip text={info} />}
+      </div>
       <div className="mb-3 flex items-baseline gap-1">
         <span className="text-2xl font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{value}</span>
         <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>{unit}</span>

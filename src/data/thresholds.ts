@@ -28,18 +28,20 @@ export interface MetricDef {
   direction: Direction // "higher" = higher is worse; "lower" = lower is worse (inverted)
   defaultWarn: number
   defaultCrit: number
+  /** optional explanatory tooltip shown via an (i) icon next to the metric name */
+  tooltip?: string
 }
 
 export const METRICS: MetricDef[] = [
   // Network
-  { id: "networkmos", category: "Network", name: "Network MOS", icon: AudioLines, min: 1, max: 5, step: 0.1, unit: "", decimals: 1, direction: "lower", defaultWarn: 4.0, defaultCrit: 3.0 },
+  { id: "networkmos", category: "Network", name: "Network Quality Index", icon: AudioLines, min: 1, max: 5, step: 0.1, unit: "", decimals: 1, direction: "lower", defaultWarn: 4.0, defaultCrit: 3.0, tooltip: "Predicted call quality score for this network, based on latency, jitter and packet loss." },
   { id: "wifi", category: "Network", name: "Wi-Fi signal", icon: Wifi, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "lower", defaultWarn: 50, defaultCrit: 25 },
   // System
   { id: "cpu", category: "System", name: "CPU utilisation", icon: Cpu, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "higher", defaultWarn: 70, defaultCrit: 85 },
   { id: "memory", category: "System", name: "Memory utilisation", icon: MemoryStick, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "higher", defaultWarn: 75, defaultCrit: 90 },
   { id: "disk", category: "System", name: "Disk free space", icon: HardDrive, min: 0, max: 100, step: 1, unit: "%", decimals: 0, direction: "lower", defaultWarn: 15, defaultCrit: 5 },
   // Platform
-  { id: "platformmos", category: "Platform", name: "Platform MOS", icon: Phone, min: 1, max: 5, step: 0.1, unit: "", decimals: 1, direction: "lower", defaultWarn: 4.0, defaultCrit: 3.0 },
+  { id: "platformmos", category: "Platform", name: "Platform Quality Index", icon: Phone, min: 1, max: 5, step: 0.1, unit: "", decimals: 1, direction: "lower", defaultWarn: 4.0, defaultCrit: 3.0, tooltip: "Predicted call quality score for the platform, based on latency, jitter and packet loss." },
 ]
 
 export const metricById = (id: string) => METRICS.find((m) => m.id === id)
