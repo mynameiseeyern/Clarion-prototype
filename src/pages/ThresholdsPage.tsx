@@ -36,7 +36,7 @@ export function ThresholdsPage() {
   const resetToDefaults = () => setPolicy(clone(defaultPolicy))
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
       {/* Section 1 — Default thresholds */}
       <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
         <div className="flex flex-wrap items-start justify-between gap-3 px-5 py-4" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
@@ -79,12 +79,12 @@ export function ThresholdsPage() {
               </div>
               {metrics.map((m) => (
                 <div key={m.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:gap-6" style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
-                  <div className="flex items-start gap-2.5 sm:w-52 sm:shrink-0">
+                  <div className="flex items-start gap-2.5 sm:w-64 sm:shrink-0">
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-lg" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>
                       <m.icon className="size-4" />
                     </span>
                     <div className="flex flex-col">
-                      <span className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
+                      <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
                         {m.name}
                         {m.tooltip && <InfoTip text={m.tooltip} />}
                       </span>

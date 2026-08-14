@@ -61,7 +61,7 @@ export function PlatformsTab({ d }: { d: EndpointDetail }) {
               <th className="px-3 pb-2 text-right text-xs font-medium uppercase tracking-wide">Loss</th>
               <th className="px-3 pb-2 text-right text-xs font-medium uppercase tracking-wide">Jitter</th>
               <th className="px-3 pb-2 text-right text-xs font-medium uppercase tracking-wide">
-                <span className="inline-flex items-center gap-1.5 whitespace-nowrap">Quality Index<InfoTip text="Predicted call quality score for the platform, based on latency, jitter and packet loss." side="bottom" /></span>
+                <span className="inline-flex items-center gap-1.5 whitespace-nowrap">Quality Index<InfoTip text="Predicted call quality score for the platform, based on latency, jitter and packet loss." side="bottom" align="end" /></span>
               </th>
               <th className="px-3 pb-2 text-right text-xs font-medium uppercase tracking-wide">Status</th>
             </tr>

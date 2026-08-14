@@ -61,7 +61,7 @@ export function MetricBlock({ label, value, unit, children, status, info }: { la
     <Panel status={status}>
       <div className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>
         {label}
-        {info && <InfoTip text={info} />}
+        {info && <InfoTip text={info} side="bottom" />}
       </div>
       <div className="mb-3 flex items-baseline gap-1">
         <span className="text-2xl font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{value}</span>
