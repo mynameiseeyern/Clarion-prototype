@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { ChevronDown } from "lucide-react"
-import { navItems, devNavItems, type NavItem, type PageId } from "@/nav"
+import { navItems, type NavItem, type PageId } from "@/nav"
 import { cn } from "@/lib/utils"
 
 export function Sidebar({
@@ -41,9 +41,6 @@ export function Sidebar({
       {/* Content — nav */}
       <div className="flex-1 overflow-y-auto p-2">
         <NavGroup label="Workspace" items={navItems} active={active} onNavigate={onNavigate} />
-        <div className="mt-3">
-          <NavGroup label="Product development" items={devNavItems} active={active} onNavigate={onNavigate} collapsible defaultOpen={false} />
-        </div>
       </div>
 
       {/* Footer */}
