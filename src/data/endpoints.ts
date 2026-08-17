@@ -1,5 +1,5 @@
 // Generated endpoint dataset for the Endpoints page.
-// All 2,847 endpoints, with per-location healthy/warning/critical counts
+// All 1,208 endpoints, with per-location healthy/warning/critical counts
 // matching the Overview exactly, seeded so it's stable across renders.
 
 import { locations, type Status } from "./dashboard"
@@ -387,7 +387,7 @@ function categorize(e: Endpoint): { cause: RollupCause; key: string; title: stri
 // device totals reconcile exactly with the map tooltip's healthy/warning/critical
 // breakdown. The Overview card, Issues page, KPI and right-panel all read this.
 // The dataset is generated once and never mutates, so rollups are stable — cache
-// per location to avoid re-scanning all ~2,847 endpoints on every render.
+// per location to avoid re-scanning all ~1,208 endpoints on every render.
 const rollupCache = new Map<string, Rollup[]>()
 
 export function rollupsForLocation(locId: string): Rollup[] {
