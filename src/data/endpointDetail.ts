@@ -29,7 +29,7 @@ export interface DeviceRow {
   name: string
   meta: string
   state: string
-  stateTone: "good" | "muted"
+  stateTone: "good" | "muted" | "warn" | "bad"
   kind: "audio-out" | "audio-in" | "video" | "bt" | "usb"
 }
 export interface SysMetric { label: string; value: string; unit: string; fill: number; meta: string }
@@ -112,6 +112,28 @@ export function getEndpointDetail(e: Endpoint): EndpointDetail {
   const headsets = ["Jabra Evolve2 75", "Poly Voyager 4320", "Logitech Zone Vibe 100", "Jabra Evolve2 65"]
   const cams = ["Logitech C920 HD Pro", "Logitech Brio 4K", "Poly Studio P5", "Dell UltraSharp WB7022"]
 
+  // Reflect the endpoint's actual alerts in the drilldown so the list and the
+  // drilldown agree: device alerts mark the matching device, memory/Wi-Fi/CPU
+  // alerts push the corresponding reading into the bad range.
+  const audioOut: DeviceRow = { name: pick(headsets), meta: `Bluetooth · Driver v2.${r(10, 20)}.${r(1, 9)} · Default speaker & mic`, state: "In-use", stateTone: "good", kind: "audio-out" }
+  const audioIn: DeviceRow = { name: "Realtek HD Audio (built-in)", meta: `Driver v6.0.${r(9000, 9300)}.1 · Fallback device`, state: "Active", stateTone: "muted", kind: "audio-in" }
+  const camera: DeviceRow = { name: pick(cams), meta: "USB · 1080p · Driver up-to-date", state: "In-use", stateTone: "good", kind: "video" }
+  for (const ev of e.events) {
+    const l = ev.label.toLowerCase()
+    if (/camera/.test(l)) { camera.state = "Not detected"; camera.stateTone = "bad"; camera.meta = "USB · No signal" }
+    else if (/battery/.test(l)) { audioOut.state = "Battery low"; audioOut.stateTone = "warn" }
+    else if (/headset|audio|usb|mic|speaker|driver/.test(l)) {
+      const crit = ev.severity === "critical"
+      audioOut.state = crit ? "Disconnected" : "Degraded"
+      audioOut.stateTone = crit ? "bad" : "warn"
+      audioOut.meta = "Bluetooth · Not responding"
+    }
+  }
+  const memHigh = e.events.some((ev) => /memory/.test(ev.label.toLowerCase()))
+  const wifiWeak = e.events.some((ev) => /wi-?fi|signal/.test(ev.label.toLowerCase()))
+  const cpuUsed = e.events.some((ev) => /\bcpu\b/.test(ev.label.toLowerCase())) ? r(88, 96) : r(8, 70)
+  const memUsed = memHigh ? r(14.6, 15.6, 1) : r(5, 14, 1)
+
   return {
     locationDetail: e.locationName,
     network: {
@@ -119,19 +141,16 @@ export function getEndpointDetail(e: Endpoint): EndpointDetail {
       mos: networkMos,
       interface: e.connection === "Ethernet"
         ? { name: "Ethernet", detail: "Wired · 1Gbps · MTU 1500" }
-        : { name: "Wi-Fi", detail: `802.11ax · ${r(35, 95)}% signal · 5GHz` },
+        : { name: "Wi-Fi", detail: `802.11ax · ${wifiWeak ? r(18, 38) : r(55, 95)}% signal · 5GHz` },
     },
     platforms: { rows, why },
     devices: {
-      audio: [
-        { name: pick(headsets), meta: `Bluetooth · Driver v2.${r(10, 20)}.${r(1, 9)} · Default speaker & mic`, state: "In-use", stateTone: "good", kind: "audio-out" },
-        { name: "Realtek HD Audio (built-in)", meta: `Driver v6.0.${r(9000, 9300)}.1 · Fallback device`, state: "Active", stateTone: "muted", kind: "audio-in" },
-      ],
-      video: [{ name: pick(cams), meta: "USB · 1080p · Driver up-to-date", state: "In-use", stateTone: "good", kind: "video" }],
+      audio: [audioOut, audioIn],
+      video: [camera],
     },
     system: {
-      cpu: { label: "CPU utilisation", value: String(r(8, 70)), unit: "%", fill: 0, meta: "Intel Core i7-1265U · 12 cores · 4.8 GHz" },
-      memory: (() => { const used = r(5, 14, 1); return { label: "Memory", value: String(used), unit: "/ 16 GB", fill: used / 16, meta: `${Math.round((used / 16) * 100)}% utilised` } })(),
+      cpu: { label: "CPU utilisation", value: String(cpuUsed), unit: "%", fill: 0, meta: "Intel Core i7-1265U · 12 cores · 4.8 GHz" },
+      memory: { label: "Memory", value: String(memUsed), unit: "/ 16 GB", fill: memUsed / 16, meta: `${Math.round((memUsed / 16) * 100)}% utilised` },
       disk: (() => { const used = r(180, 420); return { label: "Disk", value: String(used), unit: "/ 512 GB", fill: used / 512, meta: `${Math.round((used / 512) * 100)}% used · NVMe SSD` } })(),
       os: { name: "Windows 11 Pro", detail: "Build 23H2 · Patch 2026.04" },
       agent: { name: "v2.4.1", detail: `Last heartbeat ${r(1, 9)}s ago · Up-to-date` },

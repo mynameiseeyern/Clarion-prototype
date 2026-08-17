@@ -98,6 +98,12 @@ export function PlatformsTab({ d }: { d: EndpointDetail }) {
 
 /* ---------------- Devices ---------------- */
 const deviceIcon = { "audio-out": Headphones, "audio-in": Mic, video: Video, bt: Bluetooth, usb: Usb }
+const deviceStateColor: Record<string, string> = {
+  good: "var(--fg-success-emphasis)",
+  warn: "var(--fg-warning-emphasis)",
+  bad: "var(--fg-danger-emphasis)",
+  muted: "var(--fg-neutral-muted)",
+}
 
 export function DevicesTab({ d }: { d: EndpointDetail }) {
   const Row = ({ r }: { r: EndpointDetail["devices"]["audio"][number] }) => {
@@ -109,7 +115,10 @@ export function DevicesTab({ d }: { d: EndpointDetail }) {
           <span className="truncate text-sm font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{r.name}</span>
           <span className="truncate text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{r.meta}</span>
         </div>
-        <span className="text-xs font-medium" style={{ color: r.stateTone === "good" ? "var(--fg-success-emphasis)" : "var(--fg-neutral-muted)" }}>{r.state}</span>
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium" style={{ color: deviceStateColor[r.stateTone] }}>
+          {(r.stateTone === "bad" || r.stateTone === "warn") && <span className="size-1.5 shrink-0 rounded-full" style={{ background: deviceStateColor[r.stateTone] }} />}
+          {r.state}
+        </span>
       </Panel>
     )
   }
