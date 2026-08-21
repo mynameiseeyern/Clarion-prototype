@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { StatusBadge } from "@/components/endpoints/status"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getEndpointDetail } from "@/data/endpointDetail"
+import { formatLastSeen } from "@/lib/utils"
 import type { Endpoint } from "@/data/endpoints"
 import { NetworkTab, PlatformsTab, DevicesTab, SystemTab } from "./tabs"
 
@@ -39,9 +40,9 @@ function StaleBanner({ mins }: { mins: number }) {
   return (
     <div className="flex flex-col items-center gap-2 rounded-xl px-6 py-12 text-center" style={{ background: "var(--bg-warning-subtle)", border: "1px solid var(--border-warning-muted)" }}>
       <CloudOff className="size-6" style={{ color: "var(--fg-warning-emphasis)" }} />
-      <span className="text-sm font-semibold" style={{ color: "var(--fg-on-warning-subtle)" }}>Last data {mins}m ago</span>
+      <span className="text-sm font-semibold" style={{ color: "var(--fg-on-warning-subtle)" }}>No recent data from this endpoint</span>
       <span className="max-w-sm text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-        Telemetry hasn’t arrived in over 5 minutes. Showing no live readings to avoid presenting stale data as current.
+        Last seen {formatLastSeen(mins)}. Live readings return as soon as it reconnects.
       </span>
     </div>
   )
