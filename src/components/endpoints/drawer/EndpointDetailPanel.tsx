@@ -42,7 +42,7 @@ function StaleBanner({ mins }: { mins: number }) {
       <CloudOff className="size-6" style={{ color: "var(--fg-warning-emphasis)" }} />
       <span className="text-sm font-semibold" style={{ color: "var(--fg-on-warning-subtle)" }}>No recent data from this endpoint</span>
       <span className="max-w-sm text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-        Last seen {formatLastSeen(mins)}. Live readings return as soon as it reconnects.
+        Last seen {formatLastSeen(mins)}. The endpoint may be powered off, disconnected, or the Clarity widget isn’t running. Live readings return as soon as it reconnects.
       </span>
     </div>
   )
