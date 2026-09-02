@@ -59,7 +59,7 @@ function LocationFilter({ value, onChange }: { value: string[]; onChange: (ids: 
           <ChevronDown className="size-4" style={{ color: "var(--fg-neutral-muted)" }} />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-60 p-1">
+      <PopoverContent align="end" className="w-80 p-1">
         <div className="max-h-72 overflow-y-auto">
           <button type="button" onClick={() => onChange([])} className={rowCls} style={{ color: "var(--fg-neutral-emphasis)" }}>
             <Box state={value.length === 0 ? "checked" : "unchecked"} />
@@ -78,6 +78,7 @@ function LocationFilter({ value, onChange }: { value: string[]; onChange: (ids: 
                 <button type="button" onClick={toggleCountry} className={rowCls}>
                   <Box state={countryState} />
                   <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>{g.name}</span>
+                  <span className="ml-auto text-xs font-medium" style={{ color: "var(--fg-link-default)" }}>{selCount > 0 ? "Clear" : "Select all"}</span>
                 </button>
                 {g.cities.map((c) => (
                   <button key={c.id} type="button" onClick={() => toggle(c.id)} className={cityCls} style={{ color: "var(--fg-neutral-emphasis)" }}>
