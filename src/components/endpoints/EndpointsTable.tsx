@@ -143,10 +143,12 @@ export function EndpointsTable({
   locationIds,
   onLocationsChange,
   onOpenEndpoint,
+  openEndpointId,
 }: {
   locationIds: string[]
   onLocationsChange: (ids: string[]) => void
   onOpenEndpoint: (rows: Endpoint[], index: number) => void
+  openEndpointId?: string | null
 }) {
   const [search, setSearch] = useState("")
   // single source of truth for status filtering (empty = all). Landing on the
@@ -168,6 +170,12 @@ export function EndpointsTable({
     () => queryEndpoints({ search, locationIds, statuses, sortKey, sortDir }),
     [search, locationIds, statuses, sortKey, sortDir]
   )
+
+  // Freeze the highlight on the row that OPENED the drawer — it doesn't follow the
+  // ↑/↓ flick, and the table stays put (we don't poll/track it) until the drawer
+  // closes, at which point the highlight clears.
+  const [openedId, setOpenedId] = useState<string | null>(null)
+  useEffect(() => { if (!openEndpointId) setOpenedId(null) }, [openEndpointId])
 
   const shown = rows.slice(0, visible)
   const colCount = 2 + (showLocation ? 1 : 0) + 1 + 1 + 1
