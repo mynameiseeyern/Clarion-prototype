@@ -143,12 +143,10 @@ export function EndpointsTable({
   locationIds,
   onLocationsChange,
   onOpenEndpoint,
-  openEndpointId,
 }: {
   locationIds: string[]
   onLocationsChange: (ids: string[]) => void
   onOpenEndpoint: (rows: Endpoint[], index: number) => void
-  openEndpointId?: string | null
 }) {
   const [search, setSearch] = useState("")
   // single source of truth for status filtering (empty = all). Landing on the
@@ -170,14 +168,6 @@ export function EndpointsTable({
     () => queryEndpoints({ search, locationIds, statuses, sortKey, sortDir }),
     [search, locationIds, statuses, sortKey, sortDir]
   )
-
-  // ensure enough rows are rendered to include the row open in the drawer (so
-  // flicking ↑/↓ past the loaded set keeps the in-view row visible & highlighted)
-  useEffect(() => {
-    if (!openEndpointId) return
-    const idx = rows.findIndex((e) => e.id === openEndpointId)
-    if (idx >= 0) setVisible((v) => (v > idx ? v : idx + 1))
-  }, [openEndpointId, rows])
 
   const shown = rows.slice(0, visible)
   const colCount = 2 + (showLocation ? 1 : 0) + 1 + 1 + 1
