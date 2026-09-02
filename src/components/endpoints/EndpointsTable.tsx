@@ -259,7 +259,7 @@ export function EndpointsTable({
           </thead>
           <tbody>
             {shown.map((e, i) => {
-              const isSel = openEndpointId === e.id
+              const isSel = openedId === e.id
               const critN = e.events.filter((ev) => ev.severity === "critical").length
               const warnN = e.events.filter((ev) => ev.severity === "warning").length
               // tooltip on +N breaks down only the ADDITIONAL alerts (shown one excluded)
@@ -269,13 +269,13 @@ export function EndpointsTable({
               return (
                 <tr
                   key={e.id}
-                  onClick={() => onOpenEndpoint(rows, i)}
+                  onClick={() => { setOpenedId(e.id); onOpenEndpoint(rows, i) }}
                   className="group cursor-pointer transition-colors"
                   style={{
                     borderBottom: "1px solid var(--border-neutral-subtle)",
                     background: isSel ? "var(--bg-selected-subtle)" : "transparent",
                   }}
-                  onMouseEnter={(ev) => { if (!isSel) ev.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)" }}
+                  onMouseEnter={(ev) => { if (!isSel && !openEndpointId) ev.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)" }}
                   onMouseLeave={(ev) => { ev.currentTarget.style.background = isSel ? "var(--bg-selected-subtle)" : "transparent" }}
                 >
                   <td className="px-4 py-3">
