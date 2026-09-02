@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react"
-import { Search, X, Check, Monitor, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, CircleCheck } from "lucide-react"
+import { Search, X, Check, Minus, Monitor, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, CircleCheck } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Chip } from "@/components/ui/chip"
@@ -16,7 +16,8 @@ const countryGroups = [...countries]
   .map((c) => ({ name: c.name, cities: [...citiesInCountry(c.id)].sort((a, b) => a.name.localeCompare(b.name)) }))
 const allCities = countryGroups.flatMap((g) => g.cities)
 
-/** Multi-select location filter: country headings are labels, cities are checkboxes. */
+/** Multi-select location filter: tri-state country checkboxes (all / some / none)
+ *  select or clear all their cities; cities are individually selectable. */
 function LocationFilter({ value, onChange }: { value: string[]; onChange: (ids: string[]) => void }) {
   const [open, setOpen] = useState(false)
   const label =
@@ -28,18 +29,23 @@ function LocationFilter({ value, onChange }: { value: string[]; onChange: (ids: 
   const toggle = (id: string) =>
     onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id])
 
-  const Box = ({ on }: { on: boolean }) => (
-    <span
-      className="flex size-4 shrink-0 items-center justify-center rounded"
-      style={{
-        background: on ? "var(--bg-primary-emphasis)" : "var(--bg-input-default)",
-        border: `1px solid ${on ? "var(--bg-primary-emphasis)" : "var(--border-input-default)"}`,
-      }}
-    >
-      {on && <Check className="size-3" style={{ color: "var(--fg-on-primary-emphasis)" }} />}
-    </span>
-  )
+  const Box = ({ state }: { state: "checked" | "indeterminate" | "unchecked" }) => {
+    const filled = state !== "unchecked"
+    return (
+      <span
+        className="flex size-4 shrink-0 items-center justify-center rounded"
+        style={{
+          background: filled ? "var(--bg-primary-emphasis)" : "var(--bg-input-default)",
+          border: `1px solid ${filled ? "var(--bg-primary-emphasis)" : "var(--border-input-default)"}`,
+        }}
+      >
+        {state === "checked" && <Check className="size-3" style={{ color: "var(--fg-on-primary-emphasis)" }} />}
+        {state === "indeterminate" && <Minus className="size-3" style={{ color: "var(--fg-on-primary-emphasis)" }} />}
+      </span>
+    )
+  }
   const rowCls = "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]"
+  const cityCls = "flex w-full items-center gap-2 rounded-md py-1.5 pl-7 pr-2 text-left text-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]"
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -56,20 +62,32 @@ function LocationFilter({ value, onChange }: { value: string[]; onChange: (ids: 
       <PopoverContent align="end" className="w-60 p-1">
         <div className="max-h-72 overflow-y-auto">
           <button type="button" onClick={() => onChange([])} className={rowCls} style={{ color: "var(--fg-neutral-emphasis)" }}>
-            <Box on={value.length === 0} />
+            <Box state={value.length === 0 ? "checked" : "unchecked"} />
             <span>All locations</span>
           </button>
-          {countryGroups.map((g) => (
-            <div key={g.name}>
-              <div className="px-2 pb-1 pt-2 text-xs font-medium uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>{g.name}</div>
-              {g.cities.map((c) => (
-                <button key={c.id} type="button" onClick={() => toggle(c.id)} className={rowCls} style={{ color: "var(--fg-neutral-emphasis)" }}>
-                  <Box on={value.includes(c.id)} />
-                  <span>{c.name}</span>
+          {countryGroups.map((g) => {
+            const cityIds = g.cities.map((c) => c.id)
+            const selCount = cityIds.filter((id) => value.includes(id)).length
+            const countryState: "checked" | "indeterminate" | "unchecked" =
+              selCount === 0 ? "unchecked" : selCount === cityIds.length ? "checked" : "indeterminate"
+            // any selected → clear this country's cities; none selected → select them all
+            const toggleCountry = () =>
+              onChange(selCount > 0 ? value.filter((id) => !cityIds.includes(id)) : [...value, ...cityIds])
+            return (
+              <div key={g.name} className="pt-1">
+                <button type="button" onClick={toggleCountry} className={rowCls}>
+                  <Box state={countryState} />
+                  <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>{g.name}</span>
                 </button>
-              ))}
-            </div>
-          ))}
+                {g.cities.map((c) => (
+                  <button key={c.id} type="button" onClick={() => toggle(c.id)} className={cityCls} style={{ color: "var(--fg-neutral-emphasis)" }}>
+                    <Box state={value.includes(c.id) ? "checked" : "unchecked"} />
+                    <span>{c.name}</span>
+                  </button>
+                ))}
+              </div>
+            )
+          })}
         </div>
         {value.length > 0 && (
           <div className="mt-1 pt-1" style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
