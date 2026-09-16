@@ -1,13 +1,13 @@
-# Clarity — component rules
+# Clarion — component rules
 
 > Terminology note: **Issue** = persistent problem record (feature), **Alert** =
 > real-time bell notification, **Symptom** = per-endpoint condition. Full
 > definitions live in the in-app Glossary / Issues-model pages.
 
-How shadcn components and dashboard elements bind to the Clarity semantic
+How shadcn components and dashboard elements bind to the Clarion semantic
 tokens (`@ir/tokens`). The bridge lives in `src/index.css` (`@theme inline`),
-which aliases shadcn's variable names to the Clarity semantic layer, so the
-stock shadcn class names resolve to Clarity values automatically.
+which aliases shadcn's variable names to the Clarion semantic layer, so the
+stock shadcn class names resolve to Clarion values automatically.
 
 ## Golden rules
 
@@ -26,9 +26,9 @@ stock shadcn class names resolve to Clarity values automatically.
 5. **Dark mode** is automatic: toggling `.dark` on `<html>` re-points every
    semantic token. Components never branch on theme.
 
-## shadcn alias → Clarity token (set in `index.css`)
+## shadcn alias → Clarion token (set in `index.css`)
 
-| shadcn variable        | Clarity semantic token            |
+| shadcn variable        | Clarion semantic token            |
 |------------------------|-----------------------------------|
 | `background`           | `--bg-app`                        |
 | `foreground`           | `--fg-neutral-emphasis`           |

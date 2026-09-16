@@ -1,4 +1,4 @@
-# Clarity — Fleet Dashboard · User Stories & Tickets
+# Clarion — Fleet Dashboard · User Stories & Tickets
 
 Prototype scope mapped to epics, stories and acceptance criteria. Status reflects
 the current prototype (dummy data): ✅ built · 🟡 partial · ⬜ backlog.
@@ -35,7 +35,7 @@ worst location / issue.
 Acceptance criteria
 
 - Fleet KPI strip: Online endpoints (healthy/warning/critical split bar),
-  Open issues, Clarity™ Network Score, plus "N total endpoints". ✅
+  Open issues, Clarion™ Network Score, plus "N total endpoints". ✅
 - World map **clusters endpoints by country**; each country marker shows
   aggregated count + worst status. ✅
 - Drilling a country reveals its **cities/centres**; single-city countries
@@ -69,7 +69,7 @@ Acceptance criteria
 Acceptance criteria
 
 - Columns: User / Machine, Status, Location (auto-hidden when filtered),
-  Clarity™ Score, **Symptom**. ✅
+  Clarion™ Score, **Symptom**. ✅
 - **Symptom** is derived from telemetry vs thresholds (worst breaching signal);
   "—" when healthy; column auto-hides when the view is all-healthy. ✅
 - Default sort **worst-first**: critical → warning → healthy → offline. ✅

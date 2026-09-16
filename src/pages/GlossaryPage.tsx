@@ -32,7 +32,7 @@ const groups: Group[] = [
   {
     title: "Metrics",
     terms: [
-      { term: "Clarity™ Network Score", def: "The headline 0–100 network-quality score for an endpoint or aggregate (formerly 'MOS / Average MOS score'). Banded Excellent 80–100 · Good 60–79 · Fair 40–59 · Poor 0–39.", eg: "79 · Good" },
+      { term: "Clarion™ Network Score", def: "The headline 0–100 network-quality score for an endpoint or aggregate (formerly 'MOS / Average MOS score'). Banded Excellent 80–100 · Good 60–79 · Fair 40–59 · Poor 0–39.", eg: "79 · Good" },
       { term: "Latency", def: "Round-trip time in ms. Threshold: warn ≥ 80ms · crit ≥ 150ms." },
       { term: "Jitter", def: "Variation in latency in ms. Threshold: warn ≥ 30ms · crit ≥ 50ms." },
       { term: "Packet loss", def: "% of packets lost. Threshold: warn ≥ 1% · crit ≥ 3%." },
@@ -61,7 +61,7 @@ export function GlossaryPage() {
         </div>
         <h2 className="mt-3 text-heading-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>Glossary</h2>
         <p className="mt-1 text-body-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          Shared definitions for the key concepts in Clarity, so design, product and engineering use the same words.
+          Shared definitions for the key concepts in Clarion, so design, product and engineering use the same words.
         </p>
       </Card>
 

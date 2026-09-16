@@ -6,7 +6,7 @@ type ToastVariant = "success" | "info" | "danger"
 interface ToastItem { id: number; title: string; description?: string; variant?: ToastVariant }
 
 let counter = 0
-const EVENT = "clarity:toast"
+const EVENT = "clarion:toast"
 
 /** Fire a transient toast from anywhere. */
 export function toast(t: { title: string; description?: string; variant?: ToastVariant }) {

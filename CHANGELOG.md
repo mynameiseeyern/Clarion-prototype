@@ -1,13 +1,13 @@
-# Clarity — Change Log
+# Clarion — Change Log
 
-A running record of the changes made to the Clarity fleet-dashboard prototype, organised by product area and framed against the initial requirements.
+A running record of the changes made to the Clarion fleet-dashboard prototype, organised by product area and framed against the initial requirements.
 
 ---
 
 ## 1. Terminology & core data model
 
 - Renamed the core entity twice to land on the right language: **"endpoints" → "users" → "devices"** across the whole product.
-- Renamed **"Clarity Score" → "Clarity Network Score" (CNS)**.
+- Renamed **"Clarion Score" → "Clarion Network Score" (CNS)**.
 - Modelled **multiple users per device** (hot-desking): a device carries a `users[]` list; offline rows show the **machine name only** (no user).
 - **CNS rescaled to 0–100** with quality bands: **Excellent (80–100)** and **Good (60–79)** = success, **Fair (40–59)** = warning/amber, **Poor (0–39)** = danger/red. Applied consistently to the KPI, drilldown metric, and location scores.
 - Deterministic, seeded dataset of **2,847 devices** with per-location healthy / warning / critical / offline counts that feed the map, tables, and issues.
@@ -29,7 +29,7 @@ A running record of the changes made to the Clarity fleet-dashboard prototype, o
 - **Total devices** badge on the "Entire fleet" line.
 - **Active devices** (renamed from "Online") with a healthy/warning/critical segmented bar.
 - **Open issues** with a 24-hour delta ("+3 today") and a warning/critical bar.
-- **Clarity™ Network Score** card with the 0–100 value and its quality band.
+- **Clarion™ Network Score** card with the 0–100 value and its quality band.
 - Live **30-second refresh** with score jitter.
 
 ## 4. Overview "Critical issues needing attention" card

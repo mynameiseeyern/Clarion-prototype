@@ -1,11 +1,11 @@
 /* ============================================================
-   Clarity prototype — global styles
+   Clarion prototype — global styles
    Layer order:
      1. Tailwind v4
      2. tw-animate-css (animation utilities shadcn relies on)
-     3. Clarity design tokens  (:root + .dark, primitives + semantic)
+     3. Clarion design tokens  (:root + .dark, primitives + semantic)
      4. @theme inline  — bridges shadcn's semantic names AND exposes
-        Clarity semantic tokens to Tailwind v4 utilities
+        Clarion semantic tokens to Tailwind v4 utilities
    ============================================================ */
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -16,7 +16,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  /* ---- shadcn semantic aliases → Clarity semantic tokens ---- */
+  /* ---- shadcn semantic aliases → Clarion semantic tokens ---- */
   --color-background: var(--bg-app);
   --color-foreground: var(--fg-neutral-emphasis);
 
@@ -51,7 +51,7 @@
   --color-sidebar-accent: var(--bg-neutral-subtle-hovered);
   --color-sidebar-border: var(--border-neutral-subtle);
 
-  /* ---- Clarity status + chart, exposed as utilities ---- */
+  /* ---- Clarion status + chart, exposed as utilities ---- */
   --color-status-healthy: var(--status-healthy);
   --color-status-warning: var(--status-warning);
   --color-status-critical: var(--status-critical);
@@ -104,7 +104,7 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
-  /* focus ring that uses the Clarity ring composite */
+  /* focus ring that uses the Clarion ring composite */
   :focus-visible {
     outline: none;
   }

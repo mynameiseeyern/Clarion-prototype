@@ -252,7 +252,7 @@ export function EndpointsTable({
               <SortHeader label="User / Machine" col="user" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
               <SortHeader label="Status" col="status" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
               {showLocation && <SortHeader label="Location" col="location" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />}
-              <SortHeader label="Clarity Network Score" col="score" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
+              <SortHeader label="Clarion Network Score" col="score" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
               <SortHeader label="Alert" col="event" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-left" />
               <th className="w-10" />
             </tr>

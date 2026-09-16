@@ -1,4 +1,4 @@
-# Clarity — Admin & Management · Planning Doc
+# Clarion — Admin & Management · Planning Doc
 
 > **Status: draft for discussion (Ee × Ben).** This maps Ben's JTBD for the
 > "user management world" onto the Fleet prototype as a canvas. Assumptions are
@@ -201,7 +201,7 @@ Acceptance criteria
 ### A4 — Deactivate a user immediately · `MVP` · ⬜
 
 > When a staff member leaves, I want to deactivate their account immediately, so
-> they no longer have access to Clarity.
+> they no longer have access to Clarion.
 
 Acceptance criteria
 - "Deactivate" sets status **Deactivated**; access revoked (stubbed).
@@ -250,12 +250,12 @@ visual stubs for invite / resend / reset / deactivate. Email + auth are stubbed.
 
 # Epic B — Group Management
 
-> Admins create and manage Groups within Clarity. Groups scope what a CC Manager
+> Admins create and manage Groups within Clarion. Groups scope what a CC Manager
 > can see.
 
 ### B1 — Create a Group hierarchy mirroring team structure · `MVP` · ⬜
 
-> When setting up my org in Clarity, I want to create a Group hierarchy that
+> When setting up my org in Clarion, I want to create a Group hierarchy that
 > mirrors my team structure, so each Manager only sees the Widgets they're
 > responsible for.
 
@@ -378,7 +378,7 @@ Acceptance criteria
 
 ### D1 — See what's included in my current tier · `MVP` · ⬜
 
-> When reviewing my Clarity subscription, I want a clear breakdown of what's in my
+> When reviewing my Clarion subscription, I want a clear breakdown of what's in my
 > current tier, so I understand what I'm paying for and spot gaps.
 
 Acceptance criteria
@@ -407,7 +407,7 @@ Acceptance criteria
 
 ### D4 — Browse & opt into add-ons (e.g. SSO) · `1.0` · ⬜
 
-> When I want to extend Clarity, I want to browse add-ons and opt into relevant
+> When I want to extend Clarion, I want to browse add-ons and opt into relevant
 > ones, so I can activate features like SSO without a new contract.
 
 Acceptance criteria

@@ -151,7 +151,7 @@ export function SystemTab({ d }: { d: EndpointDetail }) {
         </div>
       </div>
       <div>
-        <SectionLabel>OS &amp; Clarity Widget</SectionLabel>
+        <SectionLabel>OS &amp; Clarion Widget</SectionLabel>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Panel>
             <div className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Operating system</div>
@@ -159,7 +159,7 @@ export function SystemTab({ d }: { d: EndpointDetail }) {
             <div className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{s.os.detail}</div>
           </Panel>
           <Panel>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Clarity Widget</div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>Clarion Widget</div>
             <div className="text-lg font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{s.agent.name}</div>
             <div className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{s.agent.detail}</div>
           </Panel>

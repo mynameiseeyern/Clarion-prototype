@@ -29,7 +29,7 @@ export interface Endpoint {
   locationName: string
   site: Site
   status: EndpointStatus
-  /** Clarity Network Score 0–100, or null when unreachable */
+  /** Clarion Network Score 0–100, or null when unreachable */
   score: number | null
   connection: Connection
   latency: number
@@ -139,7 +139,7 @@ function makeEndpoint(locId: string, locName: string, status: EndpointStatus, n:
     latency = 0; jitter = 0; loss = 0; score = null
   } else if (status === "healthy") {
     latency = round(between(8, 70)); jitter = round(between(4, 20)); loss = round(between(0, 0.6), 1)
-    score = round(between(80, 99)) // Clarity Network Score, 0–100
+    score = round(between(80, 99)) // Clarion Network Score, 0–100
   } else if (status === "warning") {
     // one metric in the warn band
     const which = Math.floor(rand() * 3)

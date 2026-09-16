@@ -4,7 +4,7 @@ import { SegmentedBar, LegendItem } from "./primitives"
 import { rollupsAll } from "@/data/endpoints"
 import type { LiveFleet } from "@/hooks/useStreaming"
 
-// Clarity Network Score (0–100) quality band.
+// Clarion Network Score (0–100) quality band.
 function cnsBand(v: number) {
   if (v >= 80) return { label: "Excellent", range: "80–100", color: "var(--fg-success-emphasis)" }
   if (v >= 60) return { label: "Good", range: "60–79", color: "var(--fg-success-emphasis)" }
@@ -66,7 +66,7 @@ export function StatsStrip({ live }: { live: LiveFleet }) {
         <KpiCard
           title={
             <>
-              Clarity<sup className="top-[-0.4em] text-[0.6em]">™</sup> Network Score
+              Clarion<sup className="top-[-0.4em] text-[0.6em]">™</sup> Network Score
             </>
           }
           icon={Tally5}

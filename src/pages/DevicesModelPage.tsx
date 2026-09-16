@@ -47,7 +47,7 @@ export function DevicesModelPage() {
       <SectionCard title="What an endpoint is">
         <div className="flex flex-col gap-4">
           <ConceptRow icon={Laptop} title="Endpoint">
-            A single monitored machine running the Clarity Widget. Identified by its machine name, e.g. <span className="font-mono text-xs">DESKTOP-MNL-0428</span>. The endpoint is the unit the fleet counts, statuses, and rolls up into alerts.
+            A single monitored machine running the Clarion Widget. Identified by its machine name, e.g. <span className="font-mono text-xs">DESKTOP-MNL-0428</span>. The endpoint is the unit the fleet counts, statuses, and rolls up into alerts.
           </ConceptRow>
           <ConceptRow icon={Users} title="Users on an endpoint">
             An endpoint can be shared by several users (hot-desking). The Endpoints table shows the current / primary user; the drilldown header lists everyone who uses the endpoint. Search matches any user on the endpoint.

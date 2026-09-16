@@ -33,7 +33,7 @@ export function Sidebar({
       >
         <span className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.28), rgba(0,0,0,0) 55%)" }} />
         <div className="relative flex flex-col justify-center px-4 pb-3 leading-tight" style={{ fontFamily: "'Poppins', ui-sans-serif, sans-serif" }}>
-          <span className="text-xl" style={{ fontFamily: "'Oswald', ui-sans-serif, sans-serif", fontWeight: 600, letterSpacing: "0.02em", textTransform: "uppercase", color: "#fff" }}>Clarity</span>
+          <span className="text-xl" style={{ fontFamily: "'Oswald', ui-sans-serif, sans-serif", fontWeight: 600, letterSpacing: "0.02em", textTransform: "uppercase", color: "#fff" }}>Clarion</span>
           <span className="text-xs" style={{ fontWeight: 400, color: "rgba(255,255,255,0.85)" }}>powered by Iris</span>
         </div>
       </div>

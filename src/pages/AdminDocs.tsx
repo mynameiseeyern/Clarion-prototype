@@ -165,7 +165,7 @@ export function RbacDocPage() {
     <div className="flex flex-col gap-4">
       <DocHeader
         title="Roles & permissions (RBAC)"
-        blurb="Who can do what in Clarity. Role sets the permission level; Group assignment sets the scope. Two roles for MVP, with Owner and a billing-scoped role planned for later."
+        blurb="Who can do what in Clarion. Role sets the permission level; Group assignment sets the scope. Two roles for MVP, with Owner and a billing-scoped role planned for later."
       />
 
       <SectionCard title="Roles">

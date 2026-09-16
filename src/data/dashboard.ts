@@ -1,4 +1,4 @@
-// Dummy data for the Clarity Fleet dashboard (Overview).
+// Dummy data for the Clarion Fleet dashboard (Overview).
 // Locations are cities (centres) grouped into countries, so the map can cluster
 // by country and drill down country → cities. Country aggregates and the fleet
 // total (1,208 endpoints) are preserved across the split.
@@ -34,7 +34,7 @@ export interface LocationRow {
 
 export const fleet = {
   workspace: "Acme Contact Centre",
-  product: "Clarity",
+  product: "Clarion",
 }
 
 export const countries: Country[] = [

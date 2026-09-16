@@ -10,7 +10,7 @@ const REFRESH_EVERY = 30_000 // ms
 
 /**
  * Simulates a live data stream: every REFRESH_EVERY the online-endpoint count and
- * Clarity Network Score jitter slightly.
+ * Clarion Network Score jitter slightly.
  *
  * NOTE: this hook only re-renders its consumer on an actual refresh (every 30s) —
  * NOT once per second. The per-second "streaming Ns ago" counter is owned locally
