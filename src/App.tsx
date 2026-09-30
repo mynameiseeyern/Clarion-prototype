@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { Analytics } from "@vercel/analytics/react"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { Topbar } from "@/components/dashboard/Topbar"
 import { OverviewPage } from "@/pages/OverviewPage"
@@ -220,6 +221,9 @@ export default function App() {
 
       {/* transient toasts (save confirmations, etc.) */}
       <Toaster />
+      
+      {/* Vercel Web Analytics */}
+      <Analytics />
     </div>
   )
 }
