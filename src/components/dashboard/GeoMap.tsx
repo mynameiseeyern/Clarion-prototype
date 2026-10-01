@@ -2,21 +2,33 @@ import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from 
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import { Home, Plus, Minus } from "lucide-react"
+import { feature } from "topojson-client"
+import type { Topology, GeometryCollection } from "topojson-specification"
 
-/* Real geographic basemap (Carto Voyager, label-free, OpenStreetMap data).
+/* Offline geographic basemap: Natural Earth 1:50m country polygons (public domain),
+   bundled in /public and drawn as a Leaflet vector layer — no tile server, no API key.
    Pins are rendered by the caller as React nodes: we hand back a `project`
    function and re-render on every pan/zoom so they track the map. */
 
 export interface GeoPoint { lat: number; lng: number }
 
-const TILE_URL = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png"
-const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+const WORLD_URL = `${import.meta.env.BASE_URL}world-countries-50m.json`
+const ATTRIBUTION = '<a href="https://www.naturalearthdata.com/">Natural Earth</a>'
+const OCEAN = "#b8d5e6"
+const LAND_STYLE: L.PathOptions = { fillColor: "#f7f4ef", fillOpacity: 1, color: "#c6ccd4", weight: 0.8, interactive: false }
+
+let worldPromise: Promise<GeoJSON.FeatureCollection> | null = null
+const loadWorld = () => {
+  worldPromise ??= fetch(WORLD_URL).then((r) => r.json()).then((topo: Topology) =>
+    feature(topo, topo.objects.countries as GeometryCollection) as GeoJSON.FeatureCollection)
+  return worldPromise
+}
 
 /** padding (px) kept clear around the fitted points so pills + tooltips stay inside */
 const FIT_PAD: L.PointExpression = [56, 56]
 
 export function GeoMap({
-  points, fitKey, singleZoom = 9, className, style, children,
+  points, fitKey, singleZoom = 6, className, style, children,
 }: {
   /** points the "home" view fits to */
   points: GeoPoint[]
@@ -36,15 +48,18 @@ export function GeoMap({
   useEffect(() => {
     if (!hostRef.current || mapRef.current) return
     const map = L.map(hostRef.current, {
-      zoomControl: false, attributionControl: true, worldCopyJump: true,
-      minZoom: 1, maxZoom: 16, zoomSnap: 0.25, scrollWheelZoom: false,
+      zoomControl: false, attributionControl: true, preferCanvas: true,
+      minZoom: 1, maxZoom: 8, zoomSnap: 0.25, scrollWheelZoom: false,
+      maxBounds: [[-85, -200], [85, 200]], maxBoundsViscosity: 0.8,
     })
     map.attributionControl.setPrefix(false)
-    L.tileLayer(TILE_URL, { attribution: ATTRIBUTION, subdomains: "abcd", maxZoom: 20 }).addTo(map)
+    map.attributionControl.addAttribution(ATTRIBUTION)
+    let cancelled = false
+    loadWorld().then((world) => { if (!cancelled) L.geoJSON(world, { style: LAND_STYLE }).addTo(map) })
     const rerender = () => bump((n) => n + 1)
     map.on("move zoom viewreset resize", rerender)
     mapRef.current = map
-    return () => { map.off(); map.remove(); mapRef.current = null }
+    return () => { cancelled = true; map.off(); map.remove(); mapRef.current = null }
   }, [])
 
   const home = () => {
@@ -72,7 +87,7 @@ export function GeoMap({
   const ctl = "flex size-8 items-center justify-center transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]"
   return (
     <div className={`relative overflow-hidden ${className ?? ""}`} style={style}>
-      <div ref={hostRef} className="absolute inset-0 geo-map" />
+      <div ref={hostRef} className="absolute inset-0 geo-map" style={{ background: OCEAN }} />
       {/* pin overlay: the layer ignores pointer events so the map still drags; pins opt back in */}
       <div className="pointer-events-none absolute inset-0 z-[500]">
         {mapRef.current && children(project)}
