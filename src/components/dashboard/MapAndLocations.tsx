@@ -19,6 +19,9 @@ const statusVar: Record<Status, string> = {
 const activeEndpoints = (x: { healthy: number; warning: number; critical: number }) =>
   x.healthy + x.warning + x.critical
 
+const plural = (n: number, one: string, many: string) =>
+  `${n.toLocaleString()} ${n === 1 ? one : many}`
+
 /* Hover tooltip shown on a map pin: name + endpoint count, then the
    healthy / warning / critical breakdown by number. */
 function PinTooltip({
@@ -42,7 +45,7 @@ function PinTooltip({
       style={{ background: "var(--bg-neutral-emphasis)", color: "var(--fg-on-neutral-emphasis)", boxShadow: "var(--shadow-md)" }}
     >
       <span className="block text-xs font-medium">
-        {name} · {endpoints.toLocaleString()} active endpoints
+        {name} · {endpoints.toLocaleString()} endpoints
       </span>
       <span className="mt-1 flex items-center gap-2.5 font-mono text-[11px]">
         <span className="flex items-center gap-1"><span className="size-1.5 rounded-full" style={{ background: "var(--status-healthy)" }} />{healthy.toLocaleString()}</span>
@@ -55,11 +58,10 @@ function PinTooltip({
 
 /* ---------------- Map ---------------- */
 function MapPanel({
-  country, onEnterCountry, onBack, selectedId, onSelect, onViewEndpoints,
+  country, onEnterCountry, selectedId, onSelect, onViewEndpoints,
 }: {
   country: string | null
   onEnterCountry: (id: string) => void
-  onBack: () => void
   selectedId: string
   onSelect: (id: string) => void
   onViewEndpoints: (loc?: string | string[]) => void
@@ -80,23 +82,12 @@ function MapPanel({
       cities.length <= 1 ? { x: 50, y: 50 } : { x: axis(m.x, minX, maxX, 18, 82), y: axis(m.y, minY, maxY, 22, 78) }
   })()
 
-  // header reflects the selected city when one is picked, else the country
-  const selectedCity = country && selectedId !== "all" ? cities.find((c) => c.id === selectedId) : null
-  const headerName = selectedCity?.name ?? ctry?.name
-  // back: from a selected city in a multi-city country → the country overview; otherwise → world
-  const handleHeaderBack = () => { if (selectedCity && cities.length > 1) onSelect("all"); else onBack() }
-
   return (
     <div className="flex w-full flex-col lg:min-w-0 lg:flex-1" style={{ borderRight: "1px solid var(--border-neutral-subtle)" }}>
       <div className="flex items-center justify-between p-4">
         <h2 className="flex items-center gap-1.5 text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
           {ctry ? (
-            <>
-              <button type="button" onClick={handleHeaderBack} className="rounded p-0.5 transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }} aria-label={selectedCity && cities.length > 1 ? `Back to ${ctry.name}` : "Back to world"}>
-                <ArrowLeft className="size-4" />
-              </button>
-              Endpoints in <span style={{ color: "var(--fg-link-default)" }}>{headerName}</span>
-            </>
+            <>Endpoints <span style={{ color: "var(--fg-neutral-muted)" }}>·</span> <span style={{ color: "var(--fg-link-default)" }}>{ctry.name}</span></>
           ) : (
             <>Endpoints <span style={{ color: "var(--fg-neutral-muted)" }}>· worldwide</span></>
           )}
@@ -108,7 +99,7 @@ function MapPanel({
           if (selectedId !== "all" && cityIds.includes(selectedId)) onViewEndpoints(selectedId)
           else onViewEndpoints(cityIds)
         }}>
-          View endpoints
+          View all endpoints
           <ArrowRight className="size-4" />
         </Button>
       </div>
@@ -130,7 +121,7 @@ function MapPanel({
             const cSev = countrySeverity(c.id)
             return (
               <button key={c.id} type="button" onClick={() => onEnterCountry(c.id)} aria-label={c.name}
-                className="group absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 hover:z-20 focus:z-20 focus:outline-none"
+                className="group absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center hover:z-20 focus:z-20 focus:outline-none"
                 style={{ left: `${c.x}%`, top: `${c.y}%` }}>
                 <PinTooltip name={c.name} endpoints={activeEndpoints(c)} healthy={c.healthy} warning={c.warning} critical={c.critical} />
                 <span className="flex items-center gap-1.5 rounded-full px-2 py-1 shadow-md transition-transform hover:scale-105"
@@ -138,12 +129,11 @@ function MapPanel({
                   <span className="size-2 rounded-full" style={{ background: statusVar[cSev] }} />
                   <span className="font-mono text-xs font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{activeEndpoints(c).toLocaleString()}</span>
                 </span>
-                <span className="rounded px-1 text-[10px] font-medium" style={{ color: "var(--fg-neutral-muted)" }}>{c.name}</span>
               </button>
             )
           })}
 
-          {/* country view: city markers */}
+          {/* country view: city markers (pill style, matching the world view) */}
           {country && cities.map((m) => {
             const isActive = m.id === selectedId
             const mSev = locationSeverity(m.id)
@@ -153,15 +143,13 @@ function MapPanel({
             return (
               <button key={m.id} type="button" onClick={() => onSelect(m.id)} aria-label={m.name}
                 onMouseEnter={() => setHoveredCity(m.id)} onMouseLeave={() => setHoveredCity(null)}
-                className="group absolute -translate-x-1/2 -translate-y-1/2 hover:z-20 focus:z-20 focus:outline-none" style={{ left: `${pos.x}%`, top: `${pos.y}%` }}>
-                <PinTooltip name={m.name} endpoints={activeEndpoints(m)} healthy={m.healthy} warning={m.warning} critical={m.critical} show={show} />
-                {isActive ? (
-                  <span className="flex size-4 items-center justify-center rounded-full" style={{ border: `2px solid ${statusVar[mSev]}`, background: "var(--bg-card)" }}>
-                    <span className="size-2 rounded-full" style={{ background: statusVar[mSev] }} />
-                  </span>
-                ) : (
-                  <span className="block size-3 rounded-full transition-transform hover:scale-125" style={{ background: statusVar[mSev], border: "1px solid var(--bg-card)", boxShadow: "var(--shadow-xs)" }} />
-                )}
+                className="group absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center hover:z-20 focus:z-20 focus:outline-none" style={{ left: `${pos.x}%`, top: `${pos.y}%` }}>
+                <PinTooltip name={`${m.name}, ${ctry?.name ?? ""}`} endpoints={activeEndpoints(m)} healthy={m.healthy} warning={m.warning} critical={m.critical} show={show} />
+                <span className="flex items-center gap-1.5 rounded-full px-2 py-1 transition-transform hover:scale-105"
+                  style={{ background: "var(--bg-card)", border: `2px solid ${statusVar[mSev]}`, boxShadow: isActive ? "0 0 0 3px var(--border-focused), var(--shadow-md)" : "var(--shadow-md)" }}>
+                  <span className="size-2 rounded-full" style={{ background: statusVar[mSev] }} />
+                  <span className="font-mono text-xs font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{activeEndpoints(m).toLocaleString()}</span>
+                </span>
               </button>
             )
           })}
@@ -202,7 +190,7 @@ function LocationsPanel({
           style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
           <ArrowLeft className="size-4" style={{ color: "var(--fg-neutral-muted)" }} />
           <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>All locations</span>
-          <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>· {ctry.name} · {cities.length} cities</span>
+          <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>· {ctry.name} · {plural(cities.length, "city", "cities")}</span>
         </button>
       ) : (
         <div className="flex items-baseline gap-1 p-4" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
@@ -223,10 +211,10 @@ function LocationsPanel({
                 <span className="flex min-w-px items-center gap-2">
                   <StatusDot status={countrySeverity(c.id)} />
                   <span className="truncate text-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>{c.name}</span>
-                  <span className="shrink-0 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{c.cityCount} cities</span>
+                  <span className="shrink-0 text-xs" style={{ color: "var(--fg-neutral-subtle)" }}>{plural(c.cityCount, "city", "cities")}</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-2 whitespace-nowrap font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
-                  <span>{activeEndpoints(c).toLocaleString()} active endpoints</span>
+                  <span>{plural(activeEndpoints(c), "active endpoint", "active endpoints")}</span>
                   <ChevronRight className="size-4 opacity-40 transition-opacity group-hover:opacity-100" />
                 </span>
               </button>
@@ -246,7 +234,7 @@ function LocationsPanel({
                     </span>
                     <span className="flex shrink-0 items-center gap-1 whitespace-nowrap font-mono text-xs" style={{ color: isSelected ? "var(--fg-neutral-emphasis)" : "var(--fg-neutral-muted)" }}>
                       {(() => { const n = locationIssueCount(loc.id); return (<>
-                        <span>{activeEndpoints(loc).toLocaleString()} active endpoints</span>
+                        <span>{plural(activeEndpoints(loc), "active endpoint", "active endpoints")}</span>
                         <span>·</span>
                         <span>{n === 0 ? "No alerts" : `${n} alert${n === 1 ? "" : "s"}`}</span>
                       </>) })()}
@@ -301,7 +289,7 @@ export function MapAndLocations({
   return (
     <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
       <div className="flex flex-col lg:flex-row">
-        <MapPanel country={country} onEnterCountry={handleEnterCountry} onBack={handleAllLocations} selectedId={selectedId} onSelect={handleSelectCity} onViewEndpoints={onViewEndpoints} />
+        <MapPanel country={country} onEnterCountry={handleEnterCountry} selectedId={selectedId} onSelect={handleSelectCity} onViewEndpoints={onViewEndpoints} />
         <LocationsPanel country={country} onEnterCountry={handleEnterCountry} selectedId={selectedId} onSelect={handleSelectCity} onViewEndpoints={onViewEndpoints} onAllLocations={handleAllLocations} />
       </div>
     </Card>
