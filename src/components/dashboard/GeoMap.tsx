@@ -50,12 +50,22 @@ export function GeoMap({
     const map = L.map(hostRef.current, {
       zoomControl: false, attributionControl: true, preferCanvas: true,
       minZoom: 1, maxZoom: 8, zoomSnap: 0.25, scrollWheelZoom: false,
-      maxBounds: [[-85, -200], [85, 200]], maxBoundsViscosity: 0.8,
+      // hard-stop at the poles (nothing to see beyond); east–west wraps via the shifted copies below
+      maxBounds: [[-85, -Infinity], [85, Infinity]], maxBoundsViscosity: 1, worldCopyJump: true,
     })
     map.attributionControl.setPrefix(false)
     map.attributionControl.addAttribution(ATTRIBUTION)
     let cancelled = false
-    loadWorld().then((world) => { if (!cancelled) L.geoJSON(world, { style: LAND_STYLE }).addTo(map) })
+    loadWorld().then((world) => {
+      if (cancelled) return
+      // draw the world at -360°, 0° and +360° so panning across the date line never shows a gap
+      for (const shift of [-360, 0, 360]) {
+        L.geoJSON(world, {
+          style: LAND_STYLE,
+          coordsToLatLng: (c) => L.latLng(c[1], c[0] + shift),
+        }).addTo(map)
+      }
+    })
     const rerender = () => bump((n) => n + 1)
     map.on("move zoom viewreset resize", rerender)
     mapRef.current = map
