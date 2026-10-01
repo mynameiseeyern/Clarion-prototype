@@ -110,7 +110,7 @@
   }
 }
 
-/* Geographic map (Leaflet) — ocean-blue while tiles load, quiet attribution */
-.geo-map.leaflet-container { background: #b8d5e6; cursor: grab; font-family: inherit; }
-.geo-map .leaflet-control-attribution { font-size: 10px; color: var(--fg-neutral-subtle); background: color-mix(in srgb, var(--bg-card) 75%, transparent); }
-.geo-map .leaflet-control-attribution a { color: inherit; }
+/* Geographic map (custom SVG world) */
+.geo-map { cursor: grab; }
+.geo-map:active { cursor: grabbing; }
+.geo-map svg { display: block; }
