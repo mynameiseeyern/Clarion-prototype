@@ -149,7 +149,7 @@ export function AlertRouting() {
       <div className="flex flex-wrap items-start justify-between gap-3 px-5 py-4" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
         <div className="flex flex-col">
           <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Alert routing</h2>
-          <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Decide where alerts go and who gets notified</span>
+          <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Choose who gets notified when issues are detected.</span>
         </div>
         <div className="flex items-center gap-2">
           {saving ? (
@@ -167,8 +167,8 @@ export function AlertRouting() {
 
       <div className="flex flex-col px-5">
         <EmailChips
-          label="IT reports"
-          description="These emails are sent from IT alerts, allowing users to send reports directly."
+          label="IT issues"
+          description="Email addresses that receive issue reports sent by widget users. When a user hits a problem, they can send a diagnostic report straight to these recipients."
           value={draft}
           onChange={setDraft}
           resetSignal={resetSignal}

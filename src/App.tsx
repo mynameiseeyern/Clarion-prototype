@@ -142,6 +142,7 @@ export default function App() {
           dark={dark}
           onToggleTheme={() => setDark((v) => !v)}
           onToggleSidebar={() => setSidebarOpen((v) => !v)}
+          onSwitchExperience={switchExperience}
         />
 
         <div className="shrink-0 p-5" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>

@@ -1,17 +1,20 @@
-import { CircleUserRound, LayoutDashboard, ShieldCheck, Check, LogOut } from "lucide-react"
+import { Landmark, LayoutDashboard, LogOut } from "lucide-react"
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
-import { experienceLabel, type Experience } from "@/nav"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import type { Experience } from "@/nav"
+
+export const currentUser = { name: "Ian Lowe", initials: "IL", email: "ian.lowe@ir.com" }
 
 /**
- * Top-right account menu — signed-in identity + sign out.
- * The experience switcher (Fleet ↔ Admin) only appears when `onSwitch` is passed
- * (used by the Admin shell); the fleet top bar renders it as sign-out only.
+ * Top-right account menu — avatar + name trigger, then Account actions.
+ * "Go to Admin Portal" (or "Back to Clarion" from the admin shell) appears when
+ * `onSwitch` is passed; sign out is always present.
  */
 export function ExperienceMenu({
-  experience,
+  experience = "fleet",
   onSwitch,
 }: {
   experience?: Experience
@@ -23,36 +26,22 @@ export function ExperienceMenu({
         <button
           type="button"
           aria-label="Account"
-          className="flex size-8 shrink-0 items-center justify-center rounded-full transition-colors"
-          style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--bg-neutral-subtle)")}
+          className="flex h-10 shrink-0 items-center gap-2 rounded-lg py-1 pl-1 pr-3 transition-colors data-[state=open]:bg-[var(--bg-info-subtle)] hover:bg-[var(--bg-neutral-subtle-hovered)]"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border-neutral-subtle)", color: "var(--fg-neutral-emphasis)" }}
         >
-          <CircleUserRound className="size-4" />
+          <Avatar className="size-8">
+            <AvatarFallback className="text-xs font-medium">{currentUser.initials}</AvatarFallback>
+          </Avatar>
+          <span className="text-sm font-medium">{currentUser.name}</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Ava Thornton</span>
-            <span className="text-xs font-normal" style={{ color: "var(--fg-neutral-muted)" }}>ava.thornton@ir.com · Admin</span>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {onSwitch && (
-          <>
-            <DropdownMenuLabel className="text-xs">Switch experience</DropdownMenuLabel>
-            <DropdownMenuItem onSelect={() => onSwitch("fleet")}>
-              <LayoutDashboard /> {experienceLabel.fleet}
-              {experience === "fleet" && <Check className="ml-auto" />}
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => onSwitch("admin")}>
-              <ShieldCheck /> {experienceLabel.admin}
-              {experience === "admin" && <Check className="ml-auto" />}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
-        )}
+        <DropdownMenuLabel className="text-xs font-normal" style={{ color: "var(--fg-neutral-muted)" }}>Account</DropdownMenuLabel>
+        {onSwitch && (experience === "admin" ? (
+          <DropdownMenuItem onSelect={() => onSwitch("fleet")}><LayoutDashboard /> Back to Clarion</DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem onSelect={() => onSwitch("admin")}><Landmark /> Go to Admin Portal</DropdownMenuItem>
+        ))}
         <DropdownMenuItem><LogOut /> Sign out</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
