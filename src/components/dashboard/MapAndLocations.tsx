@@ -3,9 +3,10 @@ import { ArrowRight, ChevronRight, ArrowLeft } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { StatusDot, LegendItem } from "./primitives"
+import { GeoMap } from "./GeoMap"
 import {
   locationById, citiesInCountry, countryById, countriesWithStats,
-  type Status, type LocationRow,
+  type Status,
 } from "@/data/dashboard"
 import { locationSeverity, locationIssueCount, countrySeverity } from "@/data/endpoints"
 
@@ -70,17 +71,8 @@ function MapPanel({
   const ctry = country ? countryById(country) : null
   const cities = country ? citiesInCountry(country) : []
   const [hoveredCity, setHoveredCity] = useState<string | null>(null)
-
-  // In country view, re-project the cities' world coords to fill the map (otherwise a
-  // single/clustered country leaves the pin(s) stranded in a corner). One city → centre.
-  const cityPos = (() => {
-    const xs = cities.map((c) => c.x), ys = cities.map((c) => c.y)
-    const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys)
-    const axis = (v: number, min: number, max: number, lo: number, hi: number) =>
-      max - min < 1 ? (lo + hi) / 2 : lo + ((v - min) / (max - min)) * (hi - lo)
-    return (m: LocationRow) =>
-      cities.length <= 1 ? { x: 50, y: 50 } : { x: axis(m.x, minX, maxX, 18, 82), y: axis(m.y, minY, maxY, 22, 78) }
-  })()
+  // what the "home" view fits to: all countries, or the cities of the drilled-in country
+  const fitPoints = country ? cities : cs
 
   return (
     <div className="flex w-full flex-col lg:min-w-0 lg:flex-1" style={{ borderRight: "1px solid var(--border-neutral-subtle)" }}>
@@ -105,55 +97,52 @@ function MapPanel({
       </div>
 
       <div className="flex flex-1 flex-col gap-2 px-4 pb-4">
-        <div className="relative h-[272px] w-full overflow-visible rounded-md" style={{ background: "var(--bg-canvas)" }}>
-          <svg viewBox="0 0 654 272" className="absolute inset-0 size-full" preserveAspectRatio="xMidYMid slice" aria-hidden>
-            <g fill="var(--bg-neutral-subtle-pressed)" opacity="0.7">
-              <path d="M70 120 Q120 70 200 90 Q230 130 180 170 Q120 190 80 160 Z" />
-              <path d="M300 70 Q380 50 430 90 Q470 130 410 150 Q340 160 310 120 Z" />
-              <path d="M420 150 Q470 150 460 200 Q430 240 400 210 Q400 175 420 150 Z" />
-              <path d="M200 175 Q250 175 240 215 Q210 245 185 220 Q185 190 200 175 Z" />
-              <path d="M520 180 Q580 175 590 215 Q560 245 520 225 Q505 200 520 180 Z" />
-            </g>
-          </svg>
+        <GeoMap className="h-[300px] w-full rounded-md" points={fitPoints} fitKey={country ?? "world"}
+          style={{ border: "1px solid var(--border-neutral-subtle)" }}>
+          {(project) => (
+            <>
+              {/* world view: country clusters */}
+              {!country && cs.map((c) => {
+                const cSev = countrySeverity(c.id)
+                const pos = project(c)
+                return (
+                  <button key={c.id} type="button" onClick={() => onEnterCountry(c.id)} aria-label={c.name}
+                    className="group pointer-events-auto absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center hover:z-20 focus:z-20 focus:outline-none"
+                    style={{ left: pos.x, top: pos.y }}>
+                    <PinTooltip name={c.name} endpoints={activeEndpoints(c)} healthy={c.healthy} warning={c.warning} critical={c.critical} />
+                    <span className="flex items-center gap-1.5 rounded-full px-2 py-1 shadow-md transition-transform hover:scale-105"
+                      style={{ background: "var(--bg-card)", border: `2px solid ${statusVar[cSev]}` }}>
+                      <span className="size-2 rounded-full" style={{ background: statusVar[cSev] }} />
+                      <span className="font-mono text-xs font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{activeEndpoints(c).toLocaleString()}</span>
+                    </span>
+                  </button>
+                )
+              })}
 
-          {/* world view: country clusters */}
-          {!country && cs.map((c) => {
-            const cSev = countrySeverity(c.id)
-            return (
-              <button key={c.id} type="button" onClick={() => onEnterCountry(c.id)} aria-label={c.name}
-                className="group absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center hover:z-20 focus:z-20 focus:outline-none"
-                style={{ left: `${c.x}%`, top: `${c.y}%` }}>
-                <PinTooltip name={c.name} endpoints={activeEndpoints(c)} healthy={c.healthy} warning={c.warning} critical={c.critical} />
-                <span className="flex items-center gap-1.5 rounded-full px-2 py-1 shadow-md transition-transform hover:scale-105"
-                  style={{ background: "var(--bg-card)", border: `2px solid ${statusVar[cSev]}` }}>
-                  <span className="size-2 rounded-full" style={{ background: statusVar[cSev] }} />
-                  <span className="font-mono text-xs font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{activeEndpoints(c).toLocaleString()}</span>
-                </span>
-              </button>
-            )
-          })}
-
-          {/* country view: city markers (pill style, matching the world view) */}
-          {country && cities.map((m) => {
-            const isActive = m.id === selectedId
-            const mSev = locationSeverity(m.id)
-            const pos = cityPos(m)
-            // selected pin's tooltip stays pinned, but hovering ANY other pin hides it
-            const show = isActive ? hoveredCity === null || hoveredCity === m.id : hoveredCity === m.id
-            return (
-              <button key={m.id} type="button" onClick={() => onSelect(m.id)} aria-label={m.name}
-                onMouseEnter={() => setHoveredCity(m.id)} onMouseLeave={() => setHoveredCity(null)}
-                className="group absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center hover:z-20 focus:z-20 focus:outline-none" style={{ left: `${pos.x}%`, top: `${pos.y}%` }}>
-                <PinTooltip name={`${m.name}, ${ctry?.name ?? ""}`} endpoints={activeEndpoints(m)} healthy={m.healthy} warning={m.warning} critical={m.critical} show={show} />
-                <span className="flex items-center gap-1.5 rounded-full px-2 py-1 transition-transform hover:scale-105"
-                  style={{ background: "var(--bg-card)", border: `2px solid ${statusVar[mSev]}`, boxShadow: isActive ? "0 0 0 3px var(--border-focused), var(--shadow-md)" : "var(--shadow-md)" }}>
-                  <span className="size-2 rounded-full" style={{ background: statusVar[mSev] }} />
-                  <span className="font-mono text-xs font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{activeEndpoints(m).toLocaleString()}</span>
-                </span>
-              </button>
-            )
-          })}
-        </div>
+              {/* country view: city markers (same pill style) */}
+              {country && cities.map((m) => {
+                const isActive = m.id === selectedId
+                const mSev = locationSeverity(m.id)
+                const pos = project(m)
+                // selected pin's tooltip stays pinned, but hovering ANY other pin hides it
+                const show = isActive ? hoveredCity === null || hoveredCity === m.id : hoveredCity === m.id
+                return (
+                  <button key={m.id} type="button" onClick={() => onSelect(m.id)} aria-label={m.name}
+                    onMouseEnter={() => setHoveredCity(m.id)} onMouseLeave={() => setHoveredCity(null)}
+                    className="group pointer-events-auto absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center hover:z-20 focus:z-20 focus:outline-none"
+                    style={{ left: pos.x, top: pos.y, zIndex: isActive ? 10 : undefined }}>
+                    <PinTooltip name={`${m.name}, ${ctry?.name ?? ""}`} endpoints={activeEndpoints(m)} healthy={m.healthy} warning={m.warning} critical={m.critical} show={show} />
+                    <span className="flex items-center gap-1.5 rounded-full px-2 py-1 transition-transform hover:scale-105"
+                      style={{ background: "var(--bg-card)", border: `2px solid ${statusVar[mSev]}`, boxShadow: isActive ? "0 0 0 3px var(--border-focused), var(--shadow-md)" : "var(--shadow-md)" }}>
+                      <span className="size-2 rounded-full" style={{ background: statusVar[mSev] }} />
+                      <span className="font-mono text-xs font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{activeEndpoints(m).toLocaleString()}</span>
+                    </span>
+                  </button>
+                )
+              })}
+            </>
+          )}
+        </GeoMap>
 
         <div className="flex items-center gap-2">
           <LegendItem status="healthy" label="Healthy" />
