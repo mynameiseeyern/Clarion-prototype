@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Sidebar } from "@/components/dashboard/Sidebar"
 import { Topbar } from "@/components/dashboard/Topbar"
+import { MobileNav, useIsMobile } from "@/components/dashboard/MobileNav"
 import { OverviewPage } from "@/pages/OverviewPage"
 import { EndpointsPage } from "@/pages/EndpointsPage"
 import { AlertsPage } from "@/pages/AlertsPage"
@@ -50,7 +51,13 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string>(DEFAULT_LOCATION)
   const [endpointFilters, setEndpointFilters] = useState<string[]>([])
   const [alertFilter, setAlertFilter] = useState<string>("all")
+  // Desktop/tablet: the rail sits inline and the toggle collapses it.
+  // Phones (< md): the rail becomes an off-canvas drawer over the page (MobileNav).
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const isMobile = useIsMobile()
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  useEffect(() => { if (!isMobile) setMobileNavOpen(false) }, [isMobile])
+  const toggleSidebar = () => (isMobile ? setMobileNavOpen((v) => !v) : setSidebarOpen((v) => !v))
   const [drawer, setDrawer] = useState<DeviceDrawer | null>(() => deviceDrawerFromUrl())
   const [alertDrawer, setAlertDrawer] = useState<IssueDrawer | null>(() => issueDrawerFromUrl())
   const [backAlert, setBackAlert] = useState<IssueDrawer | null>(null)
@@ -126,8 +133,21 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-full items-start overflow-hidden" style={{ background: "var(--bg-app)" }}>
-      {sidebarOpen && (
+      {!isMobile && sidebarOpen && (
         <Sidebar active={page} onNavigate={navigate} lastRefreshAt={live.lastRefreshAt} />
+      )}
+      {isMobile && (
+        <MobileNav open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+          {/* picking a page closes the drawer */}
+          <Sidebar
+            active={page}
+            onNavigate={(id) => { navigate(id); setMobileNavOpen(false) }}
+            lastRefreshAt={live.lastRefreshAt}
+            onClose={() => setMobileNavOpen(false)}
+            dark={dark}
+            onToggleTheme={() => setDark((v) => !v)}
+          />
+        </MobileNav>
       )}
 
       <div
@@ -141,7 +161,8 @@ export default function App() {
           page={page}
           dark={dark}
           onToggleTheme={() => setDark((v) => !v)}
-          onToggleSidebar={() => setSidebarOpen((v) => !v)}
+          onToggleSidebar={toggleSidebar}
+          sidebarExpanded={isMobile ? mobileNavOpen : sidebarOpen}
           onSwitchExperience={switchExperience}
         />
 

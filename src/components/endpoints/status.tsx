@@ -2,6 +2,11 @@ import { useState } from "react"
 import { Check, ChevronDown } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Badge } from "@/components/ui/badge"
+import { useIsMobile } from "@/components/dashboard/MobileNav"
+import {
+  BottomSheet, BottomSheetTrigger, BottomSheetContent, BottomSheetHeader, BottomSheetTitle,
+  BottomSheetCloseButton, BottomSheetBody, BottomSheetItem, BottomSheetFooter, SheetButton, SheetCheck,
+} from "@/components/ui/bottom-sheet"
 import type { EndpointStatus } from "@/data/endpoints"
 
 export const statusVar: Record<EndpointStatus, string> = {
@@ -28,6 +33,23 @@ export function StatusBadge({ status, label, className }: { status: EndpointStat
     </Badge>
   )
 }
+
+/** Picasso Select's count badge: the label stays, the badge says how many. */
+export function CountBadge({ n }: { n: number }) {
+  return (
+    <span
+      className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 text-xs font-medium tabular-nums"
+      style={{ background: "var(--bg-neutral-subtle)", border: "1px solid var(--border-neutral-muted)", color: "var(--fg-neutral-emphasis)" }}
+    >
+      <span aria-hidden>{n}</span>
+      <span className="sr-only">, {n} selected</span>
+    </span>
+  )
+}
+
+/** Input-shaped trigger, sm on phones (Picasso Select trigger). */
+export const filterTriggerCls =
+  "flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm shadow-xs transition-colors hover:border-[var(--border-input-hovered)] max-md:h-8 max-md:px-2.5 max-md:shadow-none"
 
 export type StatusOption = { id: EndpointStatus; label: string }
 // worst-first, offline last
@@ -57,12 +79,57 @@ export function StatusFilter({
   allLabel?: string
 }) {
   const [open, setOpen] = useState(false)
+  const mobile = useIsMobile()
+  const [draft, setDraft] = useState<EndpointStatus[]>(value)
   const label = value.length === 0 ? allLabel : value.length === 1 ? cap(value[0]) : `${value.length} statuses`
+
+  if (mobile) {
+    const toggleDraft = (s: EndpointStatus) => setDraft((d) => (d.includes(s) ? d.filter((x) => x !== s) : [...d, s]))
+    // Apply commits the draft; any other way out discards it (Picasso apply-not-live / close-discards)
+    const apply = () => { onClear(); for (const s of draft) onToggle(s); setOpen(false) }
+    return (
+      <BottomSheet open={open} onOpenChange={(o) => { setOpen(o); if (o) setDraft(value) }}>
+        <BottomSheetTrigger asChild>
+          <button type="button" className={filterTriggerCls}
+            style={{ background: "var(--bg-input-default)", border: "1px solid var(--border-input-default)", color: "var(--fg-neutral-emphasis)" }}>
+            <span>Status</span>
+            {value.length > 0 && <CountBadge n={value.length} />}
+            <ChevronDown className="size-4" style={{ color: "var(--fg-neutral-muted)" }} />
+          </button>
+        </BottomSheetTrigger>
+        <BottomSheetContent>
+          <BottomSheetHeader>
+            <BottomSheetTitle>Status</BottomSheetTitle>
+            <BottomSheetCloseButton />
+          </BottomSheetHeader>
+          <BottomSheetBody>
+            <div role="group" aria-label="Status">
+              {options.map((o) => {
+                const on = draft.includes(o.id)
+                return (
+                  <BottomSheetItem key={o.id}>
+                    <input type="checkbox" className="sr-only" checked={on} onChange={() => toggleDraft(o.id)} />
+                    <SheetCheck state={on ? "checked" : "unchecked"} />
+                    <span className="size-2 shrink-0 rounded-full" style={{ background: statusVar[o.id] }} aria-hidden />
+                    <span className="flex-1">{o.label}</span>
+                  </BottomSheetItem>
+                )
+              })}
+            </div>
+          </BottomSheetBody>
+          <BottomSheetFooter>
+            <SheetButton onClick={() => setDraft([])} disabled={draft.length === 0}>Clear</SheetButton>
+            <SheetButton primary onClick={apply}>Apply{draft.length ? ` · ${draft.length}` : ""}</SheetButton>
+          </BottomSheetFooter>
+        </BottomSheetContent>
+      </BottomSheet>
+    )
+  }
   const rowCls = "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]"
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button type="button" className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm shadow-xs transition-colors hover:border-[var(--border-input-hovered)]"
+        <button type="button" className="flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm shadow-xs transition-colors hover:border-[var(--border-input-hovered)]"
           style={{ background: "var(--bg-input-default)", border: "1px solid var(--border-input-default)", color: "var(--fg-neutral-emphasis)" }}>
           <span>{label}</span>
           <ChevronDown className="size-4" style={{ color: "var(--fg-neutral-muted)" }} />

@@ -25,14 +25,14 @@ export function ExperienceMenu({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label="Account"
-          className="flex h-10 shrink-0 items-center gap-2 rounded-lg py-1 pl-1 pr-3 transition-colors data-[state=open]:bg-[var(--bg-info-subtle)] hover:bg-[var(--bg-neutral-subtle-hovered)]"
+          aria-label={`Account — ${currentUser.name}`}
+          className="flex h-10 shrink-0 items-center gap-2 rounded-lg p-1 transition-colors md:pr-3 data-[state=open]:bg-[var(--bg-info-subtle)] hover:bg-[var(--bg-neutral-subtle-hovered)]"
           style={{ background: "var(--bg-card)", border: "1px solid var(--border-neutral-subtle)", color: "var(--fg-neutral-emphasis)" }}
         >
           <Avatar className="size-8">
             <AvatarFallback className="text-xs font-medium">{currentUser.initials}</AvatarFallback>
           </Avatar>
-          <span className="text-sm font-medium">{currentUser.name}</span>
+          <span className="hidden text-sm font-medium md:inline">{currentUser.name}</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

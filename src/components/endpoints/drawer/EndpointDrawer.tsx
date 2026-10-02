@@ -154,19 +154,27 @@ export function EndpointDrawer({
 
           {/* identity header */}
           <div className="shrink-0 px-5 pt-4" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex min-w-0 items-center gap-3">
-                <Avatar className="size-10"><AvatarFallback>{offline ? <Monitor className="size-5" /> : initials(e.user)}</AvatarFallback></Avatar>
-                <div className="flex min-w-0 flex-col">
-                  <div className="flex items-center gap-2.5">
+            {/* Desktop: badge beside the name, location + connection on the right.
+                Phones: the name gets the width — badge pinned to the end of the row,
+                location + connection drop to their own line under the machine. */}
+            <div className="flex items-center justify-between gap-4 max-md:items-start max-md:gap-3">
+              <div className="flex min-w-0 items-center gap-3 max-md:flex-1">
+                <Avatar className="size-10 shrink-0"><AvatarFallback>{offline ? <Monitor className="size-5" /> : initials(e.user)}</AvatarFallback></Avatar>
+                <div className="flex min-w-0 flex-col max-md:flex-1">
+                  <div className="flex min-w-0 items-center gap-2.5">
                     <Dialog.Title className={`truncate text-lg font-semibold ${offline ? "font-mono" : ""}`} style={{ color: "var(--fg-neutral-emphasis)" }}>{offline ? e.machine : e.user}</Dialog.Title>
-                    <StatusBadge status={e.status} />
+                    <StatusBadge status={e.status} className="max-md:hidden" />
                   </div>
                   {!offline && <span className="truncate font-mono text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{e.machine}</span>}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs md:hidden">
+                    <MetaItem icon={MapPin}>{detail.locationDetail}</MetaItem>
+                    <MetaItem icon={Monitor}>{e.connection}</MetaItem>
+                  </div>
                 </div>
               </div>
-              {/* location + connection on the right of the identity to save a line */}
-              <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-4 gap-y-1 text-sm">
+              <StatusBadge status={e.status} className="mt-1 shrink-0 md:hidden" />
+              {/* location + connection on the right of the identity to save a line (desktop) */}
+              <div className="hidden shrink-0 flex-wrap items-center justify-end gap-x-4 gap-y-1 text-sm md:flex">
                 <MetaItem icon={MapPin}>{detail.locationDetail}</MetaItem>
                 <MetaItem icon={Monitor}>{e.connection}</MetaItem>
               </div>
