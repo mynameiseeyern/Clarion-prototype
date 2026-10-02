@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { useIsMobile } from "@/components/dashboard/MobileNav"
 import * as Dialog from "@radix-ui/react-dialog"
 import { Monitor, MapPin, ChevronUp, ChevronDown, Maximize2, Minimize2, X, ArrowLeft, CloudOff } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -77,6 +78,8 @@ export function EndpointDrawer({
   backLabel?: string
 }) {
   const [expanded, setExpanded] = useState(false)
+  // phones: always the full-screen panel — the centred 'expanded' layout is a desktop idea
+  const isMobile = useIsMobile()
   const [tab, setTab] = useState("network")
   const e = rows[index]
   const detail = useMemo(() => (e ? getEndpointDetail(e) : null), [e])
@@ -109,7 +112,7 @@ export function EndpointDrawer({
   const stale = e.lastSeenMinAgo > 5
   const offline = e.status === "offline"
 
-  const contentClass = expanded
+  const contentClass = expanded && !isMobile
     ? "fixed left-1/2 top-1/2 z-50 flex h-[94vh] w-[1120px] max-w-[96vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
     : "fixed right-0 top-0 z-50 flex h-full w-full flex-col overflow-hidden shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right sm:w-[640px] sm:max-w-[95vw]"
 
@@ -145,9 +148,12 @@ export function EndpointDrawer({
               </span>
             </div>
             <div className="flex items-center gap-1">
-              <IconBtn label={expanded ? "Collapse" : "Expand"} onClick={() => setExpanded((v) => !v)}>
-                {expanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-              </IconBtn>
+              {/* phones: the drawer is already full screen, so expand has nothing to do */}
+              <span className="hidden md:contents">
+                <IconBtn label={expanded ? "Collapse" : "Expand"} onClick={() => setExpanded((v) => !v)}>
+                  {expanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                </IconBtn>
+              </span>
               <IconBtn label="Close" onClick={() => onOpenChange(false)}><X className="size-4" /></IconBtn>
             </div>
           </div>

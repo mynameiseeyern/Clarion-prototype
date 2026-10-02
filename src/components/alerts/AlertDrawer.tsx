@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useIsMobile } from "@/components/dashboard/MobileNav"
 import * as Dialog from "@radix-ui/react-dialog"
 import { X, MapPin, Clock, Users, Siren, Wifi, Activity, Gauge, ChevronRight, ChevronUp, ChevronDown, Maximize2, Minimize2, type LucideIcon } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -54,6 +55,8 @@ export function AlertDrawer({
   defaultExpanded?: boolean
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded)
+  // phones: always the full-screen panel — the centred 'expanded' layout is a desktop idea
+  const isMobile = useIsMobile()
   // reset the view mode each time the drawer opens
   useEffect(() => { if (open) setExpanded(defaultExpanded) }, [open, defaultExpanded])
 
@@ -77,7 +80,7 @@ export function AlertDrawer({
   const Icon = causeIcon[rollup.cause]
   const tone = sevTone[rollup.severity]
 
-  const contentClass = expanded
+  const contentClass = expanded && !isMobile
     ? "fixed left-1/2 top-1/2 z-50 flex h-[92vh] w-[920px] max-w-[96vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
     : "fixed right-0 top-0 z-50 flex h-full w-full flex-col overflow-hidden shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:w-[600px] sm:max-w-[95vw]"
 
@@ -87,7 +90,7 @@ export function AlertDrawer({
         <Dialog.Overlay className="fixed inset-0 z-50 data-[state=open]:animate-in data-[state=open]:fade-in-0" style={{ background: "var(--bg-scrim)" }} />
         <Dialog.Content
           className={contentClass}
-          style={{ background: "var(--bg-card)", border: expanded ? "1px solid var(--border-neutral-muted)" : undefined, borderLeft: expanded ? undefined : "1px solid var(--border-neutral-muted)" }}
+          style={{ background: "var(--bg-card)", border: expanded && !isMobile ? "1px solid var(--border-neutral-muted)" : undefined, borderLeft: expanded && !isMobile ? undefined : "1px solid var(--border-neutral-muted)" }}
         >
           {/* utility bar */}
           <div className="flex shrink-0 items-center justify-between px-3 py-2" style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
@@ -99,9 +102,12 @@ export function AlertDrawer({
               </span>
             </div>
             <div className="flex items-center gap-1">
-              <IconBtn label={expanded ? "Collapse" : "Expand"} onClick={() => setExpanded((v) => !v)}>
-                {expanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-              </IconBtn>
+              {/* phones: the drawer is already full screen, so expand has nothing to do */}
+              <span className="hidden md:contents">
+                <IconBtn label={expanded ? "Collapse" : "Expand"} onClick={() => setExpanded((v) => !v)}>
+                  {expanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                </IconBtn>
+              </span>
               <IconBtn label="Close" onClick={() => onOpenChange(false)}><X className="size-4" /></IconBtn>
             </div>
           </div>
