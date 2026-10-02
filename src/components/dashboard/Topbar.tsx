@@ -27,7 +27,6 @@ export function Topbar({
   onToggleTheme,
   onToggleSidebar,
   sidebarExpanded,
-  onSwitchExperience,
 }: {
   page: PageId
   dark: boolean
@@ -35,6 +34,7 @@ export function Topbar({
   onToggleSidebar: () => void
   /** drives aria-expanded on the menu button */
   sidebarExpanded?: boolean
+  /** no longer used — the account menu doesn't offer the Admin Portal */
   onSwitchExperience?: (e: Experience) => void
 }) {
   return (
@@ -75,7 +75,7 @@ export function Topbar({
               {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
             </IconButton>
           </span>
-          <ExperienceMenu experience="fleet" onSwitch={onSwitchExperience} />
+          <ExperienceMenu experience="fleet" />
         </div>
       </div>
     </header>
