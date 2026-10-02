@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge"
 import { StatusFilter, statusVar, type StatusOption } from "@/components/endpoints/status"
 import { formatAgo } from "@/lib/utils"
 import { EndpointDetailPanel } from "@/components/endpoints/drawer/EndpointDetailPanel"
-import { queryEndpoints, type EndpointStatus } from "@/data/endpoints"
+import { useIsMobile } from "@/components/dashboard/MobileNav"
+import { queryEndpoints, type Endpoint, type EndpointStatus } from "@/data/endpoints"
 
 // The Overview attention card only ever deals with unhealthy endpoints.
 const ATTENTION_STATUSES: EndpointStatus[] = ["critical", "warning"]
@@ -25,11 +26,17 @@ const ATTENTION_OPTIONS: StatusOption[] = [
 export function EndpointsAttentionCard({
   selectedLocationId,
   onViewEndpoints,
+  onOpenEndpoint,
+  openEndpointId,
 }: {
   /** location picked on the map ("all" = whole fleet); its endpoints sort to the top */
   selectedLocationId?: string
   onViewEndpoints: (loc?: string | string[]) => void
+  /** phones: tapping a row opens the endpoint drawer instead of the inline drilldown */
+  onOpenEndpoint?: (rows: Endpoint[], index: number) => void
+  openEndpointId?: string | null
 }) {
+  const isMobile = useIsMobile()
   const [statuses, setStatuses] = useState<EndpointStatus[]>(DEFAULT_STATUSES)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState("")
@@ -113,10 +120,12 @@ export function EndpointsAttentionCard({
           {/* left — endpoint list. lg+: 50% side-by-side, height capped to the detail
               pane via the absolute inner (long lists scroll). Below lg: stacked
               full-width with a bounded scroll so it doesn't push the detail down. */}
-          <div className="w-full min-w-0 border-b border-[var(--border-neutral-muted)] xl:relative xl:w-1/2 xl:border-b-0 xl:border-r">
-            <div className="max-h-80 overflow-y-auto overscroll-contain xl:absolute xl:inset-0 xl:max-h-none">
-            {rows.map((e) => {
-              const isSel = selected?.id === e.id
+          <div className="w-full min-w-0 border-b border-[var(--border-neutral-muted)] max-md:border-b-0 xl:relative xl:w-1/2 xl:border-b-0 xl:border-r">
+            <div className="max-h-80 overflow-y-auto overscroll-contain max-md:max-h-[28rem] xl:absolute xl:inset-0 xl:max-h-none">
+            {rows.map((e, i) => {
+              // desktop: the selected row drives the inline drilldown (first row by default).
+              // phones: no pre-selection — a row only highlights while its drawer is open.
+              const isSel = isMobile ? openEndpointId === e.id : selected?.id === e.id
               const alertColor = e.status === "critical" ? "var(--fg-danger-emphasis)" : "var(--fg-warning-emphasis)"
               const critN = e.events.filter((ev) => ev.severity === "critical").length
               const warnN = e.events.filter((ev) => ev.severity === "warning").length
@@ -129,7 +138,7 @@ export function EndpointsAttentionCard({
                 <button
                   key={e.id}
                   type="button"
-                  onClick={() => setSelectedId(e.id)}
+                  onClick={() => (isMobile && onOpenEndpoint ? onOpenEndpoint(rows, i) : setSelectedId(e.id))}
                   className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors"
                   style={{ borderBottom: "1px solid var(--border-neutral-subtle)", background: isSel ? "var(--bg-selected-subtle)" : "transparent" }}
                   onMouseEnter={(ev) => { if (!isSel) ev.currentTarget.style.background = "var(--bg-neutral-subtle-hovered)" }}
@@ -174,9 +183,12 @@ export function EndpointsAttentionCard({
           </div>
 
           {/* right — inline drilldown (50% on xl, full width when stacked) */}
-          <div className="w-full min-w-0 xl:w-1/2">
-            {selected && <EndpointDetailPanel endpoint={selected} />}
-          </div>
+          {/* phones: no inline drilldown — rows open the same endpoint drawer as the Endpoints page */}
+          {!isMobile && (
+            <div className="w-full min-w-0 xl:w-1/2">
+              {selected && <EndpointDetailPanel endpoint={selected} />}
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center gap-0.5 px-4 py-16 text-center">
