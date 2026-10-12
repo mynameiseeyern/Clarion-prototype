@@ -106,13 +106,29 @@ export function SsoWizard({
   initial,
   onExit,
   onComplete,
+  onChange,
+  onSendLink,
+  delegate,
 }: {
   initial: SsoDraft
   /** Save and exit — the page keeps the draft so setup can resume. */
   onExit: (draft: SsoDraft) => void
+  /** Admin: turn SSO on. Delegate: hand the tested setup back to the Admin. */
   onComplete: (draft: SsoDraft) => void
+  /** Called on every change, so a shared setup's progress is visible to the Admin. */
+  onChange?: (draft: SsoDraft) => void
+  /** Admin only: hand setup to someone else. Hidden when absent. */
+  onSendLink?: (draft: SsoDraft) => void
+  /**
+   * Set when someone outside Iris (usually IT) is filling this in from a setup
+   * link. They can connect and test, but turning SSO on stays with an Admin.
+   */
+  delegate?: { adminName: string }
 }) {
   const [d, setD] = useState<SsoDraft>(initial)
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
+  useEffect(() => { onChangeRef.current?.(d) }, [d])
   const set = (patch: Partial<SsoDraft>) => setD((x) => ({ ...x, ...patch }))
   const provider = d.providerId ? providerById(d.providerId) : null
   const topRef = useRef<HTMLDivElement>(null)
@@ -130,8 +146,7 @@ export function SsoWizard({
   ][d.step] ?? true
 
   const goto = (step: number) => set({ step })
-  const sendLink = () =>
-    toast({ title: "Setup link sent", description: "Scoped to SSO setup only. Email stubbed in prototype.", variant: "success" })
+  const lastSetupStep = setupSteps.length - 1
 
   return (
     <Card ref={topRef} className="w-full scroll-mt-4 overflow-hidden">
@@ -183,11 +198,16 @@ export function SsoWizard({
               Let people try SSO alongside their passwords for a week, then switch to Required from the SSO page.
             </TipCard>
           )}
-          {d.step < TURN_ON && (
+          {delegate && d.step === lastSetupStep && (
+            <TipCard title={`${delegate.adminName} turns it on`}>
+              Once the test passes, hand the setup back. An Iris Admin reviews it and chooses whether SSO is optional or required.
+            </TipCard>
+          )}
+          {!delegate && onSendLink && d.step < TURN_ON && (
             <TipCard title="Not the right person?">
               <div className="flex flex-col gap-3">
-                <p>Send this setup to whoever manages your staff sign-in. They'll only get access to SSO setup.</p>
-                <Button variant="outline" size="sm" onClick={sendLink}><Send aria-hidden /> Send setup link</Button>
+                <p>Send this setup to whoever manages your staff sign-in. They can connect and test, but only an Admin can turn SSO on.</p>
+                <Button variant="outline" size="sm" onClick={() => onSendLink(d)}><Send aria-hidden /> Send setup link</Button>
               </div>
             </TipCard>
           )}
@@ -196,12 +216,18 @@ export function SsoWizard({
       </CardContent>
 
       <CardFooter className="flex-wrap justify-between gap-3 border-t border-line-neutral-muted px-5 pt-4 pb-4">
-        <Button variant="ghost" onClick={() => (d.step === 0 ? onExit(d) : goto(d.step - 1))}>
-          {d.step === 0 ? "Cancel" : "Back"}
-        </Button>
+        {d.step === 0 && delegate ? <span /> : (
+          <Button variant="ghost" onClick={() => (d.step === 0 ? onExit(d) : goto(d.step - 1))}>
+            {d.step === 0 ? "Cancel" : "Back"}
+          </Button>
+        )}
         <div className="flex items-center gap-2">
-          {d.step < TURN_ON && <Button variant="outline" onClick={() => onExit(d)}>Save and exit</Button>}
-          {d.step < TURN_ON ? (
+          {d.step < TURN_ON && <Button variant="outline" onClick={() => onExit(d)}>{delegate ? "Save for later" : "Save and exit"}</Button>}
+          {delegate && d.step === lastSetupStep ? (
+            <Button disabled={!canContinue} onClick={() => onComplete(d)}>
+              <Send aria-hidden /> Hand back to {delegate.adminName}
+            </Button>
+          ) : d.step < TURN_ON ? (
             <Button disabled={!canContinue} onClick={() => goto(d.step + 1)}>
               {d.step === 4 ? "Continue to turn on" : d.step === 3 ? "Continue to test" : "Continue"}
             </Button>

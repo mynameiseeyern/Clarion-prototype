@@ -82,6 +82,14 @@ export interface ProviderDef {
  */
 export const tenantId = "t8x4kq2m9vzr" // placeholder: a random ID, not the company name
 export const signInPage = `https://login.ir.com/${tenantId}`
+
+/**
+ * Acme's *Microsoft* tenant ID — made by Microsoft, identifies Acme's Entra
+ * directory. Unrelated to Iris's tenantId above; it only appears in the values
+ * Iris reads back from Entra.
+ */
+const ENTRA_TENANT = "3d9f6a2e-58c1-4b7e-a0d4-c62e19b7f851"
+const ENTRA_APP = "b41e07c9-2f6d-4a83-9e15-7d0c3a68f2b4"
 const ENTITY = `${signInPage}/saml`
 const ACS = `${signInPage}/saml/acs`
 const REDIRECT = `${signInPage}/oidc/callback`
@@ -118,10 +126,10 @@ export const providers: ProviderDef[] = [
     connectMethods: ["url", "file", "manual"],
     urlLabel: "App Federation Metadata Url",
     urlWhere: "In Entra: the Iris app → **Single sign-on** → **SAML Certificates**",
-    urlExample: "https://login.microsoftonline.com/7f3c…/federationmetadata/2007-06/federationmetadata.xml?appid=2b9e…",
+    urlExample: `https://login.microsoftonline.com/${ENTRA_TENANT}/federationmetadata/2007-06/federationmetadata.xml?appid=${ENTRA_APP}`,
     parsed: [
-      ["Login URL", "https://login.microsoftonline.com/7f3c…/saml2"],
-      ["Microsoft Entra Identifier", "https://sts.windows.net/7f3c…/"],
+      ["Login URL", `https://login.microsoftonline.com/${ENTRA_TENANT}/saml2`],
+      ["Microsoft Entra Identifier", `https://sts.windows.net/${ENTRA_TENANT}/`],
     ],
     connectErrors: [
       { tone: "danger", title: "We couldn't open this link.", body: "Check you copied the whole App Federation Metadata Url, including the part after **?appid=**." },

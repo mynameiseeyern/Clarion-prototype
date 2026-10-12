@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react"
-import { KeyRound, ShieldCheck, Send, Check } from "lucide-react"
+import { KeyRound, ShieldCheck, Send, Check, ExternalLink } from "lucide-react"
 import {
   Badge, Button,
   Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardHeaderText, CardTitle,
@@ -11,6 +11,8 @@ import { roleLabel } from "@/data/users"
 import { providers, providerById, activeMembers, sampleEmailDomain, signInPage, setupSteps, recentSignIns, connectMethodLabel } from "@/data/sso"
 import { SsoWizard, emptyDraft, type SsoDraft, type SsoMode } from "@/components/admin/sso/SsoWizard"
 import { Callout, DetailList } from "@/components/admin/sso/parts"
+import { SendSetupLinkDialog } from "@/components/admin/sso/SendSetupLinkDialog"
+import { inviteUrl, isOpen, shortDate, useInvite, writeInvite, type SetupInvite } from "@/data/ssoDelegate"
 
 type View = "overview" | "setup" | "active"
 
@@ -32,9 +34,42 @@ export function SsoPage() {
 
   const start = (from: SsoDraft = draft ?? emptyDraft) => save({ view: "setup", draft: from })
 
+  // ---- Setup link (hand setup to IT) ----
+  const invite = useInvite()
+  const shared = isOpen(invite) ? invite : null
+  const [sendFrom, setSendFrom] = useState<SsoDraft | null>(null)
+  const sendDialog = (
+    <SendSetupLinkDialog
+      open={sendFrom !== null}
+      onOpenChange={(o) => { if (!o) setSendFrom(null) }}
+      draft={sendFrom ?? emptyDraft}
+      onSent={(i) => {
+        writeInvite(i)
+        save({ view: live ? "active" : "overview", draft: null })
+        toast({ title: `Setup link sent to ${i.email}`, description: "Email stubbed in prototype. Use “Open their view” to see what they get.", variant: "success" })
+      }}
+    />
+  )
+  const banner = shared && (
+    <InviteBanner
+      invite={shared}
+      onRevoke={() => {
+        writeInvite({ ...shared, status: "revoked" })
+        toast({ title: "Setup link cancelled", description: `${shared.email} can no longer open it.`, variant: "info" })
+      }}
+      onReview={() => {
+        writeInvite(null)
+        start({ ...shared.draft, step: setupSteps.length })
+      }}
+    />
+  )
+
   if (view === "setup") {
     return (
+      <>
+      {sendDialog}
       <SsoWizard
+        onSendLink={(d) => setSendFrom(d)}
         initial={draft ?? emptyDraft}
         onExit={(d) => {
           // An untouched wizard isn't worth resuming.
@@ -51,6 +86,7 @@ export function SsoPage() {
           })
         }}
       />
+      </>
     )
   }
 
@@ -71,7 +107,19 @@ export function SsoPage() {
     )
   }
 
-  return <EmptyView draft={draft} onStart={() => start()} onStartOver={() => start(emptyDraft)} />
+  return (
+    <>
+      {sendDialog}
+      <EmptyView
+        draft={draft}
+        banner={banner}
+        delegated={!!shared}
+        onStart={() => start()}
+        onStartOver={() => start(emptyDraft)}
+        onSendLink={() => setSendFrom(draft ?? emptyDraft)}
+      />
+    </>
+  )
 }
 
 // ---- Not set up ----------------------------------------------------------------
@@ -89,13 +137,22 @@ function IconTile({ tone, children }: { tone: "primary" | "success"; children: R
   )
 }
 
-function EmptyView({ draft, onStart, onStartOver }: { draft: SsoDraft | null; onStart: () => void; onStartOver: () => void }) {
-  const sendLink = () => toast({ title: "Setup link sent", description: "Scoped to SSO setup only. Email stubbed in prototype.", variant: "success" })
+function EmptyView({
+  draft, banner, delegated, onStart, onStartOver, onSendLink,
+}: {
+  draft: SsoDraft | null
+  banner: ReactNode
+  delegated: boolean
+  onStart: () => void
+  onStartOver: () => void
+  onSendLink: () => void
+}) {
   const at = draft ? Math.min(draft.step, setupSteps.length - 1) : 0
 
   return (
     <div className="flex flex-col gap-4">
-      {draft && (
+      {banner}
+      {draft && !delegated && (
         <Callout
           tone="info"
           title={`Setup paused at step ${at + 1}: ${setupSteps[at]}`}
@@ -142,12 +199,45 @@ function EmptyView({ draft, onStart, onStartOver }: { draft: SsoDraft | null; on
             Works with {providers.filter((p) => !p.generic).map((p) => p.name).join(", ")}, and any SAML 2.0 or OIDC provider. Takes about 15 minutes with access to your identity provider.
           </p>
         </CardContent>
-        <CardFooter className="flex-wrap border-t border-line-neutral-muted pt-4">
-          {!draft && <Button onClick={onStart}><KeyRound aria-hidden /> Set up SSO</Button>}
-          <Button variant="outline" onClick={sendLink}><Send aria-hidden /> Send setup link to your IT team</Button>
-        </CardFooter>
+        {!delegated && (
+          <CardFooter className="flex-wrap border-t border-line-neutral-muted pt-4">
+            {!draft && <Button onClick={onStart}><KeyRound aria-hidden /> Set up SSO</Button>}
+            <Button variant="outline" onClick={onSendLink}><Send aria-hidden /> Send setup link to your IT team</Button>
+          </CardFooter>
+        )}
       </Card>
     </div>
+  )
+}
+
+// ---- Setup link status -----------------------------------------------------------
+
+function InviteBanner({ invite, onRevoke, onReview }: { invite: SetupInvite; onRevoke: () => void; onReview: () => void }) {
+  if (invite.status === "completed") {
+    return (
+      <Callout tone="success" title={`${invite.email} finished setup and the test passed`} action={<Button size="xs" onClick={onReview}><ShieldCheck aria-hidden /> Review and turn on</Button>}>
+        Only an Admin can turn single sign-on on. Review the connection, then choose Optional or Required.
+      </Callout>
+    )
+  }
+  const step = Math.min(invite.draft.step, setupSteps.length - 1)
+  const provider = invite.draft.providerId ? providerById(invite.draft.providerId).name : null
+  const actions = (
+    <div className="flex gap-2">
+      <Button size="xs" variant="ghost" onClick={onRevoke}>Cancel link</Button>
+      <Button size="xs" variant="outline" asChild>
+        <a href={inviteUrl(invite)} target="_blank" rel="noreferrer"><ExternalLink aria-hidden /> Open their view</a>
+      </Button>
+    </div>
+  )
+  return invite.status === "verified" ? (
+    <Callout tone="info" title={`${invite.email} is setting up single sign-on`} action={actions}>
+      On step {step + 1} of {setupSteps.length}: {setupSteps[step]}{provider ? ` · ${provider}` : ""}. You'll be emailed when the test passes. Link expires {shortDate(invite.expiresAt)}.
+    </Callout>
+  ) : (
+    <Callout tone="info" title={`Setup link sent to ${invite.email}`} action={actions}>
+      Not opened yet. Expires {shortDate(invite.expiresAt)}.
+    </Callout>
   )
 }
 

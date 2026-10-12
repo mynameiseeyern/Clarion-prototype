@@ -128,8 +128,8 @@ export function UsersRolesPage() {
             )}
           </InputGroup>
           <div className="flex items-center gap-2 sm:ms-auto">
-            <Select label="Role" options={roleOptions} value={roles} onValueChange={setRoles} showDetail={false} icon={<UserCog />} className="min-w-32" />
-            <Select label="Status" options={statusOptions} value={statuses} onValueChange={setStatuses} showDetail={false} icon={<BadgeCheck />} className="min-w-32" />
+            <Select label="Role" options={roleOptions} value={roles} onValueChange={setRoles} showDetail={false} icon={<UserCog />} className="min-w-40" />
+            <Select label="Status" options={statusOptions} value={statuses} onValueChange={setStatuses} showDetail={false} icon={<BadgeCheck />} className="min-w-40" />
           </div>
         </div>
 

@@ -8,7 +8,7 @@ import { UsersRolesPage } from "@/pages/UsersRolesPage"
 import { SsoPage } from "@/pages/SsoPage"
 import { PlaceholderPage } from "@/pages/PlaceholderPage"
 import { RbacDocPage, GroupsDocPage, BillingDocPage } from "@/pages/AdminDocs"
-import { PageHeader } from "@ir/ui"
+import { AppShellContent, PageHeader } from "@ir/ui"
 import { AdminToaster } from "@/components/admin/AdminToaster"
 
 /**
@@ -85,11 +85,13 @@ export function AdminApp({
           </div>
         </header>
 
-        {/* page title */}
-        <PageHeader className="shrink-0 px-5 pt-5" title={pageLabel(page)} description={pageSubtitle[page]} />
-
-        {/* content */}
-        <div className="flex flex-1 flex-col overflow-y-auto p-4">
+        {/* Content — Picasso's AppShellContent: p-gutter padding and the
+            "standard" width (max 1280, left-aligned to the rail) that Picasso
+            sets for settings and mixed pages. The title sits in the same
+            column so its start lines up with the cards below. */}
+        <AppShellContent width="standard">
+          <div className="flex flex-col gap-gutter">
+          <PageHeader title={pageLabel(page)} description={pageSubtitle[page]} />
           {page === "users" && <UsersRolesPage />}
           {page === "groups" && (
             <PlaceholderPage title="Groups" icon={FolderTree} description="Build a Group hierarchy that mirrors your team structure (Country → Area → Office → Shift). A Manager assigned to a Group sees every Widget beneath it (visibility cascades). Bulk-assign and move Widgets between Groups." />
@@ -108,7 +110,8 @@ export function AdminApp({
           {page === "rbacdoc" && <RbacDocPage />}
           {page === "groupsdoc" && <GroupsDocPage />}
           {page === "billingdoc" && <BillingDocPage />}
-        </div>
+          </div>
+        </AppShellContent>
       </div>
 
       <AdminToaster />
