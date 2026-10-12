@@ -75,12 +75,12 @@ export interface ProviderDef {
 }
 
 /**
- * Each customer signs in at login.ir.com/<tenant_id>, like Slack's acme.slack.com.
+ * Each customer signs in at login.ir.com/<tenant_id>, a random ID (unlike Slack, which uses acme.slack.com).
  * That address tells Iris which customer someone belongs to, so there is no email
  * domain to verify. The /saml and /oidc paths below are placeholders until
  * engineering confirms them.
  */
-export const tenantId = "acme"
+export const tenantId = "t8x4kq2m9vzr" // placeholder: a random ID, not the company name
 export const signInPage = `https://login.ir.com/${tenantId}`
 const ENTITY = `${signInPage}/saml`
 const ACS = `${signInPage}/saml/acs`
