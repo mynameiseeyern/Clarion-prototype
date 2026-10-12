@@ -4,6 +4,7 @@ import { pageLabel, pageSubtitle, type PageId, type Experience } from "@/nav"
 import { AdminSidebar } from "@/components/dashboard/AdminSidebar"
 import { ExperienceMenu } from "@/components/dashboard/ExperienceMenu"
 import { UsersRolesPage } from "@/pages/UsersRolesPage"
+import { SsoPage } from "@/pages/SsoPage"
 import { PlaceholderPage } from "@/pages/PlaceholderPage"
 import { RbacDocPage, GroupsDocPage, BillingDocPage } from "@/pages/AdminDocs"
 import { Toaster } from "@/components/ui/toast"
@@ -92,6 +93,7 @@ export function AdminApp({
           {page === "widgets" && (
             <PlaceholderPage title="Device management" icon={RadioTower} description="Register agents and generate auth tokens, assign unassigned Widgets to Groups, revoke compromised tokens, and review status and last-seen. A Widget becomes a Device once it's set up and reporting telemetry." />
           )}
+          {page === "sso" && <SsoPage />}
           {page === "subscription" && (
             <PlaceholderPage title="Subscription & billing" icon={CreditCard} description="See what's included in your tier and track seat usage. Plan changes, add-ons, invoices and payment arrive for 1.0." />
           )}

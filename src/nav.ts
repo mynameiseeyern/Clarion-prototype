@@ -15,12 +15,13 @@ import {
   ShieldCheck,
   Network,
   ReceiptText,
+  KeyRound,
   type LucideIcon,
 } from "lucide-react"
 
 export type PageId =
   | "overview" | "endpoints" | "alerts" | "thresholds"
-  | "users" | "groups" | "widgets" | "subscription" | "audit"
+  | "users" | "groups" | "widgets" | "sso" | "subscription" | "audit"
   | "rbacdoc" | "groupsdoc" | "billingdoc"
   | "glossary" | "issuesdoc" | "devicesdoc" | "scopedoc" | "components"
 
@@ -50,6 +51,7 @@ export const adminNavItems: NavItem[] = [
   { id: "widgets", label: "Device management", icon: RadioTower },
   { id: "users", label: "Members", icon: Users },
   { id: "groups", label: "Groups", icon: FolderTree },
+  { id: "sso", label: "Single sign-on", icon: KeyRound },
   { id: "subscription", label: "Subscription", icon: CreditCard },
   { id: "audit", label: "Audit log", icon: ScrollText },
 ]
@@ -83,6 +85,7 @@ export const pageSubtitle: Partial<Record<PageId, string>> = {
   users: "Invite people, set their role, and manage access.",
   groups: "Organise Widgets into Groups that scope what each Manager sees.",
   widgets: "Register, assign and revoke endpoint Widgets. A Widget becomes an Endpoint once it's set up and reporting.",
+  sso: "Let Members sign in with your company's identity provider.",
   subscription: "Review your plan, usage and billing.",
   audit: "Track who changed what, and when.",
   rbacdoc: "How roles, scope and permissions work.",
@@ -100,6 +103,7 @@ export const pagePath: Record<PageId, string> = {
   users: "/admin/users",
   groups: "/admin/groups",
   widgets: "/admin/widgets",
+  sso: "/admin/sso",
   subscription: "/admin/subscription",
   audit: "/admin/audit",
   rbacdoc: "/admin/docs/roles",
@@ -142,7 +146,7 @@ export const buildPath = (page: PageId, drawer: DrawerParams = {}): string => {
 
 export type Experience = "fleet" | "admin"
 
-export const adminPageIds: PageId[] = ["users", "groups", "widgets", "subscription", "audit", "rbacdoc", "groupsdoc", "billingdoc"]
+export const adminPageIds: PageId[] = ["users", "groups", "widgets", "sso", "subscription", "audit", "rbacdoc", "groupsdoc", "billingdoc"]
 
 export const experienceOf = (id: PageId): Experience =>
   (adminPageIds as string[]).includes(id) ? "admin" : "fleet"
