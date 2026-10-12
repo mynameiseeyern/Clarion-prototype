@@ -12,6 +12,7 @@ import { providers, providerById, activeMembers, sampleEmailDomain, signInPage, 
 import { SsoWizard, emptyDraft, type SsoDraft, type SsoMode } from "@/components/admin/sso/SsoWizard"
 import { Callout, DetailList } from "@/components/admin/sso/parts"
 import { SendSetupLinkDialog } from "@/components/admin/sso/SendSetupLinkDialog"
+import { ReplaceCertificateDialog } from "@/components/admin/sso/ReplaceCertificateDialog"
 import { inviteUrl, isOpen, shortDate, useInvite, writeInvite, type SetupInvite } from "@/data/ssoDelegate"
 
 type View = "overview" | "setup" | "active"
@@ -259,8 +260,34 @@ function ActiveView({
   const method = live.connectMethod === "oidc" ? "Issuer URL, client ID and secret" : connectMethodLabel[live.connectMethod ?? "url"]
   const autoRefresh = live.connectMethod === "url" || live.connectMethod === "oidc"
 
+  // Certificates from a file or typed in by hand don't renew themselves.
+  const [cert, setCert] = useState({ expires: "14 Mar 2029", file: null as string | null })
+  const [replaceOpen, setReplaceOpen] = useState(false)
+  const [previewExpiring, setPreviewExpiring] = useState(false)
+  const expiring = !autoRefresh && previewExpiring
+
   return (
     <div className="flex flex-col gap-4">
+      <ReplaceCertificateDialog
+        open={replaceOpen}
+        onOpenChange={setReplaceOpen}
+        providerId={live.providerId!}
+        onReplaced={(c) => {
+          setCert({ expires: c.expires, file: c.name })
+          setPreviewExpiring(false)
+          toast({ title: "Certificate saved", description: `Iris trusts both certificates until the old one expires. Make the new one active in ${p.short}.`, variant: "success" })
+        }}
+      />
+
+      {expiring && (
+        <Callout
+          tone="warning"
+          title="The signing certificate expires in 21 days"
+          action={<Button size="xs" onClick={() => setReplaceOpen(true)}>Replace certificate</Button>}
+        >
+          When it expires, nobody can sign in with {p.short}. Download the new certificate from {p.short} and upload it here.
+        </Callout>
+      )}
       {/* Status */}
       <Card className="w-full overflow-hidden">
         <CardHeader className="flex-wrap">
@@ -323,10 +350,29 @@ function ActiveView({
                 ["Connected with", method],
                 [p.parsed[0][0], <span className="font-mono text-code-sm">{p.parsed[0][1]}</span>],
                 ...(p.protocol === "SAML 2.0"
-                  ? [["Signing certificate", <span className="flex flex-col gap-0.5">Valid until 14 Mar 2029<span className="text-body-xs text-content-neutral-muted">{autoRefresh ? "New certificates are picked up automatically." : "We'll email Admins 30 and 7 days before it expires."}</span></span>] as [string, ReactNode]]
+                  ? [["Signing certificate", (
+                      <span className="flex flex-col gap-1">
+                        <span className="flex flex-wrap items-center gap-2">
+                          {expiring ? "Expires 2 Nov 2026" : `Valid until ${cert.expires}`}
+                          {expiring && <Badge color="warning" dot>21 days left</Badge>}
+                          {cert.file && <span className="text-body-xs text-content-neutral-muted">from {cert.file}</span>}
+                        </span>
+                        <span className="text-body-xs text-content-neutral-muted">
+                          {autoRefresh ? "New certificates are picked up automatically." : "Uploaded, so it won't renew itself. We'll email Admins 30 and 7 days before it expires."}
+                        </span>
+                        {!autoRefresh && (
+                          <Button variant="link" size="xs" className="h-auto w-fit p-0" onClick={() => setReplaceOpen(true)}>Replace certificate</Button>
+                        )}
+                      </span>
+                    )] as [string, ReactNode]]
                   : []),
               ]}
             />
+            {!autoRefresh && p.protocol === "SAML 2.0" && (
+              <Button variant="link" size="xs" className="mt-3 h-auto w-fit p-0" onClick={() => setPreviewExpiring((v) => !v)}>
+                Prototype: {previewExpiring ? "back to a valid certificate" : "preview an expiring certificate"}
+              </Button>
+            )}
           </CardContent>
         </Card>
 

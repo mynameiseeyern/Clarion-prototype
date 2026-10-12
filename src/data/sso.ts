@@ -58,6 +58,10 @@ export interface ProviderDef {
   urlWhere?: string
   urlExample?: string
   fileName?: string
+  /** Where the metadata file download is, in the provider's words. */
+  fileWhere?: string
+  /** The certificate-only download (Enter manually / Replace certificate). */
+  cert?: { fileName: string; where: string; subject: string }
   /** What Iris reads back, labelled the way the provider labels it. */
   parsed: [string, string][]
   connectErrors: { tone: "danger" | "warning"; title: string; body: string }[]
@@ -127,6 +131,13 @@ export const providers: ProviderDef[] = [
     urlLabel: "App Federation Metadata Url",
     urlWhere: "In Entra: the Iris app → **Single sign-on** → **SAML Certificates**",
     urlExample: `https://login.microsoftonline.com/${ENTRA_TENANT}/federationmetadata/2007-06/federationmetadata.xml?appid=${ENTRA_APP}`,
+    fileName: "Iris.xml",
+    fileWhere: "In Entra: the Iris app → **Single sign-on** → **SAML Certificates** → **Federation Metadata XML** → **Download**",
+    cert: {
+      fileName: "Iris.cer",
+      where: "In Entra: the Iris app → **Single sign-on** → **SAML Certificates** → **Certificate (Base64)** → **Download**",
+      subject: "Microsoft Azure Federated SSO Certificate",
+    },
     parsed: [
       ["Login URL", `https://login.microsoftonline.com/${ENTRA_TENANT}/saml2`],
       ["Microsoft Entra Identifier", `https://sts.windows.net/${ENTRA_TENANT}/`],

@@ -16,6 +16,7 @@ import {
   type ProviderId, type ConnectMethod,
 } from "@/data/sso"
 import { Rich, CopyField, Callout, SetupStepper, TipCard, DetailList, SectionTitle } from "./parts"
+import { CertificateUpload, EXAMPLE_CERT, type CertInfo } from "./CertificateUpload"
 
 // ---- Types shared with the page ---------------------------------------------
 
@@ -148,20 +149,55 @@ export function SsoWizard({
   const goto = (step: number) => set({ step })
   const lastSetupStep = setupSteps.length - 1
 
+  // One tip per step, about the step in front of you.
+  const tip: ReactNode =
+    d.step === 0 ? (
+      <TipCard title="Why we ask">
+        Each provider names the same settings differently. Choosing yours means the next steps use the words you'll see on its screens.
+      </TipCard>
+    ) : provider && d.step === 1 ? <TipCard title={provider.addTip.title}><Rich text={provider.addTip.body} /></TipCard>
+    : provider && d.step === 2 ? <TipCard title={provider.connectTip.title}><Rich text={provider.connectTip.body} /></TipCard>
+    : provider && d.step === 3 ? <TipCard title={provider.mapTip.title}><Rich text={provider.mapTip.body} /></TipCard>
+    : d.step === 4 ? (
+      delegate ? (
+        <TipCard title={`${delegate.adminName} turns it on`}>
+          Once the test passes, hand the setup back. An Iris Admin reviews it and chooses whether SSO is optional or required.
+        </TipCard>
+      ) : (
+        <TipCard title="The test is safe">
+          It only signs in the person running it, doesn't create a session, and doesn't change anything for other Members.
+        </TipCard>
+      )
+    ) : d.step === TURN_ON ? (
+      <TipCard title="Start with Optional">
+        Let people try SSO alongside their passwords for a week, then switch to Required from the SSO page.
+      </TipCard>
+    ) : null
+
+  // Layout: the task is the card; help sits beside it, outside the card, from
+  // xl up. Narrower than that there's no room for a rail, so the tip drops
+  // into the card under the step it explains. "Send setup link" applies to
+  // the whole setup, so it lives in the card header, not in a tip.
   return (
-    <Card ref={topRef} className="w-full scroll-mt-4 overflow-hidden">
+    <div ref={topRef} className="flex scroll-mt-4 flex-col items-start gap-gutter xl:flex-row">
+    <Card className="w-full min-w-0 flex-1 overflow-hidden">
       <CardHeader className="flex-col gap-3 border-b border-line-neutral-muted px-5 pt-4 pb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2">
           <KeyRound aria-hidden className="size-4 text-content-neutral-muted" />
           <span className="text-label-md text-content-neutral-emphasis">
             {d.step === TURN_ON ? "Turn on single sign-on" : "Set up single sign-on"}
           </span>
           {provider && d.step > 0 && <Badge className="ms-1">{provider.name}</Badge>}
+          {!delegate && onSendLink && d.step < TURN_ON && (
+            <Button variant="ghost" size="sm" className="ms-auto" onClick={() => onSendLink(d)}>
+              <Send aria-hidden /> Send to someone else
+            </Button>
+          )}
         </div>
         {d.step < TURN_ON && <SetupStepper steps={setupSteps} current={d.step} />}
       </CardHeader>
 
-      <CardContent className="grid grid-cols-1 gap-6 p-5 lg:grid-cols-[minmax(0,1fr)_17rem]">
+      <CardContent className="p-5">
         <section className="flex min-w-0 flex-col gap-5">
           {d.step === 0 && <StepProvider value={d.providerId} onChange={(id) => setD((x) => forProvider(x, id))} />}
           {d.step === 1 && provider && <StepAdd p={provider} confirmed={d.addConfirmed} onConfirm={(v) => set({ addConfirmed: v })} />}
@@ -177,42 +213,8 @@ export function SsoWizard({
           {d.step === 3 && provider && <StepMap p={provider} d={d} set={set} />}
           {d.step === 4 && provider && <StepTest p={provider} d={d} passed={d.tested} onResult={(ok) => set({ tested: ok })} onFix={goto} />}
           {d.step === TURN_ON && provider && <StepTurnOn p={provider} mode={d.mode} onMode={(m) => set({ mode: m })} />}
+          {tip && <div className="xl:hidden">{tip}</div>}
         </section>
-
-        <aside className="flex min-w-0 flex-col gap-3">
-          {d.step === 0 && (
-            <TipCard title="Why we ask">
-              Each provider names the same settings differently. Choosing yours means the next steps use the words you'll see on its screens.
-            </TipCard>
-          )}
-          {provider && d.step === 1 && <TipCard title={provider.addTip.title}><Rich text={provider.addTip.body} /></TipCard>}
-          {provider && d.step === 2 && <TipCard title={provider.connectTip.title}><Rich text={provider.connectTip.body} /></TipCard>}
-          {provider && d.step === 3 && <TipCard title={provider.mapTip.title}><Rich text={provider.mapTip.body} /></TipCard>}
-          {d.step === 4 && (
-            <TipCard title="The test is safe">
-              It only signs in the person running it, doesn't create a session, and doesn't change anything for other Members.
-            </TipCard>
-          )}
-          {d.step === TURN_ON && (
-            <TipCard title="Start with Optional">
-              Let people try SSO alongside their passwords for a week, then switch to Required from the SSO page.
-            </TipCard>
-          )}
-          {delegate && d.step === lastSetupStep && (
-            <TipCard title={`${delegate.adminName} turns it on`}>
-              Once the test passes, hand the setup back. An Iris Admin reviews it and chooses whether SSO is optional or required.
-            </TipCard>
-          )}
-          {!delegate && onSendLink && d.step < TURN_ON && (
-            <TipCard title="Not the right person?">
-              <div className="flex flex-col gap-3">
-                <p>Send this setup to whoever manages your staff sign-in. They can connect and test, but only an Admin can turn SSO on.</p>
-                <Button variant="outline" size="sm" onClick={() => onSendLink(d)}><Send aria-hidden /> Send setup link</Button>
-              </div>
-            </TipCard>
-          )}
-          <p className="px-1 text-body-xs text-content-neutral-muted">Progress saves automatically. You can leave and come back.</p>
-        </aside>
       </CardContent>
 
       <CardFooter className="flex-wrap justify-between gap-3 border-t border-line-neutral-muted px-5 pt-4 pb-4">
@@ -221,7 +223,8 @@ export function SsoWizard({
             {d.step === 0 ? "Cancel" : "Back"}
           </Button>
         )}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {d.step < TURN_ON && <span className="hidden pe-1 text-body-xs text-content-neutral-muted md:inline">Progress saves automatically</span>}
           {d.step < TURN_ON && <Button variant="outline" onClick={() => onExit(d)}>{delegate ? "Save for later" : "Save and exit"}</Button>}
           {delegate && d.step === lastSetupStep ? (
             <Button disabled={!canContinue} onClick={() => onComplete(d)}>
@@ -239,6 +242,8 @@ export function SsoWizard({
         </div>
       </CardFooter>
     </Card>
+    {tip && <aside aria-label="Help for this step" className="hidden w-72 shrink-0 xl:sticky xl:top-0 xl:block">{tip}</aside>}
+    </div>
   )
 }
 
@@ -375,6 +380,8 @@ function StepConnect({
   const [url, setUrl] = useState(p.urlExample ?? "")
   const [file, setFile] = useState<{ name: string; size: number } | null>(connected && method === "file" ? { name: p.fileName ?? "metadata.xml", size: 4180 } : null)
   const [manual, setManual] = useState({ sso: "", issuer: "", cert: "" })
+  const [certFile, setCertFile] = useState<CertInfo | null>(null)
+  const certMeta = p.cert ?? { fileName: "certificate.cer", where: "", subject: `${p.name} signing certificate` }
   const [oidc, setOidc] = useState({ issuer: "https://login.acme.com", clientId: "", secret: "" })
 
   const run = async () => {
@@ -436,6 +443,7 @@ function StepConnect({
               <FileUpload accept=".xml,application/xml,text/xml" placeholder="Choose the .xml file you downloaded" onFilesChange={(fs) => fs[0] && pickFile({ name: fs[0].name, size: fs[0].size })} />
             </FieldControl>
             <FieldDescription>
+              {p.fileWhere && <><Rich text={p.fileWhere} />. </>}
               No file to hand?{" "}
               <Button variant="link" size="xs" className="h-auto p-0" onClick={() => pickFile({ name: p.fileName ?? "metadata.xml", size: 4180 })}>Use the example file</Button>
             </FieldDescription>
@@ -464,16 +472,28 @@ function StepConnect({
               </FieldControl>
               <FieldDescription>Also called: IdP Entity ID · Identity Provider Issuer · Identifier</FieldDescription>
             </Field>
-            <Field>
-              <FieldLabel>Signing certificate</FieldLabel>
-              <FieldControl>
-                <Textarea rows={4} value={manual.cert} placeholder="-----BEGIN CERTIFICATE-----" onChange={(e) => { setManual({ ...manual, cert: e.target.value }); onConnected(false) }} className="font-mono text-code-sm" />
-              </FieldControl>
-              <FieldDescription>Also called: X.509 certificate · Token signing certificate. Paste the whole certificate.</FieldDescription>
-            </Field>
+            <div className="flex flex-col gap-2">
+              <span className="text-label-md text-content-neutral-emphasis">Signing certificate</span>
+              <span className="text-body-xs text-content-neutral-muted">Also called: X.509 certificate · Token signing certificate. Upload the file, or paste its contents.</span>
+              <CertificateUpload
+                value={certFile}
+                subject={certMeta.subject}
+                fileName={certMeta.fileName}
+                where={certMeta.where || undefined}
+                onChange={(c) => { setCertFile(c); setManual((m) => ({ ...m, cert: c?.text ?? "" })); onConnected(false) }}
+              />
+              {!certFile && (
+                <Field>
+                  <FieldLabel>Or paste it</FieldLabel>
+                  <FieldControl>
+                    <Textarea rows={3} value={manual.cert} placeholder="-----BEGIN CERTIFICATE-----" onChange={(e) => { setManual({ ...manual, cert: e.target.value }); onConnected(false) }} className="font-mono text-code-sm" />
+                  </FieldControl>
+                </Field>
+              )}
+            </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" disabled={!ready} loading={busy} onClick={run}>Check details</Button>
-              <Button variant="ghost" onClick={() => setManual({ sso: p.parsed[0][1], issuer: p.parsed[1][1], cert: "-----BEGIN CERTIFICATE-----\nMIIDpDCCAoygAwIBAgIGAY…\n-----END CERTIFICATE-----" })}>Fill example values</Button>
+              <Button variant="ghost" onClick={() => { setManual({ sso: p.parsed[0][1], issuer: p.parsed[1][1], cert: EXAMPLE_CERT }); setCertFile({ name: certMeta.fileName, size: 1672, subject: certMeta.subject, expires: "14 Mar 2029", text: EXAMPLE_CERT }) }}>Fill example values</Button>
             </div>
           </CardContent>
         </Card>
