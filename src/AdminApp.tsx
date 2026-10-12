@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { PanelLeft, ChevronRight, Sun, Moon, FolderTree, RadioTower, CreditCard, ScrollText } from "lucide-react"
 import { fleet } from "@/data/dashboard"
 import { pageLabel, pageSubtitle, type PageId, type Experience } from "@/nav"
@@ -7,7 +8,8 @@ import { UsersRolesPage } from "@/pages/UsersRolesPage"
 import { SsoPage } from "@/pages/SsoPage"
 import { PlaceholderPage } from "@/pages/PlaceholderPage"
 import { RbacDocPage, GroupsDocPage, BillingDocPage } from "@/pages/AdminDocs"
-import { Toaster } from "@/components/ui/toast"
+import { PageHeader } from "@ir/ui"
+import { AdminToaster } from "@/components/admin/AdminToaster"
 
 /**
  * The Administration experience shell. Lives in the same repo as the Fleet app
@@ -31,6 +33,13 @@ export function AdminApp({
   onToggleSidebar: () => void
   onSwitchExperience: (e: Experience) => void
 }) {
+  // Picasso's tokens and type scale apply while the Administration experience
+  // is mounted. Set on <html> so Radix portals (menus, dialogs, toasts) get it too.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-picasso", "")
+    return () => document.documentElement.removeAttribute("data-picasso")
+  }, [])
+
   return (
     <div className="flex h-screen w-full items-start overflow-hidden" style={{ background: "var(--bg-app)" }}>
       {sidebarOpen && <AdminSidebar active={page} onNavigate={onNavigate} />}
@@ -77,12 +86,7 @@ export function AdminApp({
         </header>
 
         {/* page title */}
-        <div className="shrink-0 p-5" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
-          <h1 className="text-xl font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{pageLabel(page)}</h1>
-          {pageSubtitle[page] && (
-            <p className="mt-1 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>{pageSubtitle[page]}</p>
-          )}
-        </div>
+        <PageHeader className="shrink-0 px-5 pt-5" title={pageLabel(page)} description={pageSubtitle[page]} />
 
         {/* content */}
         <div className="flex flex-1 flex-col overflow-y-auto p-4">
@@ -107,7 +111,7 @@ export function AdminApp({
         </div>
       </div>
 
-      <Toaster />
+      <AdminToaster />
     </div>
   )
 }

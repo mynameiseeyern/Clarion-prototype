@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react"
-import { ShieldCheck, AlertCircle } from "lucide-react"
-import { Dialog } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import {
+  Alert, AlertDescription, AlertTitle, Button,
+  Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Field, FieldControl, FieldDescription, FieldError, FieldLabel, FieldOption,
+  Input, Radio, RadioGroup,
+} from "@ir/ui"
 import { GroupTreePicker } from "@/components/admin/GroupTreePicker"
-import { type UserRole } from "@/data/users"
+import { roleBlurb, roleLabel, type UserRole } from "@/data/users"
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -53,75 +53,60 @@ export function InviteMemberDialog({
   const emailError = touched && !emailValid ? "Enter a valid email address." : touched && duplicate ? "A member with this email already exists." : null
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Invite member"
-      description="Send an email invite and set their role and groups."
-      footer={
-        <>
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button size="sm" onClick={submit} disabled={!canSend}>Send invite</Button>
-        </>
-      }
-    >
-      <div className="flex flex-col gap-4">
-        {/* email */}
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="invite-email">Email address</Label>
-          <Input
-            id="invite-email"
-            type="email"
-            placeholder="name@company.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onBlur={() => setTouched(true)}
-            aria-invalid={emailError ? true : undefined}
-            autoFocus
-          />
-          {emailError && (
-            <span className="inline-flex items-center gap-1 text-xs" style={{ color: "var(--fg-danger-emphasis)" }}>
-              <AlertCircle className="size-3" /> {emailError}
-            </span>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>Invite member</DialogTitle>
+          <DialogDescription>Send an email invite and set their role and groups.</DialogDescription>
+        </DialogHeader>
+
+        <DialogBody className="gap-5">
+          <Field invalid={!!emailError}>
+            <FieldLabel required>Email address</FieldLabel>
+            <FieldControl required>
+              <Input
+                type="email"
+                placeholder="name@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => setTouched(true)}
+                autoFocus
+              />
+            </FieldControl>
+            <FieldError>{emailError}</FieldError>
+          </Field>
+
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2 text-label-md text-content-neutral-emphasis">Role</legend>
+            <RadioGroup value={role} onValueChange={(v) => setRole(v as UserRole)}>
+              {(["admin", "manager"] as const).map((r) => (
+                <FieldOption key={r} control={<Radio value={r} />} description={roleBlurb[r]}>
+                  {roleLabel[r]}
+                </FieldOption>
+              ))}
+            </RadioGroup>
+          </fieldset>
+
+          {role === "manager" ? (
+            <Field invalid={touched && needsGroups}>
+              <FieldLabel required>Groups</FieldLabel>
+              <GroupTreePicker value={picked} onChange={setPicked} />
+              <FieldError>Pick at least one group for a CC Manager.</FieldError>
+              <FieldDescription>Assigning a group includes everything beneath it.</FieldDescription>
+            </Field>
+          ) : (
+            <Alert variant="info">
+              <AlertTitle>Admins see every group</AlertTitle>
+              <AlertDescription>No group selection needed.</AlertDescription>
+            </Alert>
           )}
-        </div>
+        </DialogBody>
 
-        {/* role */}
-        <div className="flex flex-col gap-1.5">
-          <Label>Role</Label>
-          <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="manager">CC Manager</SelectItem>
-            </SelectContent>
-          </Select>
-          <span className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
-            {role === "admin" ? "Full administrative access across the whole org." : "Operational access, scoped to the groups below."}
-          </span>
-        </div>
-
-        {/* groups */}
-        {role === "manager" ? (
-          <div className="flex flex-col gap-1.5">
-            <Label>Groups</Label>
-            <GroupTreePicker value={picked} onChange={setPicked} />
-            {touched && needsGroups && (
-              <span className="inline-flex items-center gap-1 text-xs" style={{ color: "var(--fg-danger-emphasis)" }}>
-                <AlertCircle className="size-3" /> Pick at least one group for a CC Manager.
-              </span>
-            )}
-            <span className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
-              Assigning a group includes everything beneath it.
-            </span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 rounded-lg p-2.5 text-xs" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>
-            <ShieldCheck className="size-3.5 shrink-0" style={{ color: "var(--fg-primary-emphasis)" }} />
-            Admins have access to all groups — no selection needed.
-          </div>
-        )}
-      </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={submit} disabled={touched && !canSend}>Send invite</Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   )
 }

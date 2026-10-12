@@ -20,7 +20,8 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@ir/ui": ["./vendor/picasso/ui/index.ts"]
     },
 
     /* Linting */

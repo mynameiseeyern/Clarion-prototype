@@ -1,16 +1,15 @@
 import { useMemo, useState } from "react"
 import {
   Search, X, Plus, MoreHorizontal, ShieldCheck, UserCog, Mail, KeyRound,
-  UserMinus, UserCheck, Users as UsersIcon,
+  UserMinus, UserCheck, Users as UsersIcon, BadgeCheck,
 } from "lucide-react"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
+  Avatar, AvatarFallback, Badge, Button,
+  Card, CardAction, CardFooter, CardHeader, CardHeaderText, CardTitle,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+  EmptyState, InputGroup, InputGroupAddon, InputGroupInput, KpiTile, Select,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@ir/ui"
 import { toast } from "@/components/ui/toast"
 import { InviteMemberDialog, type InviteDraft } from "@/components/admin/InviteMemberDialog"
 import {
@@ -20,30 +19,18 @@ import {
 
 const initials = (name: string) => name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
 
-const statusBadge: Record<UserStatus, "success" | "info" | "secondary"> = {
-  active: "success", invited: "info", deactivated: "secondary",
-}
-const statusDot: Record<UserStatus, string> = {
-  active: "var(--status-healthy)", invited: "var(--status-info)", deactivated: "var(--status-unknown)",
+const statusColor: Record<UserStatus, "success" | "info" | "neutral"> = {
+  active: "success", invited: "info", deactivated: "neutral",
 }
 
-function Stat({ label, value, icon: Icon }: { label: string; value: number; icon: typeof UsersIcon }) {
-  return (
-    <Card className="flex-1 gap-0 rounded-xl p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{label}</span>
-        <Icon className="size-4" style={{ color: "var(--fg-neutral-subtle)" }} />
-      </div>
-      <span className="mt-2 font-mono text-2xl font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{value}</span>
-    </Card>
-  )
-}
+const roleOptions = (Object.keys(roleLabel) as UserRole[]).map((r) => ({ value: r, label: roleLabel[r] }))
+const statusOptions = (Object.keys(statusLabel) as UserStatus[]).map((s) => ({ value: s, label: statusLabel[s] }))
 
 export function UsersRolesPage() {
   const [rows, setRows] = useState<AccountUser[]>(seedUsers)
   const [search, setSearch] = useState("")
-  const [role, setRole] = useState<UserRole | "all">("all")
-  const [status, setStatus] = useState<UserStatus | "all">("active")
+  const [roles, setRoles] = useState<string[]>([])
+  const [statuses, setStatuses] = useState<string[]>(["active"])
   const [inviteOpen, setInviteOpen] = useState(false)
 
   const stats = useMemo(() => ({
@@ -56,12 +43,12 @@ export function UsersRolesPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return rows.filter((u) => {
-      if (role !== "all" && u.role !== role) return false
-      if (status !== "all" && u.status !== status) return false
+      if (roles.length && !roles.includes(u.role)) return false
+      if (statuses.length && !statuses.includes(u.status)) return false
       if (q && !(u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))) return false
       return true
     })
-  }, [rows, search, role, status])
+  }, [rows, search, roles, statuses])
 
   const activeAdmins = rows.filter((u) => u.role === "admin" && u.status === "active").length
 
@@ -95,177 +82,151 @@ export function UsersRolesPage() {
       groups: gs, lastActive: null, invitedAgo: "just now",
     }
     setRows((xs) => [newUser, ...xs])
-    setStatus("invited")
+    setStatuses(["invited"])
     toast({ title: `Invite sent to ${email}`, description: "Email stubbed in prototype.", variant: "success" })
   }
+
+  const clearFilters = () => { setSearch(""); setRoles([]); setStatuses([]) }
 
   return (
     <div className="flex flex-col gap-4">
       {/* KPI strip */}
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Stat label="Active" value={stats.active} icon={UserCheck} />
-        <Stat label="Invited" value={stats.invited} icon={Mail} />
-        <Stat label="Admins" value={stats.admins} icon={ShieldCheck} />
-        <Stat label="Deactivated" value={stats.deactivated} icon={UserMinus} />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <KpiTile label="Active" value={stats.active} />
+        <KpiTile label="Invited" value={stats.invited} />
+        <KpiTile label="Admins" value={stats.admins} />
+        <KpiTile label="Deactivated" value={stats.deactivated} />
       </div>
 
-      <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
-        {/* header */}
-        <div className="flex items-center gap-2 px-4 py-4">
-          <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Members</h2>
-          <Badge variant="secondary">{filtered.length} {filtered.length === 1 ? "user" : "users"}</Badge>
-          <Button size="sm" className="ml-auto" onClick={() => setInviteOpen(true)}>
-            <Plus /> Invite member
-          </Button>
-        </div>
+      <Card className="w-full overflow-hidden">
+        <CardHeader className="pb-4">
+          <CardHeaderText>
+            <div className="flex items-center gap-2">
+              <CardTitle>Members</CardTitle>
+              <Badge>{filtered.length} {filtered.length === 1 ? "user" : "users"}</Badge>
+            </div>
+          </CardHeaderText>
+          <CardAction>
+            <Button size="sm" onClick={() => setInviteOpen(true)}><Plus aria-hidden /> Invite member</Button>
+          </CardAction>
+        </CardHeader>
 
         {/* toolbar */}
-        <div className="flex flex-col gap-2 px-4 pb-4 sm:flex-row sm:items-center">
-          <div className="flex h-9 w-full items-center gap-1.5 rounded-lg px-2.5 sm:max-w-xs" style={{ background: "var(--bg-input-default)", border: "1px solid var(--border-input-default)" }}>
-            <Search className="size-4 shrink-0" style={{ color: "var(--fg-neutral-muted)" }} />
-            <input
+        <div className="flex flex-col gap-2 px-6 pb-4 sm:flex-row sm:items-center">
+          <InputGroup className="sm:max-w-xs">
+            <InputGroupAddon><Search aria-hidden /></InputGroupAddon>
+            <InputGroupInput
+              aria-label="Search members"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search name or email…"
-              className="min-w-px flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--fg-neutral-muted)]"
-              style={{ color: "var(--fg-neutral-emphasis)" }}
             />
             {search && (
-              <button type="button" aria-label="Clear search" onClick={() => setSearch("")} className="flex size-5 shrink-0 items-center justify-center rounded-sm transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }}>
-                <X className="size-3.5" />
-              </button>
+              <InputGroupAddon align="end">
+                <Button variant="ghost" size="icon-xs" aria-label="Clear search" onClick={() => setSearch("")}><X aria-hidden /></Button>
+              </InputGroupAddon>
             )}
-          </div>
-          <div className="flex items-center gap-2 sm:ml-auto">
-            <Select value={role} onValueChange={(v) => setRole(v as UserRole | "all")}>
-              <SelectTrigger className="h-9"><SelectValue placeholder="Role" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All roles</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="manager">CC Manager</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={status} onValueChange={(v) => setStatus(v as UserStatus | "all")}>
-              <SelectTrigger className="h-9"><SelectValue placeholder="Status" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="invited">Invited</SelectItem>
-                <SelectItem value="deactivated">Deactivated</SelectItem>
-              </SelectContent>
-            </Select>
+          </InputGroup>
+          <div className="flex items-center gap-2 sm:ms-auto">
+            <Select label="Role" options={roleOptions} value={roles} onValueChange={setRoles} showDetail={false} icon={<UserCog />} className="min-w-32" />
+            <Select label="Status" options={statusOptions} value={statuses} onValueChange={setStatuses} showDetail={false} icon={<BadgeCheck />} className="min-w-32" />
           </div>
         </div>
 
-        {/* table */}
-        <div className="w-full overflow-x-auto" style={{ borderTop: "1px solid var(--border-neutral-subtle)" }}>
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr style={{ borderBottom: "1px solid var(--border-neutral-muted)", background: "var(--bg-neutral-subtle)" }}>
-                <Th>User</Th>
-                <Th>Role</Th>
-                <Th>Groups</Th>
-                <Th>Last active</Th>
-                <Th>Status</Th>
-                <th className="w-10" />
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((u) => (
-                <tr key={u.id} className="group transition-colors" style={{ borderBottom: "1px solid var(--border-neutral-subtle)", opacity: u.status === "deactivated" ? 0.6 : 1 }}>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="size-8"><AvatarFallback>{initials(u.name)}</AvatarFallback></Avatar>
-                      <div className="flex min-w-px flex-col">
-                        <span className="truncate text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{u.name}</span>
-                        <span className="truncate text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{u.email}</span>
-                      </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead align="start">User</TableHead>
+              <TableHead align="start">Role</TableHead>
+              <TableHead align="start">Groups</TableHead>
+              <TableHead align="start">Last active</TableHead>
+              <TableHead align="start">Status</TableHead>
+              <TableHead align="start" className="w-12"><span className="sr-only">Actions</span></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((u) => (
+              <TableRow key={u.id} className={u.status === "deactivated" ? "text-content-neutral-muted" : undefined}>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Avatar size="sm"><AvatarFallback>{initials(u.name)}</AvatarFallback></Avatar>
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate text-label-md text-content-neutral-emphasis">{u.name}</span>
+                      <span className="truncate text-body-xs text-content-neutral-muted">{u.email}</span>
                     </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center gap-1.5 text-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>
-                      {u.role === "admin" ? <ShieldCheck className="size-3.5" style={{ color: "var(--fg-primary-emphasis)" }} /> : <UserCog className="size-3.5" style={{ color: "var(--fg-neutral-subtle)" }} />}
-                      {roleLabel[u.role]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {u.role === "admin" ? (
-                      <span className="text-sm" style={{ color: "var(--fg-neutral-subtle)" }}>All groups</span>
-                    ) : u.groups.length === 0 ? (
-                      <span className="text-sm" style={{ color: "var(--fg-warning-emphasis)" }}>Unassigned</span>
-                    ) : (
-                      <div className="flex flex-wrap items-center gap-1">
-                        {u.groups.slice(0, 2).map((g) => (
-                          <Badge key={g} variant="secondary">{groupName(g)}</Badge>
-                        ))}
-                        {u.groups.length > 2 && (
-                          <span className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>+{u.groups.length - 2}</span>
-                        )}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {u.status === "invited" ? (
-                      <span className="text-sm" style={{ color: "var(--fg-neutral-subtle)" }}>Invited {u.invitedAgo}</span>
-                    ) : (
-                      <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>{u.lastActive ?? "—"}</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={statusBadge[u.status]} className="gap-1.5">
-                      <span className="size-1.5 rounded-full" style={{ background: statusDot[u.status] }} />
-                      {statusLabel[u.status]}
-                    </Badge>
-                  </td>
-                  <td className="pr-3">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button type="button" aria-label="Row actions" className="flex size-8 items-center justify-center rounded-md transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)]" style={{ color: "var(--fg-neutral-muted)" }}>
-                          <MoreHorizontal className="size-4" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => onEditRole(u)}><UserCog /> Edit role &amp; groups</DropdownMenuItem>
-                        {u.status === "invited" && (
-                          <DropdownMenuItem onSelect={() => onResend(u)}><Mail /> Resend invite</DropdownMenuItem>
-                        )}
-                        {u.status === "active" && (
-                          <DropdownMenuItem onSelect={() => onReset(u)}><KeyRound /> Send password reset</DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        {u.status === "deactivated" ? (
-                          <DropdownMenuItem onSelect={() => onReactivate(u)}><UserCheck /> Reactivate</DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem onSelect={() => onDeactivate(u)} className="text-[var(--fg-danger-emphasis)]"><UserMinus /> Deactivate</DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-16">
-                    <div className="flex flex-col items-center gap-2 text-center">
-                      <UsersIcon className="size-6" style={{ color: "var(--fg-neutral-subtle)" }} />
-                      <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>No users match your filters.</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className="inline-flex items-center gap-1.5">
+                    {u.role === "admin"
+                      ? <ShieldCheck aria-hidden className="size-4 text-content-primary-emphasis" />
+                      : <UserCog aria-hidden className="size-4 text-content-neutral-subtle" />}
+                    {roleLabel[u.role]}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  {u.role === "admin" ? (
+                    <span className="text-content-neutral-subtle">All groups</span>
+                  ) : u.groups.length === 0 ? (
+                    <Badge color="warning">Unassigned</Badge>
+                  ) : (
+                    <div className="flex flex-wrap items-center gap-1">
+                      {u.groups.slice(0, 2).map((g) => <Badge key={g} variant="outline">{groupName(g)}</Badge>)}
+                      {u.groups.length > 2 && <span className="text-body-xs text-content-neutral-muted">+{u.groups.length - 2}</span>}
                     </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                  )}
+                </TableCell>
+                <TableCell className="text-content-neutral-muted">
+                  {u.status === "invited" ? `Invited ${u.invitedAgo}` : (u.lastActive ?? "—")}
+                </TableCell>
+                <TableCell>
+                  <Badge color={statusColor[u.status]} dot>{statusLabel[u.status]}</Badge>
+                </TableCell>
+                <TableCell className="pe-3">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${u.name}`}><MoreHorizontal aria-hidden /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onSelect={() => onEditRole(u)}><UserCog aria-hidden /> Edit role &amp; groups</DropdownMenuItem>
+                      {u.status === "invited" && <DropdownMenuItem onSelect={() => onResend(u)}><Mail aria-hidden /> Resend invite</DropdownMenuItem>}
+                      {u.status === "active" && <DropdownMenuItem onSelect={() => onReset(u)}><KeyRound aria-hidden /> Send password reset</DropdownMenuItem>}
+                      <DropdownMenuSeparator />
+                      {u.status === "deactivated"
+                        ? <DropdownMenuItem onSelect={() => onReactivate(u)}><UserCheck aria-hidden /> Reactivate</DropdownMenuItem>
+                        : <DropdownMenuItem variant="destructive" onSelect={() => onDeactivate(u)}><UserMinus aria-hidden /> Deactivate</DropdownMenuItem>}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+            {filtered.length === 0 && (
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={6}>
+                  <EmptyState
+                    size="sm"
+                    icon={<UsersIcon />}
+                    title="No members match"
+                    description="Try a different name, or clear the role and status filters."
+                    action={<Button variant="outline" size="sm" onClick={clearFilters}>Clear filters</Button>}
+                  />
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
 
-        {/* footer — role legend */}
-        <div className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-6" style={{ borderTop: "1px solid var(--border-neutral-muted)" }}>
-          <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
-            <ShieldCheck className="size-3.5" style={{ color: "var(--fg-primary-emphasis)" }} /> <b style={{ color: "var(--fg-neutral-emphasis)" }}>Admin</b> — {roleBlurb.admin}
+        {/* role legend */}
+        <CardFooter className="flex-col items-start gap-1 pt-4 sm:flex-row sm:items-center sm:gap-6">
+          <span className="inline-flex items-center gap-1.5 text-body-xs text-content-neutral-muted">
+            <ShieldCheck aria-hidden className="size-3.5 text-content-primary-emphasis" />
+            <strong className="font-medium text-content-neutral-emphasis">{roleLabel.admin}</strong> — {roleBlurb.admin}
           </span>
-          <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
-            <UserCog className="size-3.5" style={{ color: "var(--fg-neutral-subtle)" }} /> <b style={{ color: "var(--fg-neutral-emphasis)" }}>CC Manager</b> — {roleBlurb.manager}
+          <span className="inline-flex items-center gap-1.5 text-body-xs text-content-neutral-muted">
+            <UserCog aria-hidden className="size-3.5 text-content-neutral-subtle" />
+            <strong className="font-medium text-content-neutral-emphasis">{roleLabel.manager}</strong> — {roleBlurb.manager}
           </span>
-        </div>
+        </CardFooter>
       </Card>
 
       <InviteMemberDialog
@@ -275,13 +236,5 @@ export function UsersRolesPage() {
         onInvite={onInvite}
       />
     </div>
-  )
-}
-
-function Th({ children }: { children: React.ReactNode }) {
-  return (
-    <th className="h-10 px-4 text-left align-middle text-xs font-medium" style={{ color: "var(--fg-neutral-muted)" }}>
-      {children}
-    </th>
   )
 }

@@ -1,8 +1,11 @@
 import { useState, type ReactNode } from "react"
-import { KeyRound, ShieldCheck, Users, LogIn, CircleAlert, Send, Check, X, CheckCircle2 } from "lucide-react"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { KeyRound, ShieldCheck, Send, Check } from "lucide-react"
+import {
+  Badge, Button,
+  Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardHeaderText, CardTitle,
+  KpiTile,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@ir/ui"
 import { toast } from "@/components/ui/toast"
 import { users, roleLabel } from "@/data/users"
 import { providers, providerById, tenantDomain, setupSteps, recentSignIns, connectMethodLabel } from "@/data/sso"
@@ -73,19 +76,33 @@ export function SsoPage() {
 
 // ---- Not set up ----------------------------------------------------------------
 
+function IconTile({ tone, children }: { tone: "primary" | "success"; children: ReactNode }) {
+  return (
+    <span
+      aria-hidden
+      className={tone === "primary"
+        ? "flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-primary-subtle text-content-primary-emphasis [&>svg]:size-5"
+        : "flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-success-subtle text-content-success-emphasis [&>svg]:size-5"}
+    >
+      {children}
+    </span>
+  )
+}
+
 function EmptyView({ draft, onStart, onStartOver }: { draft: SsoDraft | null; onStart: () => void; onStartOver: () => void }) {
   const sendLink = () => toast({ title: "Setup link sent", description: "Scoped to SSO setup only. Email stubbed in prototype.", variant: "success" })
+  const at = draft ? Math.min(draft.step, setupSteps.length - 1) : 0
 
   return (
     <div className="flex flex-col gap-4">
       {draft && (
         <Callout
           tone="info"
-          title={`Setup paused at step ${Math.min(draft.step, setupSteps.length - 1) + 1}: ${setupSteps[Math.min(draft.step, setupSteps.length - 1)]}`}
+          title={`Setup paused at step ${at + 1}: ${setupSteps[at]}`}
           action={
             <div className="flex gap-2">
-              <Button size="sm" variant="ghost" onClick={onStartOver}>Start over</Button>
-              <Button size="sm" onClick={onStart}>Resume</Button>
+              <Button size="xs" variant="ghost" onClick={onStartOver}>Start over</Button>
+              <Button size="xs" onClick={onStart}>Resume</Button>
             </div>
           }
         >
@@ -93,64 +110,48 @@ function EmptyView({ draft, onStart, onStartOver }: { draft: SsoDraft | null; on
         </Callout>
       )}
 
-      <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
-        <div className="flex flex-col gap-5 p-5 sm:p-6">
-          <div className="flex items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg" style={{ background: "var(--bg-primary-subtle)", color: "var(--fg-primary-emphasis)" }}>
-              <KeyRound className="size-5" />
-            </span>
-            <div className="flex flex-col gap-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Single sign-on</h2>
-                <Badge variant="secondary">Not set up</Badge>
-              </div>
-              <p className="max-w-[64ch] text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-                Let Members sign in to Clarion with the company account they already use for work, instead of a separate Clarion password.
-              </p>
+      <Card className="w-full">
+        <CardHeader>
+          <IconTile tone="primary"><KeyRound /></IconTile>
+          <CardHeaderText>
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle>Single sign-on</CardTitle>
+              <Badge>Not set up</Badge>
             </div>
-          </div>
-
+            <CardDescription className="max-w-content-reading">
+              Let Members sign in to Clarion with the company account they already use for work, instead of a separate Clarion password.
+            </CardDescription>
+          </CardHeaderText>
+        </CardHeader>
+        <CardContent className="gap-4">
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {[
               ["One less password", "Members sign in the way they do every morning, with your company's MFA."],
               ["Access ends when they leave", "Turn someone off in your identity provider and they lose Clarion too."],
               ["Tested before it's live", "You run a test sign-in first, and Admins keep an emergency way in."],
             ].map(([t, b]) => (
-              <li key={t} className="flex flex-col gap-1 rounded-lg p-3.5" style={{ background: "var(--bg-neutral-subtle)" }}>
-                <span className="flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>
-                  <Check className="size-4" style={{ color: "var(--fg-success-emphasis)" }} /> {t}
+              <li key={t} className="flex flex-col gap-1 rounded-lg bg-surface-neutral-subtle p-3.5">
+                <span className="flex items-center gap-1.5 text-label-md text-content-neutral-emphasis">
+                  <Check aria-hidden className="size-4 text-content-success-emphasis" /> {t}
                 </span>
-                <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>{b}</span>
+                <span className="text-body-sm text-content-neutral-muted">{b}</span>
               </li>
             ))}
           </ul>
-
-          <p className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
+          <p className="text-body-xs text-content-neutral-muted">
             Works with {providers.filter((p) => !p.generic).map((p) => p.name).join(", ")}, and any SAML 2.0 or OIDC provider. Takes about 15 minutes with access to your identity provider.
           </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 px-5 py-4 sm:px-6" style={{ borderTop: "1px solid var(--border-neutral-muted)" }}>
-          {!draft && <Button onClick={onStart}><KeyRound /> Set up SSO</Button>}
-          <Button variant="outline" onClick={sendLink}><Send /> Send setup link to your IT team</Button>
-        </div>
+        </CardContent>
+        <CardFooter className="flex-wrap border-t border-line-neutral-muted pt-4">
+          {!draft && <Button onClick={onStart}><KeyRound aria-hidden /> Set up SSO</Button>}
+          <Button variant="outline" onClick={sendLink}><Send aria-hidden /> Send setup link to your IT team</Button>
+        </CardFooter>
       </Card>
     </div>
   )
 }
 
 // ---- Active --------------------------------------------------------------------
-
-function Stat({ label, value, icon: Icon, tone }: { label: string; value: string | number; icon: typeof Users; tone?: "danger" }) {
-  return (
-    <Card className="flex-1 gap-0 rounded-xl p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{label}</span>
-        <Icon className="size-4" style={{ color: tone === "danger" ? "var(--fg-danger-emphasis)" : "var(--fg-neutral-subtle)" }} />
-      </div>
-      <span className="mt-2 font-mono text-2xl font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{value}</span>
-    </Card>
-  )
-}
 
 function ActiveView({
   live, onMode, onEdit, onTurnOff,
@@ -171,82 +172,80 @@ function ActiveView({
   return (
     <div className="flex flex-col gap-4">
       {/* Status */}
-      <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
-        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg" style={{ background: "var(--bg-success-subtle)", color: "var(--fg-success-emphasis)" }}>
-              <ShieldCheck className="size-5" />
-            </span>
-            <div className="flex flex-col gap-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Single sign-on is on</h2>
-                <Badge variant="success"><CheckCircle2 /> Active</Badge>
-                <Badge variant={live.mode === "required" ? "info" : "secondary"}>{live.mode === "required" ? "Required" : "Optional"}</Badge>
-              </div>
-              <p className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-                Members at {tenantDomain} sign in with {p.name}
-                {live.mode === "optional" ? " or their Clarion password" : ""}. Last successful sign-in {recentSignIns.find((s) => s.outcome === "success")?.when}.
-              </p>
+      <Card className="w-full overflow-hidden">
+        <CardHeader className="flex-wrap">
+          <IconTile tone="success"><ShieldCheck /></IconTile>
+          <CardHeaderText>
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle>Single sign-on is on</CardTitle>
+              <Badge color="success" dot>Active</Badge>
+              <Badge color={live.mode === "required" ? "info" : "neutral"}>{live.mode === "required" ? "Required" : "Optional"}</Badge>
             </div>
-          </div>
-          <div className="flex shrink-0 flex-wrap gap-2">
+            <CardDescription>
+              Members at {tenantDomain} sign in with {p.name}
+              {live.mode === "optional" ? " or their Clarion password" : ""}. Last successful sign-in {recentSignIns.find((s) => s.outcome === "success")?.when}.
+            </CardDescription>
+          </CardHeaderText>
+          <CardAction>
             {live.mode === "optional"
               ? <Button variant="outline" onClick={() => setConfirmRequired(true)}>Make required</Button>
               : <Button variant="outline" onClick={() => onMode("optional")}>Make optional</Button>}
             <Button variant="outline" onClick={onEdit}>Edit connection</Button>
-          </div>
-        </div>
-
+          </CardAction>
+        </CardHeader>
         {confirmRequired && (
-          <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderTop: "1px solid var(--border-neutral-muted)", background: "var(--bg-warning-subtle)" }}>
-            <p className="text-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>
-              <strong className="font-medium">{onDomain} Members</strong> will have to sign in with {p.short}; their Clarion passwords stop working. Admins keep emergency access.
-            </p>
-            <div className="flex shrink-0 gap-2">
-              <Button variant="ghost" onClick={() => setConfirmRequired(false)}>Cancel</Button>
-              <Button onClick={() => { setConfirmRequired(false); onMode("required") }}>Make SSO required</Button>
-            </div>
-          </div>
+          <CardContent className="pt-4">
+            <Callout
+              tone="warning"
+              title={`${onDomain} Members will have to sign in with ${p.short}`}
+              action={
+                <div className="flex gap-2">
+                  <Button size="xs" variant="ghost" onClick={() => setConfirmRequired(false)}>Cancel</Button>
+                  <Button size="xs" onClick={() => { setConfirmRequired(false); onMode("required") }}>Make SSO required</Button>
+                </div>
+              }
+            >
+              Their Clarion passwords stop working. Admins keep emergency access.
+            </Callout>
+          </CardContent>
         )}
       </Card>
 
       {/* KPI strip */}
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Stat label="Members on SSO" value={onDomain} icon={Users} />
-        <Stat label="Sign-ins, last 24 h" value={recentSignIns.length * 7} icon={LogIn} />
-        <Stat label="Failed, last 24 h" value={failed} icon={CircleAlert} tone={failed ? "danger" : undefined} />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <KpiTile label="Members on SSO" value={onDomain} />
+        <KpiTile label="Sign-ins, last 24 h" value={recentSignIns.length * 7} />
+        <KpiTile label="Failed, last 24 h" value={failed} status={failed ? "warning" : "healthy"} statusLabel={failed ? "Check the log" : "None"} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        {/* Connection */}
-        <Card className="gap-0 rounded-xl p-0">
-          <div className="flex items-center justify-between px-4 py-3.5" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
-            <h3 className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Connection</h3>
-            <Badge variant="secondary">{p.protocol}</Badge>
-          </div>
-          <div className="px-4 py-1">
+        <Card>
+          <CardHeader>
+            <CardHeaderText><CardTitle>Connection</CardTitle></CardHeaderText>
+            <CardAction><Badge>{p.protocol}</Badge></CardAction>
+          </CardHeader>
+          <CardContent className="pt-2">
             <DetailList
               mono={false}
               rows={[
                 ["Identity provider", p.name],
-                ["Verified domain", <span className="flex items-center gap-2">{tenantDomain} <Badge variant="success">Verified</Badge></span>],
+                ["Verified domain", <span className="flex items-center gap-2">{tenantDomain} <Badge color="success" dot>Verified</Badge></span>],
                 ["Connected with", method],
-                [p.parsed[0][0], <span className="font-mono text-xs">{p.parsed[0][1]}</span>],
+                [p.parsed[0][0], <span className="font-mono text-code-sm">{p.parsed[0][1]}</span>],
                 ...(p.protocol === "SAML 2.0"
-                  ? [["Signing certificate", <span className="flex flex-col gap-0.5">Valid until 14 Mar 2029<span className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{autoRefresh ? "New certificates are picked up automatically." : "We'll email Admins 30 and 7 days before it expires."}</span></span>] as [string, ReactNode]]
+                  ? [["Signing certificate", <span className="flex flex-col gap-0.5">Valid until 14 Mar 2029<span className="text-body-xs text-content-neutral-muted">{autoRefresh ? "New certificates are picked up automatically." : "We'll email Admins 30 and 7 days before it expires."}</span></span>] as [string, ReactNode]]
                   : []),
               ]}
             />
-          </div>
+          </CardContent>
         </Card>
 
-        {/* Who can sign in */}
-        <Card className="gap-0 rounded-xl p-0">
-          <div className="flex items-center justify-between px-4 py-3.5" style={{ borderBottom: "1px solid var(--border-neutral-muted)" }}>
-            <h3 className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Who can sign in</h3>
-            <Button variant="link" size="sm" className="h-auto px-0" onClick={onEdit}>Edit</Button>
-          </div>
-          <div className="px-4 py-1">
+        <Card>
+          <CardHeader>
+            <CardHeaderText><CardTitle>Who can sign in</CardTitle></CardHeaderText>
+            <CardAction><Button variant="link" size="xs" onClick={onEdit}>Edit</Button></CardAction>
+          </CardHeader>
+          <CardContent className="pt-2">
             <DetailList
               mono={false}
               rows={[
@@ -257,66 +256,71 @@ function ActiveView({
                 ["Emergency access", "Admins can sign in with password and MFA if the provider is down"],
               ]}
             />
-          </div>
+          </CardContent>
         </Card>
       </div>
 
       {/* Recent sign-ins */}
-      <Card className="w-full gap-0 overflow-hidden rounded-xl p-0">
-        <div className="flex items-center gap-2 px-4 py-3.5">
-          <h3 className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Recent SSO sign-ins</h3>
-          <Badge variant="secondary">{recentSignIns.length}</Badge>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[36rem] text-sm">
-            <thead>
-              <tr className="text-left text-xs" style={{ color: "var(--fg-neutral-muted)", background: "var(--bg-neutral-subtle)" }}>
-                <th className="px-4 py-2 font-medium">Person</th>
-                <th className="px-4 py-2 font-medium">Outcome</th>
-                <th className="px-4 py-2 font-medium">Reason</th>
-                <th className="px-4 py-2 text-right font-medium">When</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentSignIns.map((s) => (
-                <tr key={s.who + s.when} style={{ borderTop: "1px solid var(--border-neutral-muted)" }}>
-                  <td className="px-4 py-2.5" style={{ color: "var(--fg-neutral-emphasis)" }}>{s.who}@{tenantDomain}</td>
-                  <td className="px-4 py-2.5">
-                    {s.outcome === "success"
-                      ? <Badge variant="success"><Check /> Signed in</Badge>
-                      : <Badge variant="danger"><X /> Failed</Badge>}
-                  </td>
-                  <td className="px-4 py-2.5" style={{ color: "var(--fg-neutral-muted)" }}>{s.reason ?? "–"}</td>
-                  <td className="px-4 py-2.5 text-right" style={{ color: "var(--fg-neutral-muted)" }}>{s.when}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <Card className="w-full overflow-hidden">
+        <CardHeader className="pb-4">
+          <CardHeaderText>
+            <div className="flex items-center gap-2">
+              <CardTitle>Recent SSO sign-ins</CardTitle>
+              <Badge>{recentSignIns.length}</Badge>
+            </div>
+          </CardHeaderText>
+        </CardHeader>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead align="start">Person</TableHead>
+              <TableHead align="start">Outcome</TableHead>
+              <TableHead align="start">Reason</TableHead>
+              <TableHead align="end">When</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {recentSignIns.map((s) => (
+              <TableRow key={s.who + s.when} className="last:border-b-0">
+                <TableCell>{s.who}@{tenantDomain}</TableCell>
+                <TableCell>
+                  {s.outcome === "success"
+                    ? <Badge color="success" dot>Signed in</Badge>
+                    : <Badge color="danger" dot>Failed</Badge>}
+                </TableCell>
+                <TableCell className="text-content-neutral-muted">{s.reason ?? "–"}</TableCell>
+                <TableCell align="end" className="text-content-neutral-muted">{s.when}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </Card>
 
       {/* Turn off */}
-      <Card className="w-full gap-0 rounded-xl p-0">
-        {confirmOff ? (
-          <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between" style={{ background: "var(--bg-danger-subtle)" }}>
-            <p className="text-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>
-              Members go back to Clarion passwords. Anyone who never had one gets a reset email.
-            </p>
-            <div className="flex shrink-0 gap-2">
-              <Button variant="ghost" onClick={() => setConfirmOff(false)}>Keep SSO on</Button>
-              <Button variant="destructive" onClick={onTurnOff}>Turn off SSO</Button>
+      {confirmOff ? (
+        <Callout
+          tone="destructive"
+          title="Turn off single sign-on?"
+          action={
+            <div className="flex gap-2">
+              <Button size="xs" variant="ghost" onClick={() => setConfirmOff(false)}>Keep SSO on</Button>
+              <Button size="xs" variant="destructive" onClick={onTurnOff}>Turn off SSO</Button>
             </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Turn off single sign-on</span>
-              <span className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>Your connection settings are deleted. You'd need to set it up again.</span>
-            </div>
-            <Button variant="outline" className="shrink-0" onClick={() => setConfirmOff(true)}>Turn off…</Button>
-          </div>
-        )}
-      </Card>
+          }
+        >
+          Members go back to Clarion passwords. Anyone who never had one gets a reset email.
+        </Callout>
+      ) : (
+        <Card size="sm" className="w-full">
+          <CardHeader>
+            <CardHeaderText>
+              <CardTitle>Turn off single sign-on</CardTitle>
+              <CardDescription>Your connection settings are deleted. You'd need to set it up again.</CardDescription>
+            </CardHeaderText>
+            <CardAction><Button variant="outline" onClick={() => setConfirmOff(true)}>Turn off…</Button></CardAction>
+          </CardHeader>
+        </Card>
+      )}
     </div>
   )
 }

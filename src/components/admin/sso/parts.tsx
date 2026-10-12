@@ -1,6 +1,14 @@
 import { Fragment, useState, type ReactNode } from "react"
-import { Check, Copy, Info, AlertTriangle, CircleAlert, CheckCircle2 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Check, Copy } from "lucide-react"
+import {
+  Alert, AlertDescription, AlertTitle,
+  Button,
+  Card, CardContent,
+  Field, FieldControl, FieldDescription, FieldLabel,
+  InputGroup, InputGroupAddon, InputGroupInput,
+  Stepper, StepperContent, StepperIndicator, StepperItem, StepperSeparator, StepperTitle,
+} from "@ir/ui"
+import { cnPicasso as cn } from "@/lib/utils"
 
 /** Renders **bold** spans inside a plain string from the SSO data file. */
 export function Rich({ text }: { text: string }) {
@@ -9,15 +17,15 @@ export function Rich({ text }: { text: string }) {
     <>
       {parts.map((p, i) =>
         i % 2 === 1
-          ? <strong key={i} className="font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{p}</strong>
+          ? <strong key={i} className="font-medium text-content-neutral-emphasis">{p}</strong>
           : <Fragment key={i}>{p}</Fragment>
       )}
     </>
   )
 }
 
-/** Read-only value with a Copy button — for details the admin pastes into their provider. */
-export function CopyField({ id, label, hint, aka, value }: { id: string; label: string; hint?: string; aka?: string; value: string }) {
+/** A value the admin pastes into their provider: read-only field + Copy. */
+export function CopyField({ label, hint, aka, value }: { label: string; hint?: string; aka?: string; value: string }) {
   const [copied, setCopied] = useState(false)
   const copy = async () => {
     try {
@@ -25,143 +33,86 @@ export function CopyField({ id, label, hint, aka, value }: { id: string; label: 
       setCopied(true)
       window.setTimeout(() => setCopied(false), 1500)
     } catch {
-      const el = document.getElementById(id) as HTMLInputElement | null
-      el?.select()
+      /* Clipboard refused (older browsers): the field selects on focus instead. */
     }
   }
   return (
-    <div className="flex flex-col gap-1.5">
+    <Field>
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <label htmlFor={id} className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{label}</label>
-        {hint && <span className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>{hint}</span>}
+        <FieldLabel>{label}</FieldLabel>
+        {hint && <span className="text-body-xs text-content-neutral-subtle">{hint}</span>}
       </div>
-      {aka && <span className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Also called: {aka}</span>}
-      <div className="flex gap-2">
-        <input
-          id={id}
-          readOnly
-          value={value}
-          onFocus={(e) => e.currentTarget.select()}
-          className="h-9 min-w-0 flex-1 rounded-md px-3 font-mono text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          style={{ background: "var(--bg-neutral-subtle)", border: "1px solid var(--border-neutral-muted)", color: "var(--fg-neutral-emphasis)" }}
-        />
-        <button
-          type="button"
-          onClick={copy}
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors hover:bg-[var(--bg-neutral-subtle-hovered)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          style={{ border: "1px solid var(--border-neutral-muted)", color: "var(--fg-neutral-emphasis)", background: "var(--bg-card)" }}
-        >
-          {copied ? <Check className="size-4" style={{ color: "var(--fg-success-emphasis)" }} /> : <Copy className="size-4" />}
-          {copied ? "Copied" : "Copy"}
-        </button>
-      </div>
-    </div>
+      <InputGroup>
+        <FieldControl>
+          <InputGroupInput readOnly value={value} onFocus={(e) => e.currentTarget.select()} className="font-mono text-code-sm" />
+        </FieldControl>
+        <InputGroupAddon align="end">
+          <Button variant="ghost" size="xs" onClick={copy} aria-label={copied ? `${label} copied` : `Copy ${label}`}>
+            {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
+            {copied ? "Copied" : "Copy"}
+          </Button>
+        </InputGroupAddon>
+      </InputGroup>
+      {aka && <FieldDescription>Also called: {aka}</FieldDescription>}
+    </Field>
   )
 }
 
-type Tone = "info" | "warning" | "danger" | "success"
-const toneStyle: Record<Tone, { bg: string; border: string; fg: string; icon: typeof Info }> = {
-  info: { bg: "var(--bg-info-subtle)", border: "var(--border-info-muted)", fg: "var(--fg-info-emphasis)", icon: Info },
-  warning: { bg: "var(--bg-warning-subtle)", border: "var(--border-warning-muted)", fg: "var(--fg-warning-emphasis)", icon: AlertTriangle },
-  danger: { bg: "var(--bg-danger-subtle)", border: "var(--border-danger-muted)", fg: "var(--fg-danger-emphasis)", icon: CircleAlert },
-  success: { bg: "var(--bg-success-subtle)", border: "var(--border-success-muted)", fg: "var(--fg-success-emphasis)", icon: CheckCircle2 },
-}
+type Tone = "info" | "warning" | "destructive" | "success"
 
-/** Inline message. Status is carried by icon shape as well as colour. */
-export function Callout({ tone, title, children, action, className, bare = false }: { tone: Tone; title: string; children?: ReactNode; action?: ReactNode; className?: string; /** Drop the border/radius when nested inside a bordered panel. */ bare?: boolean }) {
-  const t = toneStyle[tone]
-  const Icon = t.icon
+/** Inline message — Picasso's Alert, with the body as rich text. */
+export function Callout({ tone, title, children, action, className }: { tone: Tone; title: string; children?: ReactNode; action?: ReactNode; className?: string }) {
   return (
-    <div className={cn("flex items-start gap-3 px-3.5 py-3", !bare && "rounded-lg", className)} style={{ background: t.bg, border: bare ? undefined : `1px solid ${t.border}` }}>
-      <Icon className="mt-0.5 size-4 shrink-0" style={{ color: t.fg }} aria-hidden />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-sm">
-        <span className="font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{title}</span>
-        {children && <span style={{ color: "var(--fg-neutral-muted)" }}>{children}</span>}
-      </div>
-      {action && <div className="shrink-0 self-center">{action}</div>}
-    </div>
+    <Alert variant={tone} action={action} className={className}>
+      <AlertTitle>{title}</AlertTitle>
+      {children && <AlertDescription>{children}</AlertDescription>}
+    </Alert>
   )
 }
 
-/** Numbered setup progress. Collapses to "Step n of N" on narrow screens. */
-export function Stepper({ steps, current }: { steps: readonly string[]; current: number }) {
+/** Setup progress. Titles show from lg up; below that, "Step n of N". */
+export function SetupStepper({ steps, current }: { steps: readonly string[]; current: number }) {
+  const at = Math.min(current, steps.length - 1)
   return (
     <>
-      <p className="text-sm sm:hidden" style={{ color: "var(--fg-neutral-muted)" }}>
-        Step {Math.min(current + 1, steps.length)} of {steps.length} · <span style={{ color: "var(--fg-neutral-emphasis)" }}>{steps[Math.min(current, steps.length - 1)]}</span>
+      <p className="text-body-sm text-content-neutral-muted sm:hidden">
+        Step {at + 1} of {steps.length} · <span className="text-content-neutral-emphasis">{steps[at]}</span>
       </p>
-      <ol aria-label="Setup steps" className="hidden items-center gap-2 sm:flex">
-        {steps.map((label, i) => {
-          const done = i < current
-          const active = i === current
-          return (
-            <Fragment key={label}>
-              {i > 0 && <li aria-hidden className="h-px min-w-3 flex-1" style={{ background: done || active ? "var(--border-neutral-emphasis)" : "var(--border-neutral-muted)" }} />}
-              <li aria-current={active ? "step" : undefined} className="flex shrink-0 items-center gap-2 text-xs">
-                <span
-                  className="flex size-6 items-center justify-center rounded-full text-xs font-medium"
-                  style={
-                    done ? { background: "var(--bg-success-emphasis)", color: "var(--fg-on-success-emphasis)" }
-                      : active ? { background: "var(--bg-primary-emphasis)", color: "var(--fg-on-primary-emphasis)" }
-                      : { border: "1px solid var(--border-neutral-emphasis)", color: "var(--fg-neutral-muted)" }
-                  }
-                >
-                  {done ? <Check className="size-3.5" aria-label="Done" /> : i + 1}
-                </span>
-                <span className="hidden lg:inline" style={{ color: active ? "var(--fg-neutral-emphasis)" : "var(--fg-neutral-muted)", fontWeight: active ? 500 : 400 }}>{label}</span>
-              </li>
-            </Fragment>
-          )
-        })}
-      </ol>
+      <Stepper value={current} size="sm" aria-label="Setup steps" className="hidden sm:flex">
+        {steps.map((label, i) => (
+          <StepperItem key={label} index={i} className="gap-2">
+            <StepperIndicator />
+            <StepperContent className="hidden shrink-0 lg:flex">
+              <StepperTitle className="text-label-sm">{label}</StepperTitle>
+            </StepperContent>
+            <StepperSeparator className="mx-1 min-w-2" />
+          </StepperItem>
+        ))}
+      </Stepper>
     </>
   )
 }
 
-/** Side-panel help card. */
+/** Side-panel help. */
 export function TipCard({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-1.5 rounded-lg p-4" style={{ border: "1px solid var(--border-neutral-muted)" }}>
-      <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{title}</span>
-      <div className="text-sm" style={{ color: "var(--fg-neutral-muted)" }}>{children}</div>
-    </div>
+    <Card size="sm" className="shadow-none">
+      <CardContent className="gap-1">
+        <span className="text-label-md text-content-neutral-emphasis">{title}</span>
+        <div className="text-body-sm text-content-neutral-muted">{children}</div>
+      </CardContent>
+    </Card>
   )
 }
 
-/** Pill-style single choice (e.g. Metadata URL / Upload file / Enter manually). */
-export function Segmented<T extends string>({ label, options, value, onChange }: { label: string; options: { value: T; label: string; hint?: string }[]; value: T; onChange: (v: T) => void }) {
-  return (
-    <div role="radiogroup" aria-label={label} className="inline-flex w-fit flex-wrap gap-1 rounded-lg p-1" style={{ background: "var(--bg-neutral-subtle)" }}>
-      {options.map((o) => {
-        const on = o.value === value
-        return (
-          <button
-            key={o.value}
-            type="button"
-            role="radio"
-            aria-checked={on}
-            onClick={() => onChange(o.value)}
-            className={cn("h-8 rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", on && "shadow-xs")}
-            style={on
-              ? { background: "var(--bg-card)", color: "var(--fg-neutral-emphasis)" }
-              : { color: "var(--fg-neutral-muted)" }}
-          >
-            {o.label}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-/** Label / value list used for "what we read back" and connection details. */
+/** Label / value list for "what we read back" and connection details. */
 export function DetailList({ rows, mono = true }: { rows: [string, ReactNode][]; mono?: boolean }) {
   return (
-    <dl className="grid grid-cols-1 text-sm sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">
+    <dl className="grid grid-cols-1 sm:grid-cols-option sm:gap-x-6">
       {rows.map(([k, v], i) => (
         <Fragment key={k}>
-          <dt className="pt-2.5 sm:py-2.5" style={{ color: "var(--fg-neutral-muted)", borderTop: i === 0 ? undefined : "1px solid var(--border-neutral-muted)" }}>{k}</dt>
-          <dd className={cn("m-0 pb-2.5 [overflow-wrap:anywhere] sm:py-2.5", i > 0 && "sm:border-t sm:border-[var(--border-neutral-muted)]", mono && "font-mono text-xs leading-5")} style={{ color: "var(--fg-neutral-emphasis)" }}>{v}</dd>
+          <dt className={cn("pt-2.5 text-body-sm text-content-neutral-muted sm:py-2.5", i > 0 && "border-t border-line-neutral-muted")}>{k}</dt>
+          <dd className={cn("m-0 pb-2.5 text-content-neutral-emphasis wrap-anywhere sm:py-2.5", i > 0 && "sm:border-t sm:border-line-neutral-muted", mono ? "font-mono text-code-sm" : "text-body-sm")}>{v}</dd>
         </Fragment>
       ))}
     </dl>
@@ -171,8 +122,8 @@ export function DetailList({ rows, mono = true }: { rows: [string, ReactNode][];
 export function SectionTitle({ children, sub }: { children: ReactNode; sub?: ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <h2 className="text-base font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>{children}</h2>
-      {sub && <p className="max-w-[68ch] text-sm" style={{ color: "var(--fg-neutral-muted)" }}>{sub}</p>}
+      <h2 className="text-heading-md text-content-neutral-emphasis">{children}</h2>
+      {sub && <p className="max-w-content-reading text-body-md text-content-neutral-muted">{sub}</p>}
     </div>
   )
 }
