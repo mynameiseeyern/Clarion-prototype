@@ -393,21 +393,36 @@ export const connectMethodLabel: Record<ConnectMethod, string> = {
 
 // ---- Tenant context ---------------------------------------------------------
 
-/** The customer's email domain, taken from the seeded Members so counts line up. */
-export const tenantDomain = (() => {
+/**
+ * The email domain most active Members use. Iris knows this from its own Member
+ * list, so setup can *suggest* it, but the admin always types or confirms the
+ * domain themselves. Nothing is prefilled.
+ */
+export const memberDomain = (() => {
   const counts = new Map<string, number>()
   for (const u of users) {
+    if (u.status === "deactivated") continue
     const d = u.email.split("@")[1]
     if (d) counts.set(d, (counts.get(d) ?? 0) + 1)
   }
-  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "acme.com"
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
 })()
 
-export const dnsRecord = {
+export const membersOnDomain = (domain: string) =>
+  users.filter((u) => u.status !== "deactivated" && u.email.toLowerCase().endsWith(`@${domain}`)).length
+
+/** Public email services can't be claimed for SSO: no one company owns them. */
+export const publicEmailDomains = [
+  "gmail.com", "googlemail.com", "outlook.com", "hotmail.com", "live.com", "msn.com",
+  "yahoo.com", "icloud.com", "me.com", "aol.com", "proton.me", "protonmail.com", "bigpond.com",
+]
+
+/** The TXT record Iris generates once the admin has entered their domain. */
+export const dnsRecordFor = (domain: string) => ({
   type: "TXT",
-  host: `_iris-verification.${tenantDomain}`,
+  host: `_iris-verification.${domain}`,
   value: "iris-domain-verify=8f41c2d7e09b4a6f",
-}
+})
 
 export const setupSteps = [
   "Verify domain",
