@@ -232,10 +232,14 @@ function StepDomain({ verified, onVerified }: { verified: boolean; onVerified: (
           <span className="font-mono text-sm" style={{ color: "var(--fg-neutral-emphasis)" }}>{tenantDomain}</span>
           {verified ? <Badge variant="success">Verified</Badge> : <Badge variant="warning">Pending</Badge>}
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[6rem_minmax(0,1fr)]">
-          <CopyField id="dns-type" label="Type" value={dnsRecord.type} />
-          <CopyField id="dns-host" label="Name / Host" value={dnsRecord.host} />
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium" style={{ color: "var(--fg-neutral-emphasis)" }}>Record type</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="font-mono">{dnsRecord.type}</Badge>
+            <span className="text-xs" style={{ color: "var(--fg-neutral-muted)" }}>Choose this from the record type list at your DNS provider.</span>
+          </div>
         </div>
+        <CopyField id="dns-host" label="Name / Host" value={dnsRecord.host} />
         <CopyField id="dns-value" label="Value" value={dnsRecord.value} />
       </div>
       {verified ? (
