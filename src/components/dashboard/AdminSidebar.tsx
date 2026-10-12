@@ -15,15 +15,14 @@ export function AdminSidebar({
 }) {
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col" style={{ background: "var(--bg-sidebar)" }}>
-      {/* Header — product brand on the IR watercolour banner (client white-label is a Day 2 feature) */}
+      {/* Header — Administration lives in Iris, so the brand is Iris alone (no tagline) on the IR watercolour banner */}
       <div
         className="relative flex h-20 shrink-0 items-end overflow-hidden rounded-tr-2xl"
         style={{ backgroundImage: "url('/sidebar-header.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}
       >
         <span className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.28), rgba(0,0,0,0) 55%)" }} />
         <div className="relative flex flex-col justify-center px-4 pb-3 leading-tight" style={{ fontFamily: "'Poppins', ui-sans-serif, sans-serif" }}>
-          <span className="text-xl" style={{ fontFamily: "'Oswald', ui-sans-serif, sans-serif", fontWeight: 600, letterSpacing: "0.02em", textTransform: "uppercase", color: "#fff" }}>Clarion</span>
-          <span className="text-xs" style={{ fontWeight: 400, color: "rgba(255,255,255,0.85)" }}>powered by Iris</span>
+          <span className="text-xl" style={{ fontFamily: "'Oswald', ui-sans-serif, sans-serif", fontWeight: 600, letterSpacing: "0.02em", textTransform: "uppercase", color: "#fff" }}>Iris</span>
         </div>
       </div>
 
