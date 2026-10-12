@@ -3,8 +3,8 @@ import { Plus, Trash2, ShieldCheck, KeyRound, Users, Send, ExternalLink } from "
 import {
   Badge, Button,
   Card, CardContent, CardFooter, CardHeader,
-  Checkbox, Field, FieldControl, FieldDescription, FieldError, FieldLabel, FieldOption,
-  FileUpload, FileUploadItem, Input, InputGroup, InputGroupAddon, InputGroupInput, InputGroupText, Loader, PasswordInput,
+  Checkbox, Field, FieldControl, FieldDescription, FieldLabel, FieldOption,
+  FileUpload, FileUploadItem, Input, Loader, PasswordInput,
   Radio, RadioGroup, SegmentedControl, SegmentedControlItem,
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea,
 } from "@ir/ui"
@@ -12,7 +12,7 @@ import { toast } from "@/components/ui/toast"
 import { cnPicasso as cn } from "@/lib/utils"
 import { users, roleLabel, type UserRole } from "@/data/users"
 import {
-  providers, providerById, connectMethodLabel, memberDomain, membersOnDomain, publicEmailDomains, dnsRecordFor, setupSteps,
+  providers, providerById, connectMethodLabel, activeMembers, setupSteps,
   type ProviderId, type ConnectMethod,
 } from "@/data/sso"
 import { Rich, CopyField, Callout, SetupStepper, TipCard, DetailList, SectionTitle } from "./parts"
@@ -26,9 +26,6 @@ export interface GroupRule { id: string; value: string; label?: string; role: Us
 
 export interface SsoDraft {
   step: number
-  /** Entered by the admin on the first step. Empty until they do. */
-  domain: string
-  domainVerified: boolean
   providerId: ProviderId | null
   addConfirmed: boolean
   connectMethod: ConnectMethod | "oidc" | null
@@ -43,8 +40,6 @@ export interface SsoDraft {
 
 export const emptyDraft: SsoDraft = {
   step: 0,
-  domain: "",
-  domainVerified: false,
   providerId: null,
   addConfirmed: false,
   connectMethod: null,
@@ -127,7 +122,6 @@ export function SsoWizard({
   }, [d.step])
 
   const canContinue = [
-    d.domainVerified,
     d.providerId !== null,
     d.addConfirmed,
     d.connected,
@@ -147,24 +141,16 @@ export function SsoWizard({
           <span className="text-label-md text-content-neutral-emphasis">
             {d.step === TURN_ON ? "Turn on single sign-on" : "Set up single sign-on"}
           </span>
-          {provider && d.step > 1 && <Badge className="ms-1">{provider.name}</Badge>}
+          {provider && d.step > 0 && <Badge className="ms-1">{provider.name}</Badge>}
         </div>
         {d.step < TURN_ON && <SetupStepper steps={setupSteps} current={d.step} />}
       </CardHeader>
 
       <CardContent className="grid grid-cols-1 gap-6 p-5 lg:grid-cols-[minmax(0,1fr)_17rem]">
         <section className="flex min-w-0 flex-col gap-5">
-          {d.step === 0 && (
-            <StepDomain
-              domain={d.domain}
-              verified={d.domainVerified}
-              onDomain={(domain) => set({ domain, domainVerified: false })}
-              onVerified={() => set({ domainVerified: true })}
-            />
-          )}
-          {d.step === 1 && <StepProvider value={d.providerId} onChange={(id) => setD((x) => forProvider(x, id))} />}
-          {d.step === 2 && provider && <StepAdd p={provider} confirmed={d.addConfirmed} onConfirm={(v) => set({ addConfirmed: v })} />}
-          {d.step === 3 && provider && (
+          {d.step === 0 && <StepProvider value={d.providerId} onChange={(id) => setD((x) => forProvider(x, id))} />}
+          {d.step === 1 && provider && <StepAdd p={provider} confirmed={d.addConfirmed} onConfirm={(v) => set({ addConfirmed: v })} />}
+          {d.step === 2 && provider && (
             <StepConnect
               p={provider}
               method={d.connectMethod ?? provider.connectDefault}
@@ -173,26 +159,21 @@ export function SsoWizard({
               onConnected={(v) => set({ connected: v, tested: false })}
             />
           )}
-          {d.step === 4 && provider && <StepMap p={provider} d={d} set={set} />}
-          {d.step === 5 && provider && <StepTest p={provider} d={d} passed={d.tested} onResult={(ok) => set({ tested: ok })} onFix={goto} />}
-          {d.step === TURN_ON && provider && <StepTurnOn p={provider} domain={d.domain} mode={d.mode} onMode={(m) => set({ mode: m })} />}
+          {d.step === 3 && provider && <StepMap p={provider} d={d} set={set} />}
+          {d.step === 4 && provider && <StepTest p={provider} d={d} passed={d.tested} onResult={(ok) => set({ tested: ok })} onFix={goto} />}
+          {d.step === TURN_ON && provider && <StepTurnOn p={provider} mode={d.mode} onMode={(m) => set({ mode: m })} />}
         </section>
 
         <aside className="flex min-w-0 flex-col gap-3">
           {d.step === 0 && (
-            <TipCard title="Why verify a domain?">
-              It proves {d.domain || "the domain"} belongs to your organisation, so Iris can send everyone with that email address to your company sign-in.
-            </TipCard>
-          )}
-          {d.step === 1 && (
             <TipCard title="Why we ask">
               Each provider names the same settings differently. Choosing yours means the next steps use the words you'll see on its screens.
             </TipCard>
           )}
-          {provider && d.step === 2 && <TipCard title={provider.addTip.title}><Rich text={provider.addTip.body} /></TipCard>}
-          {provider && d.step === 3 && <TipCard title={provider.connectTip.title}><Rich text={provider.connectTip.body} /></TipCard>}
-          {provider && d.step === 4 && <TipCard title={provider.mapTip.title}><Rich text={provider.mapTip.body} /></TipCard>}
-          {d.step === 5 && (
+          {provider && d.step === 1 && <TipCard title={provider.addTip.title}><Rich text={provider.addTip.body} /></TipCard>}
+          {provider && d.step === 2 && <TipCard title={provider.connectTip.title}><Rich text={provider.connectTip.body} /></TipCard>}
+          {provider && d.step === 3 && <TipCard title={provider.mapTip.title}><Rich text={provider.mapTip.body} /></TipCard>}
+          {d.step === 4 && (
             <TipCard title="The test is safe">
               It only signs in the person running it, doesn't create a session, and doesn't change anything for other Members.
             </TipCard>
@@ -222,7 +203,7 @@ export function SsoWizard({
           {d.step < TURN_ON && <Button variant="outline" onClick={() => onExit(d)}>Save and exit</Button>}
           {d.step < TURN_ON ? (
             <Button disabled={!canContinue} onClick={() => goto(d.step + 1)}>
-              {d.step === 5 ? "Continue to turn on" : d.step === 4 ? "Continue to test" : "Continue"}
+              {d.step === 4 ? "Continue to turn on" : d.step === 3 ? "Continue to test" : "Continue"}
             </Button>
           ) : (
             <Button onClick={() => onComplete(d)}>
@@ -232,171 +213,6 @@ export function SsoWizard({
         </div>
       </CardFooter>
     </Card>
-  )
-}
-
-// ---- Step 1: verify domain ----------------------------------------------------
-
-const domainRe = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/
-
-/** Strip what people paste by habit: "@", "https://", "www.", a trailing path. */
-const cleanDomain = (v: string) =>
-  v.trim().toLowerCase().replace(/^.*@/, "").replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/.*$/, "")
-
-function StepDomain({
-  domain,
-  verified,
-  onDomain,
-  onVerified,
-}: {
-  domain: string
-  verified: boolean
-  onDomain: (domain: string) => void
-  onVerified: () => void
-}) {
-  // Two parts: the admin enters the domain, then Iris generates the record for it.
-  return domain ? (
-    <DomainRecord key={domain} domain={domain} verified={verified} onChange={() => onDomain("")} onVerified={onVerified} />
-  ) : (
-    <DomainEntry onSubmit={onDomain} />
-  )
-}
-
-function DomainEntry({ onSubmit }: { onSubmit: (domain: string) => void }) {
-  const [value, setValue] = useState("")
-  const [touched, setTouched] = useState(false)
-  const cleaned = cleanDomain(value)
-
-  const error = !cleaned
-    ? "Enter your company's email domain."
-    : publicEmailDomains.includes(cleaned)
-      ? `${cleaned} is a public email service, so no one company can verify it. Use your company's own domain.`
-      : !domainRe.test(cleaned)
-        ? "That doesn't look like a domain. Use the part after the @ in your work email."
-        : null
-
-  // A suggestion, not a prefill: Iris has seen this domain on the Member list.
-  const suggestion = memberDomain && !publicEmailDomains.includes(memberDomain) && memberDomain !== cleaned ? memberDomain : null
-
-  return (
-    <>
-      <SectionTitle sub="Members whose email ends in this domain will sign in through your identity provider.">
-        Which email domain does your team use?
-      </SectionTitle>
-      <form
-        noValidate
-        className="flex flex-col gap-4"
-        onSubmit={(e) => { e.preventDefault(); setTouched(true); if (!error) onSubmit(cleaned) }}
-      >
-        <Field invalid={touched && !!error}>
-          <FieldLabel required>Email domain</FieldLabel>
-          <InputGroup className="sm:max-w-sm">
-            <InputGroupAddon><InputGroupText>@</InputGroupText></InputGroupAddon>
-            <FieldControl required>
-              <InputGroupInput
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder="yourcompany.com"
-                autoComplete="off"
-                autoCapitalize="none"
-                spellCheck={false}
-                autoFocus
-              />
-            </FieldControl>
-          </InputGroup>
-          <FieldError>{touched ? error : null}</FieldError>
-          <FieldDescription>The part after the @ in your work email. You can add more domains once SSO is on.</FieldDescription>
-        </Field>
-
-        {suggestion && (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-body-sm text-content-neutral-muted">
-            <span>{membersOnDomain(suggestion)} of your Members sign in with an @{suggestion} address.</span>
-            <Button type="button" variant="link" size="xs" className="h-auto p-0" onClick={() => { setValue(suggestion); setTouched(false) }}>
-              Use {suggestion}
-            </Button>
-          </div>
-        )}
-
-        <Button type="submit" className="w-fit">Get verification record</Button>
-      </form>
-    </>
-  )
-}
-
-function DomainRecord({
-  domain,
-  verified,
-  onChange,
-  onVerified,
-}: {
-  domain: string
-  verified: boolean
-  onChange: () => void
-  onVerified: () => void
-}) {
-  const [checking, setChecking] = useState(false)
-  const [notFound, setNotFound] = useState(false)
-  const [attempts, setAttempts] = useState(0)
-  const record = dnsRecordFor(domain)
-
-  const check = async () => {
-    setChecking(true)
-    setNotFound(false)
-    await wait(1100)
-    setChecking(false)
-    // First check fails (DNS still propagating), second succeeds — shows both states.
-    if (attempts === 0) { setNotFound(true); setAttempts(1) } else onVerified()
-  }
-
-  return (
-    <>
-      <SectionTitle sub={<>Add this record wherever {domain}'s DNS is managed, usually the company that sold you the domain or your IT team's DNS host. It proves the domain is yours.</>}>
-        Verify {domain}
-      </SectionTitle>
-      <Card size="sm" className="shadow-none">
-        <CardContent>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="truncate font-mono text-code-md text-content-neutral-emphasis">{domain}</span>
-              {!verified && (
-                <Button variant="link" size="xs" className="h-auto p-0" onClick={onChange}>Change</Button>
-              )}
-            </div>
-            {verified
-              ? <Badge color="success" dot>Verified</Badge>
-              : notFound
-                ? <Badge color="warning" dot>Not found yet</Badge>
-                : <Badge color="neutral" dot>Not verified</Badge>}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <span className="text-label-md text-content-neutral-emphasis">Record type</span>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="font-mono">{record.type}</Badge>
-              <span className="text-body-sm text-content-neutral-subtle">Choose this from the record type list at your DNS provider.</span>
-            </div>
-          </div>
-          <CopyField label="Name / Host" value={record.host} />
-          <CopyField label="Value" value={record.value} />
-        </CardContent>
-      </Card>
-      {verified ? (
-        <Callout tone="success" title={`${domain} is verified`}>Members with an @{domain} address can now be sent to your company sign-in.</Callout>
-      ) : (
-        <>
-          {notFound && (
-            <Callout tone="warning" title="We couldn't find the record yet">
-              DNS changes can take a few hours. We'll keep checking and email you when it's verified, so you can leave this page.
-            </Callout>
-          )}
-          <div className="flex flex-wrap items-center gap-3">
-            <Button variant="outline" className="w-fit" loading={checking} onClick={check}>
-              {checking ? "Checking DNS…" : notFound ? "Check again" : "I've added it, verify"}
-            </Button>
-            {!notFound && !checking && <span className="text-body-sm text-content-neutral-subtle">Add the record first. Most providers update within minutes.</span>}
-          </div>
-        </>
-      )}
-    </>
   )
 }
 
@@ -823,7 +639,7 @@ function StepMap({ p, d, set }: { p: Provider; d: SsoDraft; set: (patch: Partial
             Only people invited in Clarion
           </FieldOption>
           <FieldOption control={<Radio value="anyone" />} description="They get a CC Manager account with no Groups the first time they sign in.">
-            Anyone at {d.domain}
+            Anyone assigned to Iris in {p.short}
           </FieldOption>
         </RadioGroup>
       </fieldset>
@@ -921,7 +737,7 @@ function StepTest({
           <Callout
             tone="destructive"
             title="Test failed: the signature didn't match"
-            action={<Button size="xs" variant="outline" onClick={() => onFix(3)}>Back to step 4</Button>}
+            action={<Button size="xs" variant="outline" onClick={() => onFix(2)}>Back to step 3</Button>}
           >
             {p.short} signed the response with a different certificate from the one Iris has. This usually means the certificate was rotated. Reconnect in step 4 to pick up the new one.
           </Callout>
@@ -934,9 +750,8 @@ function StepTest({
 
 // ---- Turn on -----------------------------------------------------------------
 
-function StepTurnOn({ p, domain, mode, onMode }: { p: Provider; domain: string; mode: SsoMode; onMode: (m: SsoMode) => void }) {
-  const onDomain = users.filter((u) => u.status !== "deactivated" && u.email.endsWith(`@${domain}`))
-  const offDomain = users.filter((u) => u.status !== "deactivated" && !u.email.endsWith(`@${domain}`))
+function StepTurnOn({ p, mode, onMode }: { p: Provider; mode: SsoMode; onMode: (m: SsoMode) => void }) {
+  const members = activeMembers()
   const admins = users.filter((u) => u.role === "admin" && u.status === "active").length
 
   return (
@@ -951,15 +766,15 @@ function StepTurnOn({ p, domain, mode, onMode }: { p: Provider; domain: string; 
         </ChoiceCard>
         <ChoiceCard selected={mode === "required"} onSelect={() => onMode("required")}>
           <span className="text-label-md text-content-neutral-emphasis">Required</span>
-          <span className="text-body-sm text-content-neutral-muted">Everyone at {domain} must sign in with {p.short}.</span>
+          <span className="text-body-sm text-content-neutral-muted">Every Member must sign in with {p.short}. Admins keep an emergency way in.</span>
         </ChoiceCard>
       </div>
 
       {mode === "required" && (
         <Callout tone="warning" title="What changes when you turn this on">
           <ul className="mt-1 flex list-disc flex-col gap-1.5 ps-5">
-            <li><strong className="font-medium text-content-neutral-emphasis">{onDomain.length} Members</strong> at {domain} will sign in through {p.short}. Their Clarion passwords stop working.</li>
-            {offDomain.length > 0 && <li><strong className="font-medium text-content-neutral-emphasis">{offDomain.length} Members</strong> outside {domain} keep their passwords.</li>}
+            <li><strong className="font-medium text-content-neutral-emphasis">{members.length} Members</strong> will sign in through {p.short}. Their Clarion passwords stop working.</li>
+            <li>Anyone not assigned to the Iris app in {p.short} can't sign in. Check everyone who needs Clarion is assigned.</li>
             <li>People already signed in stay signed in until their session ends.</li>
             <li><strong className="font-medium text-content-neutral-emphasis">Emergency access:</strong> {admins === 1 ? "your Admin" : `your ${admins} Admins`} can still sign in with password and MFA if {p.short} is down.</li>
           </ul>

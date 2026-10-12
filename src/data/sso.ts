@@ -74,9 +74,17 @@ export interface ProviderDef {
   mapTip: Tip
 }
 
-const ACS = "https://iris.example/saml/acme/acs"
-const ENTITY = "https://iris.example/saml/acme"
-const REDIRECT = "https://iris.example/oidc/acme/callback"
+/**
+ * Each customer signs in at login.ir.com/<tenant_id>, like Slack's acme.slack.com.
+ * That address tells Iris which customer someone belongs to, so there is no email
+ * domain to verify. The /saml and /oidc paths below are placeholders until
+ * engineering confirms them.
+ */
+export const tenantId = "acme"
+export const signInPage = `https://login.ir.com/${tenantId}`
+const ENTITY = `${signInPage}/saml`
+const ACS = `${signInPage}/saml/acs`
+const REDIRECT = `${signInPage}/oidc/callback`
 
 export const providers: ProviderDef[] = [
   {
@@ -86,7 +94,7 @@ export const providers: ProviderDef[] = [
     protocol: "SAML 2.0",
     blurb: "Formerly Azure AD",
     mostCommon: true,
-    addIntro: "In the Entra admin center, create an app for Iris, then paste in the two values below.",
+    addIntro: "In the Entra admin center, create an app for Iris, then paste in the three values below.",
     addSteps: [
       "Go to **Enterprise applications** → **New application** → **Create your own application**.",
       "Name it **Iris** and choose **Integrate any other application you don't find in the gallery**.",
@@ -96,8 +104,9 @@ export const providers: ProviderDef[] = [
     spFields: [
       { label: "Identifier (Entity ID)", irisName: "Iris's Entity ID", value: ENTITY },
       { label: "Reply URL (Assertion Consumer Service URL)", irisName: "Iris's ACS URL", value: ACS },
+      { label: "Sign on URL", irisName: "Your Iris sign-in page", value: signInPage },
     ],
-    spSettings: [["Sign on URL and Relay State", "Leave empty"]],
+    spSettings: [["Relay State", "Leave empty"]],
     addCallout: {
       tone: "info",
       title: "User details: no changes needed",
@@ -393,39 +402,14 @@ export const connectMethodLabel: Record<ConnectMethod, string> = {
 
 // ---- Tenant context ---------------------------------------------------------
 
-/**
- * The email domain most active Members use. Iris knows this from its own Member
- * list, so setup can *suggest* it, but the admin always types or confirms the
- * domain themselves. Nothing is prefilled.
- */
-export const memberDomain = (() => {
-  const counts = new Map<string, number>()
-  for (const u of users) {
-    if (u.status === "deactivated") continue
-    const d = u.email.split("@")[1]
-    if (d) counts.set(d, (counts.get(d) ?? 0) + 1)
-  }
-  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
-})()
+/** Active Members: the people SSO applies to. Like Slack, Iris applies SSO to
+ * the whole workspace, not by email domain, so there is no domain to verify. */
+export const activeMembers = () => users.filter((u) => u.status !== "deactivated")
 
-export const membersOnDomain = (domain: string) =>
-  users.filter((u) => u.status !== "deactivated" && u.email.toLowerCase().endsWith(`@${domain}`)).length
-
-/** Public email services can't be claimed for SSO: no one company owns them. */
-export const publicEmailDomains = [
-  "gmail.com", "googlemail.com", "outlook.com", "hotmail.com", "live.com", "msn.com",
-  "yahoo.com", "icloud.com", "me.com", "aol.com", "proton.me", "protonmail.com", "bigpond.com",
-]
-
-/** The TXT record Iris generates once the admin has entered their domain. */
-export const dnsRecordFor = (domain: string) => ({
-  type: "TXT",
-  host: `_iris-verification.${domain}`,
-  value: "iris-domain-verify=8f41c2d7e09b4a6f",
-})
+/** Sample sign-in log addresses (the Acme mock tenant). */
+export const sampleEmailDomain = "acme.com"
 
 export const setupSteps = [
-  "Verify domain",
   "Choose provider",
   "Add Iris to provider",
   "Connect provider",

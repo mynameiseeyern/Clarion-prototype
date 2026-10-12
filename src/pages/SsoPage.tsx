@@ -8,7 +8,7 @@ import {
 } from "@ir/ui"
 import { toast } from "@/components/ui/toast"
 import { roleLabel } from "@/data/users"
-import { providers, providerById, membersOnDomain, setupSteps, recentSignIns, connectMethodLabel } from "@/data/sso"
+import { providers, providerById, activeMembers, sampleEmailDomain, signInPage, setupSteps, recentSignIns, connectMethodLabel } from "@/data/sso"
 import { SsoWizard, emptyDraft, type SsoDraft, type SsoMode } from "@/components/admin/sso/SsoWizard"
 import { Callout, DetailList } from "@/components/admin/sso/parts"
 
@@ -38,7 +38,7 @@ export function SsoPage() {
         initial={draft ?? emptyDraft}
         onExit={(d) => {
           // An untouched wizard isn't worth resuming.
-          const touched = d.domain !== "" || d.providerId !== null
+          const touched = d.providerId !== null
           save({ view: live ? "active" : "overview", draft: touched ? d : null })
           if (touched) toast({ title: "Setup saved", description: `Paused at "${setupSteps[Math.min(d.step, setupSteps.length - 1)]}".`, variant: "info" })
         }}
@@ -46,7 +46,7 @@ export function SsoPage() {
           save({ view: "active", live: d, draft: null })
           toast({
             title: `SSO is on (${d.mode})`,
-            description: d.mode === "required" ? `Members at ${d.domain} now sign in with ${providerById(d.providerId!).short}.` : "Members can choose SSO or their password.",
+            description: d.mode === "required" ? `Members now sign in with ${providerById(d.providerId!).short}.` : "Members can choose SSO or their password.",
             variant: "success",
           })
         }}
@@ -62,7 +62,7 @@ export function SsoPage() {
           save({ live: { ...live, mode } })
           toast({ title: mode === "required" ? "SSO is now required" : "SSO is now optional", variant: "success" })
         }}
-        onEdit={() => start({ ...live, step: 3, connected: false, tested: false })}
+        onEdit={() => start({ ...live, step: 2, connected: false, tested: false })}
         onTurnOff={() => {
           save({ view: "overview", live: null, draft: null })
           toast({ title: "SSO turned off", description: "Members sign in with their Clarion passwords. Anyone without one gets a reset email. (Stubbed)", variant: "danger" })
@@ -164,7 +164,7 @@ function ActiveView({
   const [confirmOff, setConfirmOff] = useState(false)
   const [confirmRequired, setConfirmRequired] = useState(false)
   const p = providerById(live.providerId!)
-  const onDomain = membersOnDomain(live.domain)
+  const onDomain = activeMembers().length
   const failed = recentSignIns.filter((s) => s.outcome === "failed").length
   const method = live.connectMethod === "oidc" ? "Issuer URL, client ID and secret" : connectMethodLabel[live.connectMethod ?? "url"]
   const autoRefresh = live.connectMethod === "url" || live.connectMethod === "oidc"
@@ -182,7 +182,7 @@ function ActiveView({
               <Badge color={live.mode === "required" ? "info" : "neutral"}>{live.mode === "required" ? "Required" : "Optional"}</Badge>
             </div>
             <CardDescription>
-              Members at {live.domain} sign in with {p.name}
+              Members sign in with {p.name}
               {live.mode === "optional" ? " or their Clarion password" : ""}. Last successful sign-in {recentSignIns.find((s) => s.outcome === "success")?.when}.
             </CardDescription>
           </CardHeaderText>
@@ -229,7 +229,7 @@ function ActiveView({
               mono={false}
               rows={[
                 ["Identity provider", p.name],
-                ["Verified domain", <span className="flex items-center gap-2">{live.domain} <Badge color="success" dot>Verified</Badge></span>],
+                ["Sign-in page", <span className="font-mono text-code-sm">{signInPage}</span>],
                 ["Connected with", method],
                 [p.parsed[0][0], <span className="font-mono text-code-sm">{p.parsed[0][1]}</span>],
                 ...(p.protocol === "SAML 2.0"
@@ -249,7 +249,7 @@ function ActiveView({
             <DetailList
               mono={false}
               rows={[
-                ["New people", live.newUsers === "invited" ? "Only people invited in Clarion" : `Anyone at ${live.domain}, as a CC Manager with no Groups`],
+                ["New people", live.newUsers === "invited" ? "Only people invited in Clarion" : `Anyone assigned to Iris in ${p.short}, as a CC Manager with no Groups`],
                 ["Roles from groups", live.groupsEnabled && live.groupRules.length
                   ? <span className="flex flex-col gap-1">{live.groupRules.map((r) => <span key={r.id}>{r.label || r.value} → {roleLabel[r.role]}</span>)}</span>
                   : "Not set up. Roles are assigned on the Members page."],
@@ -282,7 +282,7 @@ function ActiveView({
           <TableBody>
             {recentSignIns.map((s) => (
               <TableRow key={s.who + s.when} className="last:border-b-0">
-                <TableCell>{s.who}@{live.domain}</TableCell>
+                <TableCell>{s.who}@{sampleEmailDomain}</TableCell>
                 <TableCell>
                   {s.outcome === "success"
                     ? <Badge color="success" dot>Signed in</Badge>
