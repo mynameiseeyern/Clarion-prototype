@@ -43,7 +43,7 @@ Six things in the code change the conversation:
 |---|---|---|---|---|
 | 1 | Tick individual users | ✅ | Checkbox per row | — |
 | 2 | Tick all users on the current page | 🔧 | "Select all loaded users" (header checkbox) | There are no pages: the list loads 15 at a time as you scroll. Same intent, honest wording. |
-| 3 | Select every user matching the current search or filter | ✅ | "Select all N matching" from the selection banner / bulk bar | The core of R&D's point 1. The server re-checks the count on confirm and refuses if another admin changed the list. |
+| 3 | Select every user matching the current search or filter | ✅ | "Select all N matching" in the table toolbar once rows are selected | The core of R&D's point 1. The server re-checks the count on confirm and refuses if another admin changed the list. |
 | 4 | Confirmation shows how many will be removed | ✅ | Dialog with the count and a sample of names; type the count for 10+ | Typing the count is a proven guard for mass deletes (Customer.io). |
 | 5 | Deleted user loses widget access via the licence flow | ✅ | Unchanged — remove → widget answers `licensed:false` | Already how the back end works. |
 
@@ -244,7 +244,7 @@ Most of the direction above is established practice, not invention:
 |---|---|---|
 | **Deactivate as the normal offboarding**, reversible, separate from delete | [Mural](https://mobbin.com/screens/72184367-08da-465e-9b6a-dfb0448fe354) ("you can reactivate this member anytime"), [Okta](https://mobbin.com/screens/eaf5ce0f-9a10-4324-a9f1-a9097f7ff2ce), [Apollo](https://mobbin.com/screens/a071c333-bcc8-414d-9965-f8009bc215a6), [Campsite](https://mobbin.com/screens/827bdaf8-055e-4c8f-848c-be2bdaf01e3d) (Active / Invited / Deactivated views) | A2 |
 | **Connection / last seen as a column** | [Tailscale](https://mobbin.com/screens/6823bfb6-6e19-4e60-b4be-ea7c8acc9e4d) users list: Joined, Last seen, green "Connected" | F1, F2 |
-| **Floating bulk bar with "select all"** | [Calendly](https://mobbin.com/screens/40804c9e-702d-41a4-8fbc-a1c7f070fc55) ("2 selected · Select all 5 contacts"), [Asana Admin](https://mobbin.com/screens/86b47c19-cb80-408b-8e51-571f60d76dcd) ("Change status → Remove") | B2 |
+| **Bulk actions in the table toolbar, with "select all"** | [HubSpot](https://mobbin.com/screens/bb7f0f5a-1de4-4773-b66a-f46e11c4ea24) (toolbar becomes "2 contacts selected · Assign · Edit · Delete"); floating variants: [Calendly](https://mobbin.com/screens/40804c9e-702d-41a4-8fbc-a1c7f070fc55), [Asana Admin](https://mobbin.com/screens/86b47c19-cb80-408b-8e51-571f60d76dcd) | B2 — decided (Ee): in the toolbar, not floating |
 | **Type the count to confirm a mass delete** | [Customer.io](https://mobbin.com/screens/3e28b555-ff21-400b-bc0e-6858ed5c6124) ("Confirm how many people you're deleting") | A3, E2 |
 | **Undo after delete** | [HubSpot](https://mobbin.com/screens/bb7f0f5a-1de4-4773-b66a-f46e11c4ea24) toast: "2 Contacts were deleted. Restore Contacts." | A4 |
 | **Download → edit → upload → validate → review → apply** | [Deel bulk edit](https://mobbin.com/flows/f9e90f25-5d36-4474-86a5-d61fbc08051b) | E1 — the PO's ask, done as a staged flow rather than a silent sync |
@@ -295,7 +295,7 @@ then left. If that becomes a real support problem, last seen is the thing to bri
 - **The list pages 15 at a time with latency**, like the real API, so "select all" is real.
 - **Proposed includes:** connection and status columns; filters; server-side sort; total count;
   row menu (edit details, deactivate/reactivate, remove with confirm);
-  floating bulk bar that only offers what applies (Deactivate if any are active, Reactivate if
+  bulk actions in the table toolbar (it swaps in for search and filters while rows are selected), offering only what applies (Deactivate if any are active, Reactivate if
   any are deactivated, with counts when mixed), plus export and remove (type the
   count for 10+); "select all N matching" with an **expected-count guard** (use *Another admin
   adds 3* to see it refuse).

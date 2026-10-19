@@ -251,7 +251,42 @@ export function WidgetUsersPage() {
             </div>
           </div>
 
-          {/* toolbar */}
+          {/* Toolbar. With rows selected it becomes the bulk-action bar, in place —
+              the actions sit right above the rows they affect. */}
+          {proposed && selCount > 0 ? (
+            <div className="flex min-h-9 flex-wrap items-center gap-2 rounded-lg bg-surface-selected-subtle px-3 py-1">
+              <span className="text-label-md text-content-neutral-emphasis">
+                {allMatching
+                  ? `All ${fmt(allMatching.count)} ${filtered ? "matching users" : "users"} selected`
+                  : `${fmt(selCount)} selected`}
+              </span>
+              {!allMatching && total > selCount && (
+                <Button variant="link" size="xs" onClick={() => setAllMatching({ count: total })}>
+                  Select all {fmt(total)}{filtered ? " matching" : ""}
+                </Button>
+              )}
+              {allMatching && total > rows.length && (
+                <span className="text-body-sm text-content-neutral-muted">including ones not loaded yet</span>
+              )}
+              <div className="ms-auto flex flex-wrap items-center gap-2">
+                {/* Only what applies: you can't deactivate the deactivated or reactivate the active. */}
+                {selMix.active > 0 && (
+                  <Button variant="outline" size="sm" onClick={() => bulk((t) => setDeactivateTarget(onlyActive(t, true)))}>
+                    Deactivate{selMix.inactive > 0 ? ` ${fmt(selMix.active)}` : ""}
+                  </Button>
+                )}
+                {selMix.inactive > 0 && (
+                  <Button variant="outline" size="sm" onClick={() => bulk((t) => doReactivate(onlyActive(t, false)))}>
+                    Reactivate{selMix.active > 0 ? ` ${fmt(selMix.inactive)}` : ""}
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={() => { const us = resolveSelection(); if (us) exportUsers(us, "clarion-widget-users-selected.csv") }}><Download /> Export</Button>
+                <Button variant="outline" size="sm" className="text-content-danger-emphasis" onClick={() => bulk(setRemoveTarget)}>Remove…</Button>
+                <span className="mx-1 h-5 w-px bg-line-neutral-muted" />
+                <Button variant="ghost" size="sm" onClick={clearSelection}>Clear selection</Button>
+              </div>
+            </div>
+          ) : (
           <div className="flex flex-wrap items-center gap-2">
             <InputGroup className="w-72">
               <InputGroupAddon><Search /></InputGroupAddon>
@@ -278,21 +313,8 @@ export function WidgetUsersPage() {
               </>
             )}
           </div>
+          )}
         </div>
-
-        {/* "select all matching" — the Gmail pattern */}
-        {proposed && allLoadedSelected && !allMatching && total > loadedIds.length && (
-          <div className="flex items-center justify-center gap-2 border-t border-line-neutral-muted bg-surface-selected-subtle px-4 py-2 text-body-sm text-content-neutral-emphasis">
-            All {fmt(loadedIds.length)} loaded users are selected.
-            <Button variant="link" size="xs" onClick={() => setAllMatching({ count: total })}>Select all {fmt(total)} {filtered ? "matching users" : "users"}</Button>
-          </div>
-        )}
-        {proposed && allMatching && (
-          <div className="flex items-center justify-center gap-2 border-t border-line-neutral-muted bg-surface-selected-subtle px-4 py-2 text-body-sm text-content-neutral-emphasis">
-            All {fmt(allMatching.count)} {filtered ? "matching users" : "users"} are selected, including ones not loaded yet.
-            <Button variant="link" size="xs" onClick={clearSelection}>Clear selection</Button>
-          </div>
-        )}
 
         {/* table */}
         <div ref={scroller} className="max-h-[560px] overflow-y-auto">
@@ -383,32 +405,6 @@ export function WidgetUsersPage() {
         )}
       </Card>
 
-      {/* floating bulk bar */}
-      {proposed && selCount > 0 && (
-        <div className="fixed inset-x-0 bottom-6 z-40 flex justify-center px-4">
-          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line-neutral-muted bg-surface-overlay px-3 py-2 shadow-lg">
-            <span className="px-1 text-label-md text-content-neutral-emphasis">{fmt(selCount)} selected</span>
-            {!allMatching && total > selCount && (
-              <Button variant="link" size="xs" onClick={() => setAllMatching({ count: total })}>Select all {fmt(total)}</Button>
-            )}
-            <span className="mx-1 h-5 w-px bg-line-neutral-muted" />
-            {/* Only what applies: you can't deactivate the deactivated or reactivate the active. */}
-            {selMix.active > 0 && (
-              <Button variant="outline" size="sm" onClick={() => bulk((t) => setDeactivateTarget(onlyActive(t, true)))}>
-                Deactivate{selMix.inactive > 0 ? ` ${fmt(selMix.active)}` : ""}
-              </Button>
-            )}
-            {selMix.inactive > 0 && (
-              <Button variant="outline" size="sm" onClick={() => bulk((t) => doReactivate(onlyActive(t, false)))}>
-                Reactivate{selMix.active > 0 ? ` ${fmt(selMix.inactive)}` : ""}
-              </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={() => { const us = resolveSelection(); if (us) exportUsers(us, "clarion-widget-users-selected.csv") }}><Download /> Export</Button>
-            <Button variant="destructive" size="sm" onClick={() => bulk(setRemoveTarget)}>Remove…</Button>
-            <Button variant="ghost" size="xs" aria-label="Clear selection" onClick={clearSelection}><X /></Button>
-          </div>
-        </div>
-      )}
 
       <AddUserDialog open={addOpen} onOpenChange={setAddOpen} proposed={proposed} />
       <CurrentCsvDialog open={csvOpen} onOpenChange={setCsvOpen} />
