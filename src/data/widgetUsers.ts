@@ -258,18 +258,16 @@ export function stats() {
 
 // ------------------------------------------------------------- the query --
 
-export type SeenFilter = "seen30" | "stale30" | "stale90" | "never"
-export type SortKey = "hash" | "name" | "added" | "lastSeen"
+export type SortKey = "hash" | "name" | "added"
 
 export interface Query {
   q: string
   connection: Connection[]
   status: ("active" | "deactivated")[]
-  seen: SeenFilter[]
   sort: SortKey
 }
 
-export const emptyQuery: Query = { q: "", connection: [], status: [], seen: [], sort: "hash" }
+export const emptyQuery: Query = { q: "", connection: [], status: [], sort: "hash" }
 
 /** Search is a case-insensitive "contains" over name, login ID, email and site — as
  *  fleet-config's matchesSearch. Filters and sorts beyond that are proposed. */
@@ -279,19 +277,12 @@ export function runQuery(query: Query): WidgetUser[] {
     if (q && ![u.name, u.loginId, u.email, u.site].some((v) => v.toLowerCase().includes(q))) return false
     if (query.connection.length && !query.connection.includes(connectionOf(u))) return false
     if (query.status.length && !query.status.includes(u.active ? "active" : "deactivated")) return false
-    if (query.seen.length) {
-      const age = u.lastSeen == null ? Infinity : (NOW - u.lastSeen) / DAY
-      const hit = query.seen.some((s) =>
-        s === "seen30" ? age <= 30 : s === "stale30" ? age > 30 && u.lastSeen != null : s === "stale90" ? age > 90 && u.lastSeen != null : u.lastSeen == null)
-      if (!hit) return false
-    }
     return true
   })
   const by: Record<SortKey, (a: WidgetUser, b: WidgetUser) => number> = {
     hash: (a, b) => a.userId.localeCompare(b.userId),
     name: (a, b) => a.name.localeCompare(b.name),
     added: (a, b) => b.createdAt - a.createdAt,
-    lastSeen: (a, b) => (a.lastSeen ?? -1) - (b.lastSeen ?? -1),
   }
   return out.sort(by[query.sort])
 }
@@ -356,20 +347,12 @@ export function setActive(ids: string[], active: boolean): Result<{ changed: num
 // --------------------------------------------------------------------- CSV --
 
 const TEMPLATE_COLS = ["loginId", "name", "email", "site"] as const
-const INFO_COLS = ["status", "connection", "lastSeen", "added"] as const
 
 const esc = (v: string) => (/[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v)
 
-export function toCsv(users: WidgetUser[], withInfo: boolean) {
-  const head = withInfo ? [...TEMPLATE_COLS, ...INFO_COLS] : [...TEMPLATE_COLS]
-  const lines = users.map((u) => {
-    const base = [u.loginId, u.name, u.email, u.site]
-    const info = withInfo
-      ? [u.active ? "Active" : "Deactivated", connectionLabel[connectionOf(u)], u.lastSeen ? new Date(u.lastSeen).toISOString().slice(0, 10) : "", new Date(u.createdAt).toISOString().slice(0, 10)]
-      : []
-    return [...base, ...info].map(esc).join(",")
-  })
-  return [head.join(","), ...lines].join("\n")
+/** Same columns as the import template, so an export can be edited and imported back. */
+export function toCsv(users: WidgetUser[]) {
+  return [TEMPLATE_COLS.join(","), ...users.map((u) => [u.loginId, u.name, u.email, u.site].map(esc).join(","))].join("\n")
 }
 
 export const TEMPLATE_CSV = "loginId,name,email,site\ndomainname\\emma.johnson,Emma Johnson,emma.johnson@example.com,Sydney\n"
@@ -450,10 +433,11 @@ export function importCurrent(text: string): Result<{ imported: number }> {
   return { ok: true, imported: toCreate.length }
 }
 
-// ---------------------------------------------- the PROPOSED import (planned) --
+// ------------------------------------------------- the PROPOSED import --
+// One job: add new login IDs and update people already on the list. It never
+// takes anyone off (that's done in the table), so skipping a bad row is safe.
 
-export type ImportMode = "upsert" | "remove" | "replace"
-export type PlanKind = "new" | "update" | "unchanged" | "invalid" | "duplicate" | "remove" | "notFound"
+export type PlanKind = "new" | "update" | "unchanged" | "invalid" | "duplicate"
 
 export interface PlanRow {
   row: number
@@ -467,33 +451,28 @@ export interface PlanRow {
 }
 
 export interface Plan {
-  mode: ImportMode
   rows: PlanRow[]
-  removals: WidgetUser[]
   counts: Record<PlanKind, number>
-  licence: { newUsers: number; available: number; ok: boolean }
+  lookalikes: number
   /** Problems that stop the whole file. */
   blocking: string[]
-  warnings: string[]
-  fileRows: number
 }
 
-export function planImport(text: string, mode: ImportMode): Plan {
+export function planImport(text: string): Plan {
   const rows = parseCsv(text)
   const header = rows[0]?.map((c) => c.trim()) ?? []
   const idx = new Map(header.map((c, i) => [c, i]))
   const blocking: string[] = []
-  const warnings: string[] = []
-  const counts: Record<PlanKind, number> = { new: 0, update: 0, unchanged: 0, invalid: 0, duplicate: 0, remove: 0, notFound: 0 }
+  const counts: Record<PlanKind, number> = { new: 0, update: 0, unchanged: 0, invalid: 0, duplicate: 0 }
   const out: PlanRow[] = []
   const byLogin = new Map(state.users.map((u) => [u.loginId, u]))
   const byLocal = new Map<string, string>()
   state.users.forEach((u) => byLocal.set(loginLocalPart(u.loginId), u.loginId))
   const seen = new Map<string, number>()
 
-  if (!idx.has("loginId")) blocking.push("The file needs a loginId column.")
+  if (!idx.has("loginId")) blocking.push("The file needs a loginId column. Download the template to check the format.")
   const data = rows.slice(1)
-  if (!data.length) blocking.push("The file has no user rows.")
+  if (!data.length) blocking.push("The file has no users in it.")
 
   for (let i = 0; i < data.length && !blocking.length; i++) {
     const row = data[i]
@@ -503,23 +482,18 @@ export function planImport(text: string, mode: ImportMode): Plan {
     const name = cell("name"), email = cell("email"), site = cell("site")
     const add = (r: PlanRow) => { out.push(r); counts[r.kind]++ }
 
-    if (!loginId) { add({ row: rowNum, loginId: "", name, kind: "invalid", reason: "Login ID is missing" }); continue }
-    if (seen.has(loginId)) { add({ row: rowNum, loginId, name, kind: "duplicate", reason: `Same login ID as row ${seen.get(loginId)}` }); continue }
+    if (!loginId) { add({ row: rowNum, loginId: "", name, kind: "invalid", reason: "no login ID" }); continue }
+    if (seen.has(loginId)) { add({ row: rowNum, loginId, name, kind: "duplicate", reason: `same login ID as row ${seen.get(loginId)}` }); continue }
     seen.set(loginId, rowNum)
+    if (email && !emailOk(email)) { add({ row: rowNum, loginId, name, kind: "invalid", reason: "email isn't valid" }); continue }
 
     const existing = byLogin.get(loginId)
-    if (mode === "remove") {
-      add(existing ? { row: rowNum, loginId, name: existing.name, kind: "remove" } : { row: rowNum, loginId, name, kind: "notFound", reason: "Not on the list" })
-      continue
-    }
-    if (email && !emailOk(email)) { add({ row: rowNum, loginId, name, kind: "invalid", reason: "Email isn't valid" }); continue }
-
     if (!existing) {
       const other = byLocal.get(loginLocalPart(loginId))
       add({ row: rowNum, loginId, name, kind: "new", lookalike: other && other !== loginId ? other : undefined })
       continue
     }
-    // A blank cell keeps the current value; only a column with a value changes it.
+    // A blank cell keeps the current value.
     const changes: NonNullable<PlanRow["changes"]> = []
     if (name && name !== existing.name) changes.push({ field: "name", from: existing.name, to: name })
     if (email && email !== existing.email) changes.push({ field: "email", from: existing.email, to: email })
@@ -527,97 +501,47 @@ export function planImport(text: string, mode: ImportMode): Plan {
     add({ row: rowNum, loginId, name: existing.name, kind: changes.length ? "update" : "unchanged", changes })
   }
 
-  let removals: WidgetUser[] = []
-  if (mode === "replace" && !blocking.length) {
-    const inFile = new Set(seen.keys())
-    removals = state.users.filter((u) => !inFile.has(u.loginId))
-    counts.remove = removals.length
-    if (counts.invalid || counts.duplicate)
-      blocking.push("Every row must be valid to replace the list — a row we skipped would look missing, and that person would be removed.")
-    const share = state.users.length ? removals.length / state.users.length : 0
-    if (share > 0.2)
-      warnings.push(`This file leaves out ${Math.round(share * 100)}% of your current list. Check it's a full export, not a filtered one.`)
-  }
-  if (mode === "upsert" && counts.duplicate)
-    warnings.push("Duplicate login IDs were found. Only the first row for each is used.")
-
   const s = stats()
   const available = Math.max(s.limit - s.active, 0)
-  const freed = mode === "replace" ? removals.filter((u) => u.active).length : 0
-  const licence = { newUsers: counts.new, available: available + freed, ok: counts.new <= available + freed }
-  if (!licence.ok) blocking.push(`Adding ${counts.new.toLocaleString()} users needs ${(counts.new - licence.available).toLocaleString()} more licences than you have.`)
+  if (counts.new > available)
+    blocking.push(`This adds ${counts.new.toLocaleString()} people but you have ${available.toLocaleString()} licences left.`)
 
-  return { mode, rows: out, removals, counts, licence, blocking, warnings, fileRows: data.length }
+  return { rows: out, counts, lookalikes: out.filter((r) => r.lookalike).length, blocking }
 }
 
-export interface ApplyOptions {
-  /** What happens to people leaving the list (remove / replace modes). */
-  removalAction: "deactivate" | "remove"
-}
-
-export function applyPlan(plan: Plan, text: string, opts: ApplyOptions) {
+export function applyPlan(plan: Plan, text: string) {
   const rows = parseCsv(text)
   const idx = new Map(rows[0].map((c, i) => [c.trim(), i]))
   const byRow = new Map(rows.slice(1).map((r, i) => [i + 2, r]))
   const now = Date.now()
-  let users = state.users
-  const summary = { added: 0, updated: 0, removed: 0, deactivated: 0, skipped: 0 }
-
-  if (plan.mode !== "remove") {
-    const updates = new Map<string, PlanRow>()
-    const adds: WidgetUser[] = []
-    for (const r of plan.rows) {
-      if (r.kind === "update") { updates.set(r.loginId, r); summary.updated++ }
-      else if (r.kind === "new") {
-        const row = byRow.get(r.row)!
-        const get = (c: string) => (idx.has(c) ? (row[idx.get(c)!] ?? "").trim() : "")
-        adds.push({ userId: hashId(r.loginId), loginId: r.loginId, name: get("name"), email: get("email"), site: get("site"),
-          active: true, registerStatus: "", createdAt: now, updatedAt: now, lastSeen: null })
-        summary.added++
-      } else if (r.kind === "invalid" || r.kind === "duplicate") summary.skipped++
-    }
-    users = users.map((u) => {
+  const summary = { added: 0, updated: 0, skipped: 0 }
+  const updates = new Map<string, PlanRow>()
+  const adds: WidgetUser[] = []
+  for (const r of plan.rows) {
+    if (r.kind === "update") { updates.set(r.loginId, r); summary.updated++ }
+    else if (r.kind === "new") {
+      const row = byRow.get(r.row)!
+      const get = (c: string) => (idx.has(c) ? (row[idx.get(c)!] ?? "").trim() : "")
+      adds.push({ userId: hashId(r.loginId), loginId: r.loginId, name: get("name"), email: get("email"), site: get("site"),
+        active: true, registerStatus: "", createdAt: now, updatedAt: now, lastSeen: null })
+      summary.added++
+    } else if (r.kind === "invalid" || r.kind === "duplicate") summary.skipped++
+  }
+  state.users = [
+    ...state.users.map((u) => {
       const up = updates.get(u.loginId)
       if (!up) return u
       const next = { ...u, updatedAt: now }
       up.changes?.forEach((c) => { next[c.field] = c.to })
       return next
-    })
-    users = [...users, ...adds]
-  }
-
-  const leaving = new Set(
-    plan.mode === "remove"
-      ? plan.rows.filter((r) => r.kind === "remove").map((r) => r.loginId)
-      : plan.removals.map((u) => u.loginId),
-  )
-  if (leaving.size) {
-    if (opts.removalAction === "remove") {
-      summary.removed = leaving.size
-      users = users.filter((u) => !leaving.has(u.loginId))
-    } else {
-      users = users.map((u) => {
-        if (!leaving.has(u.loginId) || !u.active) return u
-        summary.deactivated++
-        return { ...u, active: false, updatedAt: now }
-      })
-    }
-  }
-  state.users = users
+    }),
+    ...adds,
+  ]
   bump()
   return summary
 }
 
-export function changeListCsv(plan: Plan) {
-  const lines = ["row,loginId,name,change,detail"]
-  const label: Record<PlanKind, string> = { new: "Add", update: "Update", unchanged: "No change", invalid: "Invalid", duplicate: "Duplicate", remove: "Remove", notFound: "Not found" }
-  plan.rows.forEach((r) => lines.push([String(r.row), r.loginId, r.name ?? "", label[r.kind],
-    r.changes?.map((c) => `${c.field}: ${c.from || "(blank)"} → ${c.to}`).join("; ") ?? r.reason ?? ""].map(esc).join(",")))
-  plan.removals.forEach((u) => lines.push(["", u.loginId, u.name, "Remove (not in file)", ""].map(esc).join(",")))
-  return lines.join("\n")
-}
-
-// ------------------------------------------------------- sample test files --
+// ------------------------------------------------------- sample test file --
 
 function pick<T>(xs: T[], n: number, seed: number) {
   const r = rng(seed)
@@ -627,7 +551,7 @@ function pick<T>(xs: T[], n: number, seed: number) {
 }
 
 export const samples = {
-  /** New people, edits, a lookalike, two bad rows and a duplicate. */
+  /** New starters, a few fixes, a lookalike, two bad rows and a duplicate. */
   addUpdate() {
     const users = state.users
     const edits = pick(users, Math.min(8, users.length), 11)
@@ -640,22 +564,5 @@ export const samples = {
     lines.push("corp\\bad.email,Bad Email,not-an-email,Sydney")
     lines.push("corp\\new.starter3,New Starter 3 again,new.starter3@acme.example,Sydney")
     return lines.join("\n")
-  },
-  /** Leavers to offboard, plus two IDs that aren't on the list. */
-  remove() {
-    const leavers = pick(state.users, Math.min(25, Math.max(state.users.length - 1, 1)), 23)
-    return ["loginId", ...leavers.map((u) => esc(u.loginId)), "corp\\someone.gone", "corp\\never.here"].join("\n")
-  },
-  /** A full export with some people gone, some edited, some new. */
-  replaceFull() {
-    const keep = pick(state.users, Math.max(state.users.length - Math.max(3, Math.round(state.users.length * 0.02)), 1), 31)
-    const edited = keep.map((u, i) => (i < 5 ? { ...u, site: "Manila" } : u))
-    const csv = toCsv(edited, true).split("\n")
-    csv.push("corp\\fresh.hire1,Fresh Hire,fresh.hire1@acme.example,Auckland")
-    return csv.join("\n")
-  },
-  /** What happens when someone exports a filtered view and uploads it as the list. */
-  replacePartial() {
-    return toCsv(runQuery({ ...emptyQuery, q: "sydney" }).slice(0, 30), true)
   },
 }

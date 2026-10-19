@@ -128,7 +128,8 @@ ideally recoverable; the list is knowable; safe with several admins.
 - **D1 — Edit dialog** for name, email, site (API exists). Explain why login ID is locked;
   "change login ID" = add the new one, remove the old one.
 - **D2 — Back-end login ID rename** that migrates config. Expensive; only if real need.
-- **Recommend:** D1.
+- **Recommend (revised):** **drop for now** — it's one of the PO's nice-to-haves. Import already
+  updates name, email and site for an existing login ID, which covers the typo case.
 
 ### E. Bulk change by file
 - **E1 — Keep "Import" additive, add a preview, and let existing rows update.** New = add,
@@ -141,14 +142,18 @@ ideally recoverable; the list is knowable; safe with several admins.
   list or older than the last change.
 - **E3 — Explicit remove-by-file.** A file of login IDs to remove (or deactivate). No
   omission semantics at all.
-- **Recommend:** E1 + E3. E2 only if customers really need one-file sync — and if so, make it
-  deactivate rather than delete by default.
+- **Recommend (revised):** **E1 only.** Import adds and updates; it never takes anyone off.
+  Taking people off happens in the table — filter (e.g. not seen for 90+ days), select,
+  deactivate. That removes the riskiest path (E2) and a second file mode (E3) entirely, and
+  every one of R&D's file-related risks goes with them. Revisit E3 only if admins ask for
+  "remove these 500 IDs from my HR export".
 
 ### F. Connection visibility
 - **F1 — Show `registerStatus` now:** *Never connected / Connected / Invite not sent*. Filter
   needs a server-side parameter.
 - **F2 — Last seen** — new endpoint joining analytics. 1.0.
-- **Recommend:** F1 now, F2 later.
+- **Recommend (revised):** **F1 only.** Last seen is a PO nice-to-have that needs a cross-service
+  join; dropped.
 
 ### G. Audit
 - Bulk events with counts (allowed under the PII policy); **add the missing update and
@@ -168,23 +173,39 @@ Most of the direction above is established practice, not invention:
 | **Type the count to confirm a mass delete** | [Customer.io](https://mobbin.com/screens/3e28b555-ff21-400b-bc0e-6858ed5c6124) ("Confirm how many people you're deleting") | A3, E2 |
 | **Undo after delete** | [HubSpot](https://mobbin.com/screens/bb7f0f5a-1de4-4773-b66a-f46e11c4ea24) toast: "2 Contacts were deleted. Restore Contacts." | A4 |
 | **Download → edit → upload → validate → review → apply** | [Deel bulk edit](https://mobbin.com/flows/f9e90f25-5d36-4474-86a5-d61fbc08051b) | E1 — the PO's ask, done as a staged flow rather than a silent sync |
-| **Bulk-edit one field, "keep current value" by default** | [Pipedrive](https://mobbin.com/screens/1c70f25d-7816-4204-a257-c5c4309dcb0c) | "Set site" bulk action — cleans up free-text sites |
+| **Bulk-edit one field, "keep current value" by default** | [Pipedrive](https://mobbin.com/screens/1c70f25d-7816-4204-a257-c5c4309dcb0c) | Considered for a "Set site" bulk action; dropped with single-user edit |
 | **CSV import with options before it runs** | [Okta import users](https://mobbin.com/flows/69efb81d-f7c3-463d-a757-cbac5b3bdcfe), [Sprig](https://mobbin.com/flows/10b68bf6-5954-47f7-b95f-075dd3f49378) | E1 |
 
 What we did **not** find: a mainstream product that makes "the uploaded file is the whole
 list, anything missing is deleted" the default import. Where full replacement exists it's a
 separate, guarded action — which supports keeping E2 advanced (or out).
 
-## 6. Decisions needed
+## 6. Scope: the PO's nice-to-haves are out
+
+Dropped from the proposal and the prototype, because each adds cost without serving a core job:
+
+- **Info-only columns in the export** (connection, date added, last seen). An export now has
+  exactly the template columns, so it can be edited and imported straight back (round trip
+  verified: re-importing an export reports every row as unchanged). Connection is still
+  visible and filterable in the table.
+- **Last seen.** Needs a join with the analytics database. "Never connected" already covers
+  failed or incomplete rollouts.
+- **Single-user edit.** Import updates name, email and site for an existing login ID, which
+  covers the email-typo case without another screen. (Our own "Set site" bulk action went too.)
+
+Trade-off to note: without last seen there's no way to spot people who connected once and
+then left. If that becomes a real support problem, last seen is the thing to bring back.
+
+## 7. Decisions needed
 
 1. Is **Deactivate** the default offboarding action, with Remove for mistakes and clean-up?
 2. Should re-importing an existing login ID **update** it (E1)? It changes today's behaviour.
-3. Do we need **one-file sync** (E2) at all, or do E1 + E3 cover the jobs?
+3. Agree to drop **one-file sync** (E2) and remove-by-file (E3), and offboard from the table instead?
 4. In-file duplicates: **block** (R&D) or **first-wins with a warning** in the preview?
-5. Do we want **last seen** in v1, given it crosses services?
+5. ~~Last seen in v1?~~ Dropped with the other nice-to-haves (see below).
 6. Login ID cleanliness (`domain\name` vs `name`): flag in the preview, or normalise?
 
-## 7. The prototype
+## 8. The prototype
 
 **Administration → Widget users** (`/admin/widget-users`), built with Picasso.
 
@@ -196,14 +217,16 @@ separate, guarded action — which supports keeping E2 advanced (or out).
   sites ("Sydney", "sydney", "SYD", "Sydney CBD"), ~13% never connected, ~4% invite failed,
   ~12% not seen for 60+ days, a few deactivated.
 - **The list pages 15 at a time with latency**, like the real API, so "select all" is real.
-- **Proposed includes:** connection, last seen and status columns; filters; server-side sort;
-  total count; leavers callout; row menu (edit, deactivate/reactivate, remove with confirm);
-  floating bulk bar (deactivate, reactivate, set site, export, remove — type the count for 10+);
-  "select all N matching" with an **expected-count guard** (use *Another admin adds 3* to see
-  it refuse); export; import in three modes (add/update, take off, replace) with a full
-  preview, lookalike login-ID warnings, licence check and downloadable change list.
-- **Test files** are built in (prototype only), including "a filtered export by mistake" to
-  show why replace mode needs its guards.
+- **Proposed includes:** connection and status columns; filters; server-side sort; total count;
+  row menu (deactivate/reactivate, remove with confirm);
+  floating bulk bar that only offers what applies (Deactivate if any are active, Reactivate if
+  any are deactivated, with counts when mixed), plus export and remove (type the
+  count for 10+); "select all N matching" with an **expected-count guard** (use *Another admin
+  adds 3* to see it refuse).
+- **Export** is one button: it downloads what you're looking at — everyone, or the filtered set.
+- **Import** is one button and one dialog: pick a file, see "N new, N updated, N skipped" and
+  the rows that change, confirm. Bad rows are skipped (safe — import never removes anyone).
+  A built-in test file (prototype only) has new starters, fixes, a lookalike login ID and bad rows.
 
 Data and simulated API: `src/data/widgetUsers.ts`. Screens: `src/pages/WidgetUsersPage.tsx`,
 `src/components/admin/widget-users/`.

@@ -8,7 +8,7 @@ import {
 import { toast } from "@/components/ui/toast"
 import {
   TEMPLATE_CSV, connectionLabel, connectionOf, createUser, downloadText, emailOk, importCurrent,
-  relTime, shortDate, stats, store, updateUser, validateCurrent, type WidgetUser,
+  stats, store, validateCurrent, type WidgetUser,
 } from "@/data/widgetUsers"
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n.toLocaleString()} ${n === 1 ? one : many}`
@@ -208,83 +208,6 @@ export function DeactivateDialog({ open, onOpenChange, target, onConfirm }: {
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={onConfirm}>Deactivate</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-// --------------------------------------------------------- Edit (proposed) --
-
-export function EditUserDialog({ open, onOpenChange, user }: { open: boolean; onOpenChange: (o: boolean) => void; user: WidgetUser | null }) {
-  const [f, setF] = useState({ name: "", email: "", site: "" })
-  useEffect(() => { if (open && user) setF({ name: user.name, email: user.email, site: user.site }) }, [open, user])
-  if (!user) return null
-  const emailErr = f.email.trim() && !emailOk(f.email.trim()) ? "Enter a valid email address." : null
-  const dirty = f.name !== user.name || f.email !== user.email || f.site !== user.site
-  const save = () => {
-    if (emailErr) return
-    updateUser(user.userId, { name: f.name.trim(), email: f.email.trim(), site: f.site.trim() })
-    toast({ title: "Changes saved." })
-    onOpenChange(false)
-  }
-  const conn = connectionOf(user)
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="md">
-        <DialogHeader>
-          <DialogTitle>Edit {user.name || user.loginId}</DialogTitle>
-          <DialogDescription>Fix details without removing and re-adding them.</DialogDescription>
-        </DialogHeader>
-        <DialogBody className="gap-4">
-          <dl className="grid grid-cols-3 gap-3 rounded-lg bg-surface-neutral-subtle p-3 text-body-sm">
-            <div><dt className="text-content-neutral-muted">Widget</dt><dd className="mt-1"><ConnectionBadge user={user} /></dd></div>
-            <div><dt className="text-content-neutral-muted">Last seen</dt><dd className="mt-1 text-content-neutral-emphasis">{conn === "never" ? "—" : relTime(user.lastSeen)}</dd></div>
-            <div><dt className="text-content-neutral-muted">Added</dt><dd className="mt-1 text-content-neutral-emphasis">{shortDate(user.createdAt)}</dd></div>
-          </dl>
-          <Field>
-            <FieldLabel>Login ID</FieldLabel>
-            <FieldControl><Input value={user.loginId} disabled readOnly /></FieldControl>
-            <FieldDescription>Can't be changed — it's how the widget is matched to this user. To use a different login ID, add a new user and remove this one.</FieldDescription>
-          </Field>
-          <Field><FieldLabel>Name</FieldLabel><FieldControl><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></FieldControl></Field>
-          <Field invalid={!!emailErr}>
-            <FieldLabel>Email</FieldLabel>
-            <FieldControl><Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></FieldControl>
-            <FieldError>{emailErr}</FieldError>
-          </Field>
-          <Field><FieldLabel>Site</FieldLabel><FieldControl><SiteInput value={f.site} onChange={(v) => setF({ ...f, site: v })} suggest /></FieldControl></Field>
-        </DialogBody>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button disabled={!dirty || !!emailErr} onClick={save}>Save changes</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-// ------------------------------------------------------ Set site (proposed) --
-
-export function SetSiteDialog({ open, onOpenChange, target, onConfirm }: {
-  open: boolean; onOpenChange: (o: boolean) => void; target: Target | null; onConfirm: (site: string) => void
-}) {
-  const [site, setSite] = useState("")
-  useEffect(() => { if (open) setSite("") }, [open])
-  if (!target) return null
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="sm">
-        <DialogHeader>
-          <DialogTitle>Set site for {plural(target.count, "user")}</DialogTitle>
-          <DialogDescription>Replaces whatever site they have now.</DialogDescription>
-        </DialogHeader>
-        <DialogBody>
-          <Field><FieldLabel>Site</FieldLabel><FieldControl><SiteInput value={site} onChange={setSite} suggest /></FieldControl></Field>
-        </DialogBody>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button disabled={!site.trim()} onClick={() => onConfirm(site.trim())}>Set site</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

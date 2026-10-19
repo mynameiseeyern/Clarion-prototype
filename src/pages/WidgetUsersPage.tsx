@@ -4,19 +4,19 @@ import {
   MoreHorizontal, RotateCcw, Search, Upload, UserPlus, UserRoundPlus, X,
 } from "lucide-react"
 import {
-  Alert, AlertDescription, AlertTitle, Badge, Button, Card, Checkbox,
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+  Badge, Button, Card, Checkbox,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
   EmptyState, InputGroup, InputGroupAddon, InputGroupInput, Progress, SegmentedControl, SegmentedControlItem, Select,
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@ir/ui"
 import { toast } from "@/components/ui/toast"
 import {
-  PAGE_SIZE, connectionLabel, createUser, downloadText, emptyQuery, fetchPage, relTime, removeUsers, runQuery,
-  setActive, sizeMeta, stats, store, toCsv, updateUser,
-  type Connection, type DataSize, type ImportMode, type Query, type SeenFilter, type SortKey, type WidgetUser,
+  PAGE_SIZE, connectionLabel, createUser, downloadText, emptyQuery, fetchPage, removeUsers, runQuery,
+  setActive, sizeMeta, stats, store, toCsv,
+  type Connection, type DataSize, type Query, type SortKey, type WidgetUser,
 } from "@/data/widgetUsers"
 import {
-  AddUserDialog, ConnectionBadge, CurrentCsvDialog, DeactivateDialog, EditUserDialog, RemoveDialog, SetSiteDialog, type Target,
+  AddUserDialog, ConnectionBadge, CurrentCsvDialog, DeactivateDialog, RemoveDialog, type Target,
 } from "@/components/admin/widget-users/dialogs"
 import { ImportFlow } from "@/components/admin/widget-users/ImportFlow"
 
@@ -28,7 +28,7 @@ const fmt = (n: number) => n.toLocaleString()
 const plural = (n: number, one: string, many = `${one}s`) => `${fmt(n)} ${n === 1 ? one : many}`
 const displayName = (u: WidgetUser) => u.name.trim() || u.loginId
 
-const sortLabel: Record<SortKey, string> = { hash: "Default order", name: "Name", added: "Recently added", lastSeen: "Last seen (oldest first)" }
+const sortLabel: Record<SortKey, string> = { hash: "Default order", name: "Name", added: "Recently added" }
 
 export function WidgetUsersPage() {
   const version = useSyncExternalStore(store.subscribe, store.version)
@@ -41,12 +41,12 @@ export function WidgetUsersPage() {
   const [search, setSearch] = useState("")
   const [debounced, setDebounced] = useState("")
   useEffect(() => { const t = setTimeout(() => setDebounced(search.trim()), 300); return () => clearTimeout(t) }, [search])
-  const [filters, setFilters] = useState<Pick<Query, "connection" | "status" | "seen" | "sort">>({ connection: [], status: [], seen: [], sort: "hash" })
+  const [filters, setFilters] = useState<Pick<Query, "connection" | "status" | "sort">>({ connection: [], status: [], sort: "hash" })
   const query: Query = useMemo(
     () => (proposed ? { ...emptyQuery, q: debounced, ...filters } : { ...emptyQuery, q: debounced }),
     [proposed, debounced, filters],
   )
-  const filtered = proposed && (filters.connection.length + filters.status.length + filters.seen.length > 0 || !!debounced)
+  const filtered = proposed && (filters.connection.length + filters.status.length > 0 || !!debounced)
 
   // ---- paged list, 15 at a time like the real API -----------------------
   const [rows, setRows] = useState<WidgetUser[]>([])
@@ -140,13 +140,21 @@ export function WidgetUsersPage() {
   // ---- dialogs -----------------------------------------------------------
   const [addOpen, setAddOpen] = useState(false)
   const [csvOpen, setCsvOpen] = useState(false)
-  const [importMode, setImportMode] = useState<ImportMode | null>(null)
-  const [editUser, setEditUser] = useState<WidgetUser | null>(null)
+  const [importOpen, setImportOpen] = useState(false)
   const [removeTarget, setRemoveTarget] = useState<Target | null>(null)
   const [deactivateTarget, setDeactivateTarget] = useState<Target | null>(null)
-  const [siteTarget, setSiteTarget] = useState<Target | null>(null)
 
   const targetFor = (users: WidgetUser[]): Target => ({ users, count: users.length, label: users.length === 1 ? displayName(users[0]) : plural(users.length, "user") })
+  /** Narrow a mixed selection to the users an action actually changes. */
+  const onlyActive = (t: Target, active: boolean) => targetFor(t.users.filter((u) => u.active === active))
+
+  // How many of the selection are active vs deactivated — decides which actions show.
+  const selMix = useMemo(() => {
+    const users = allMatching ? runQuery(query) : store.all().filter((u) => selected.has(u.userId))
+    const active = users.filter((u) => u.active).length
+    return { active, inactive: users.length - active }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, allMatching, query, version])
   const bulk = (fn: (t: Target) => void) => { const us = resolveSelection(); if (us && us.length) fn(targetFor(us)) }
 
   const doRemove = () => {
@@ -166,15 +174,9 @@ export function WidgetUsersPage() {
     toast({ title: r.changed === 1 ? `${t.label} was reactivated.` : `${fmt(r.changed)} users were reactivated.` })
     clearSelection()
   }
-  const doSetSite = (site: string) => {
-    if (!siteTarget) return
-    siteTarget.users.forEach((u) => updateUser(u.userId, { site }))
-    toast({ title: `Site set to ${site} for ${plural(siteTarget.count, "user")}.` })
-    setSiteTarget(null); clearSelection()
-  }
   const exportUsers = (users: WidgetUser[], name: string) => {
-    downloadText(name, toCsv(users, true))
-    toast({ title: `Exported ${plural(users.length, "user")}.`, description: "Same columns as the template, plus status, connection, last seen and date added." })
+    downloadText(name, toCsv(users))
+    toast({ title: `Exported ${plural(users.length, "user")}.`, description: "Same columns as the import template, so you can edit it and import it back." })
   }
 
   // As built: one click, no confirmation.
@@ -195,9 +197,6 @@ export function WidgetUsersPage() {
 
   const s = stats()
   const pct = s.limit ? Math.min(100, (s.active / s.limit) * 100) : 0
-  const stale90 = useMemo(() => (proposed ? runQuery({ ...emptyQuery, seen: ["stale90"], status: ["active"] }).length : 0),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [proposed, version])
 
   return (
     <div className="flex flex-col gap-4">
@@ -223,16 +222,6 @@ export function WidgetUsersPage() {
 
       <Progress label="Clarion licenses in use" value={pct} valueLabel={`${fmt(s.active)}/${fmt(s.limit)}`} />
 
-      {proposed && stale90 > 0 && !filters.seen.length && (
-        <Alert
-          variant="info"
-          action={<Button variant="outline" size="xs" onClick={() => setFilters({ ...filters, seen: ["stale90"], status: ["active"] })}>Show them</Button>}
-        >
-          <AlertTitle>{plural(stale90, "active user")} {stale90 === 1 ? "hasn't" : "haven't"} been seen in 90+ days</AlertTitle>
-          <AlertDescription>They may have left. Deactivating frees their licences and can be undone.</AlertDescription>
-        </Alert>
-      )}
-
       <Card className="gap-0 overflow-hidden p-0">
         {/* header */}
         <div className="flex flex-col gap-4 p-5 pb-4">
@@ -245,23 +234,11 @@ export function WidgetUsersPage() {
             <div className="flex flex-wrap gap-2">
               {proposed ? (
                 <>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild><Button variant="outline"><Download /> Export <ChevronDown /></Button></DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => exportUsers(store.all(), "clarion-widget-users.csv")}>All users ({fmt(s.total)})</DropdownMenuItem>
-                      {filtered && <DropdownMenuItem onSelect={() => exportUsers(runQuery(query), "clarion-widget-users-filtered.csv")}>Users matching filters ({fmt(total)})</DropdownMenuItem>}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild><Button variant="outline"><Upload /> Import <ChevronDown /></Button></DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-64">
-                      <DropdownMenuItem onSelect={() => setImportMode("upsert")}>Add or update people</DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => setImportMode("remove")}>Take people off</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuLabel>Advanced</DropdownMenuLabel>
-                      <DropdownMenuItem onSelect={() => setImportMode("replace")}>Replace the whole list…</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {/* Exports what you're looking at: everyone, or the filtered set. */}
+                  <Button variant="outline" onClick={() => exportUsers(filtered ? runQuery(query) : store.all(), "clarion-widget-users.csv")}>
+                    <Download /> Export
+                  </Button>
+                  <Button variant="outline" onClick={() => setImportOpen(true)}><Upload /> Import</Button>
                   <Button onClick={() => setAddOpen(true)}>Add user</Button>
                 </>
               ) : (
@@ -282,17 +259,14 @@ export function WidgetUsersPage() {
             </InputGroup>
             {proposed && (
               <>
-                <Select size="md" label="Widget" value={filters.connection}
+                <div className="w-44"><Select size="md" label="Widget" value={filters.connection}
                   options={(["connected", "never", "invite_failed"] as Connection[]).map((c) => ({ value: c, label: connectionLabel[c] }))}
-                  onValueChange={(v) => setFilters({ ...filters, connection: v as Connection[] })} />
-                <Select size="md" label="Status" value={filters.status}
+                  onValueChange={(v) => setFilters({ ...filters, connection: v as Connection[] })} /></div>
+                <div className="w-40"><Select size="md" label="Status" value={filters.status}
                   options={[{ value: "active", label: "Active" }, { value: "deactivated", label: "Deactivated" }]}
-                  onValueChange={(v) => setFilters({ ...filters, status: v as Query["status"] })} />
-                <Select size="md" label="Last seen" value={filters.seen}
-                  options={[{ value: "seen30", label: "In the last 30 days" }, { value: "stale30", label: "Not for 30+ days" }, { value: "stale90", label: "Not for 90+ days" }, { value: "never", label: "Never" }]}
-                  onValueChange={(v) => setFilters({ ...filters, seen: v as SeenFilter[] })} />
-                {(filters.connection.length + filters.status.length + filters.seen.length > 0) && (
-                  <Button variant="ghost" size="sm" onClick={() => setFilters({ ...filters, connection: [], status: [], seen: [] })}>Clear filters</Button>
+                  onValueChange={(v) => setFilters({ ...filters, status: v as Query["status"] })} /></div>
+                {(filters.connection.length + filters.status.length > 0) && (
+                  <Button variant="ghost" size="sm" onClick={() => setFilters({ ...filters, connection: [], status: [] })}>Clear filters</Button>
                 )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild><Button variant="ghost" size="sm" className="ms-auto"><ArrowDownUp /> {sortLabel[filters.sort]}</Button></DropdownMenuTrigger>
@@ -336,19 +310,18 @@ export function WidgetUsersPage() {
                       <Checkbox aria-label="Select loaded users" checked={allMatching || allLoadedSelected ? true : someSelected ? "indeterminate" : false} onCheckedChange={toggleLoaded} />
                     </TableHead>
                   )}
-                  <TableHead>
+                  <TableHead className="text-start">
                     {proposed ? "User" : (
                       <button type="button" className="inline-flex items-center gap-1" onClick={() => setClientSort(clientSort === "asc" ? "desc" : "asc")}>
                         User {clientSort === "none" ? <ChevronsUpDown className="size-3.5" /> : clientSort === "asc" ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                       </button>
                     )}
                   </TableHead>
-                  <TableHead>Login ID</TableHead>
-                  {!proposed && <TableHead>Email</TableHead>}
-                  <TableHead>Site</TableHead>
-                  {proposed && <TableHead>Widget</TableHead>}
-                  {proposed && <TableHead title="From analytics — needs a new endpoint (see BULK-USER-MANAGEMENT.md)">Last seen</TableHead>}
-                  {proposed && <TableHead>Status</TableHead>}
+                  <TableHead className="text-start">Login ID</TableHead>
+                  {!proposed && <TableHead className="text-start">Email</TableHead>}
+                  <TableHead className="text-start">Site</TableHead>
+                  {proposed && <TableHead className="text-start">Widget</TableHead>}
+                  {proposed && <TableHead className="text-start">Status</TableHead>}
                   <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead>
                 </TableRow>
               </TableHeader>
@@ -370,14 +343,12 @@ export function WidgetUsersPage() {
                       {!proposed && <TableCell className="max-w-64 truncate">{u.email || "-"}</TableCell>}
                       <TableCell className="max-w-40 truncate">{u.site || (proposed ? <span className="text-content-neutral-subtle">—</span> : "-")}</TableCell>
                       {proposed && <TableCell><ConnectionBadge user={u} /></TableCell>}
-                      {proposed && <TableCell className="whitespace-nowrap text-body-sm">{relTime(u.lastSeen)}</TableCell>}
                       {proposed && <TableCell>{u.active ? <Badge color="success">Active</Badge> : <Badge>Deactivated</Badge>}</TableCell>}
                       <TableCell>
                         {proposed ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="xs" aria-label={`Actions for ${displayName(u)}`}><MoreHorizontal /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onSelect={() => setEditUser(u)}>Edit details</DropdownMenuItem>
                               {u.active
                                 ? <DropdownMenuItem onSelect={() => setDeactivateTarget(targetFor([u]))}>Deactivate</DropdownMenuItem>
                                 : <DropdownMenuItem onSelect={() => doReactivate(targetFor([u]))}>Reactivate</DropdownMenuItem>}
@@ -419,9 +390,17 @@ export function WidgetUsersPage() {
               <Button variant="link" size="xs" onClick={() => setAllMatching({ count: total })}>Select all {fmt(total)}</Button>
             )}
             <span className="mx-1 h-5 w-px bg-line-neutral-muted" />
-            <Button variant="outline" size="sm" onClick={() => bulk(setDeactivateTarget)}>Deactivate</Button>
-            <Button variant="outline" size="sm" onClick={() => bulk(doReactivate)}>Reactivate</Button>
-            <Button variant="outline" size="sm" onClick={() => bulk(setSiteTarget)}>Set site</Button>
+            {/* Only what applies: you can't deactivate the deactivated or reactivate the active. */}
+            {selMix.active > 0 && (
+              <Button variant="outline" size="sm" onClick={() => bulk((t) => setDeactivateTarget(onlyActive(t, true)))}>
+                Deactivate{selMix.inactive > 0 ? ` ${fmt(selMix.active)}` : ""}
+              </Button>
+            )}
+            {selMix.inactive > 0 && (
+              <Button variant="outline" size="sm" onClick={() => bulk((t) => doReactivate(onlyActive(t, false)))}>
+                Reactivate{selMix.active > 0 ? ` ${fmt(selMix.inactive)}` : ""}
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={() => { const us = resolveSelection(); if (us) exportUsers(us, "clarion-widget-users-selected.csv") }}><Download /> Export</Button>
             <Button variant="destructive" size="sm" onClick={() => bulk(setRemoveTarget)}>Remove…</Button>
             <Button variant="ghost" size="xs" aria-label="Clear selection" onClick={clearSelection}><X /></Button>
@@ -431,13 +410,11 @@ export function WidgetUsersPage() {
 
       <AddUserDialog open={addOpen} onOpenChange={setAddOpen} proposed={proposed} />
       <CurrentCsvDialog open={csvOpen} onOpenChange={setCsvOpen} />
-      {importMode && <ImportFlow open={!!importMode} onOpenChange={(o) => { if (!o) setImportMode(null) }} initialMode={importMode} />}
-      <EditUserDialog open={!!editUser} onOpenChange={(o) => { if (!o) setEditUser(null) }} user={editUser} />
+      <ImportFlow open={importOpen} onOpenChange={setImportOpen} />
       <RemoveDialog open={!!removeTarget} onOpenChange={(o) => { if (!o) setRemoveTarget(null) }} target={removeTarget}
         onRemove={doRemove} onDeactivateInstead={() => { if (removeTarget) { setDeactivateTarget(removeTarget); setRemoveTarget(null) } }} />
       <DeactivateDialog open={!!deactivateTarget} onOpenChange={(o) => { if (!o) setDeactivateTarget(null) }} target={deactivateTarget}
         onConfirm={() => deactivateTarget && doDeactivate(deactivateTarget)} />
-      <SetSiteDialog open={!!siteTarget} onOpenChange={(o) => { if (!o) setSiteTarget(null) }} target={siteTarget} onConfirm={doSetSite} />
     </div>
   )
 }
