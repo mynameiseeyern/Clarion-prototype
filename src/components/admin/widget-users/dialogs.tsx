@@ -12,6 +12,7 @@ import {
 } from "@/data/widgetUsers"
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n.toLocaleString()} ${n === 1 ? one : many}`
+const fmtN = (n: number) => n.toLocaleString()
 
 // ------------------------------------------------------------------ Add user --
 
@@ -154,14 +155,20 @@ export function RemoveDialog({ open, onOpenChange, target, onRemove, onDeactivat
   const n = target.count
   const needsCount = n >= 10
   const okToGo = !needsCount || typed.replace(/[,\s]/g, "") === String(n)
-  const freed = target.users.filter((u) => u.active).length
+  // Only active users can be deactivated, and only active users hold a licence.
+  const active = target.users.filter((u) => u.active).length
+  const allInactive = active === 0
   const sample = target.users.slice(0, 4)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>Remove {n === 1 ? target.label : plural(n, "user")}?</DialogTitle>
-          <DialogDescription>Their widget stops working the next time it checks in. This can't be undone.</DialogDescription>
+          <DialogDescription>
+            {allInactive
+              ? `${n === 1 ? "They're" : "They're all"} already deactivated. Removing takes them off the list for good.`
+              : "Their widget stops working the next time it checks in. This can't be undone."}
+          </DialogDescription>
         </DialogHeader>
         <DialogBody className="gap-4">
           {n > 1 && (
@@ -170,11 +177,19 @@ export function RemoveDialog({ open, onOpenChange, target, onRemove, onDeactivat
               {n > sample.length && <li className="text-content-neutral-muted">…and {plural(n - sample.length, "other")}</li>}
             </ul>
           )}
-          <p className="text-body-sm text-content-neutral-muted">Frees {plural(freed, "licence")}. The audit log records who removed {n === 1 ? "them" : "them"} and how many.</p>
-          <Alert variant="info" action={<Button variant="outline" size="xs" onClick={onDeactivateInstead}>Deactivate instead</Button>}>
-            <AlertTitle>Offboarding people who left?</AlertTitle>
-            <AlertDescription>Deactivating frees the licence too, keeps their history, and can be undone.</AlertDescription>
-          </Alert>
+          <p className="text-body-sm text-content-neutral-muted">
+            {active > 0 ? `Frees ${plural(active, "licence")}. ` : ""}The audit log records who removed them and how many.
+          </p>
+          {!allInactive && (
+            <Alert variant="info" action={
+              <Button variant="outline" size="xs" onClick={onDeactivateInstead}>
+                {active === n ? "Deactivate instead" : `Deactivate the ${fmtN(active)} active instead`}
+              </Button>
+            }>
+              <AlertTitle>Offboarding people who left?</AlertTitle>
+              <AlertDescription>Deactivating frees the licence too, keeps their history, and can be undone.</AlertDescription>
+            </Alert>
+          )}
           {needsCount && (
             <Field>
               <FieldLabel>Type the number of users to remove</FieldLabel>

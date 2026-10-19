@@ -412,7 +412,7 @@ export function WidgetUsersPage() {
       <CurrentCsvDialog open={csvOpen} onOpenChange={setCsvOpen} />
       <ImportFlow open={importOpen} onOpenChange={setImportOpen} />
       <RemoveDialog open={!!removeTarget} onOpenChange={(o) => { if (!o) setRemoveTarget(null) }} target={removeTarget}
-        onRemove={doRemove} onDeactivateInstead={() => { if (removeTarget) { setDeactivateTarget(removeTarget); setRemoveTarget(null) } }} />
+        onRemove={doRemove} onDeactivateInstead={() => { if (removeTarget) { setDeactivateTarget(onlyActive(removeTarget, true)); setRemoveTarget(null) } }} />
       <DeactivateDialog open={!!deactivateTarget} onOpenChange={(o) => { if (!o) setDeactivateTarget(null) }} target={deactivateTarget}
         onConfirm={() => deactivateTarget && doDeactivate(deactivateTarget)} />
     </div>
