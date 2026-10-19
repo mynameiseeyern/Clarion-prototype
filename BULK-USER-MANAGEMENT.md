@@ -32,6 +32,82 @@ Six things in the code change the conversation:
 
 ---
 
+## Decision log — every PO ask, what we're doing, and why
+
+**Status:** ✅ Keep — as asked · 🔧 Adapted — same intent, different shape · ❌ Dropped ·
+➕ Added — not asked for · ❓ Open — needs a call (recommendation given)
+
+### Bulk select and delete
+
+| # | PO ask | Status | Decision | Why |
+|---|---|---|---|---|
+| 1 | Tick individual users | ✅ | Checkbox per row | — |
+| 2 | Tick all users on the current page | 🔧 | "Select all loaded users" (header checkbox) | There are no pages: the list loads 15 at a time as you scroll. Same intent, honest wording. |
+| 3 | Select every user matching the current search or filter | ✅ | "Select all N matching" from the selection banner / bulk bar | The core of R&D's point 1. The server re-checks the count on confirm and refuses if another admin changed the list. |
+| 4 | Confirmation shows how many will be removed | ✅ | Dialog with the count and a sample of names; type the count for 10+ | Typing the count is a proven guard for mass deletes (Customer.io). |
+| 5 | Deleted user loses widget access via the licence flow | ✅ | Unchanged — remove → widget answers `licensed:false` | Already how the back end works. |
+
+### Download the user list
+
+| # | PO ask | Status | Decision | Why |
+|---|---|---|---|---|
+| 6 | Download every user as CSV, however they were added | ❓ | Export downloads everyone. **Open:** today it follows active filters. **Recommend:** always everyone, and export a subset by selecting it. | The PO asked for the whole list; following filters makes "Export" mean different things at different times. |
+| 7 | Same columns as the upload template | ✅ | `loginId, name, email, site` only | Export → edit → import round trip verified: re-importing an export changes nothing. |
+| 8 | Info-only columns: connection, date added, last seen *(nice to have)* | ❌ | Dropped | Extra columns complicate the round trip; connection is already visible and filterable in the table. |
+
+### Re-upload the CSV to apply changes
+
+| # | PO ask | Status | Decision | Why |
+|---|---|---|---|---|
+| 9 | Match each row to a user by login ID | ✅ | Matched by login ID, case-insensitive (as the back end does) | Login ID can't change — it derives the user's ID. `chenry` and `demo\chenry` are two people, so the preview **warns about lookalikes** (➕). |
+| 10 | Unknown rows are added | ✅ | Added; licence check before anything is written | — |
+| 11 | Rows that differ are updated | ✅ | Name, email and site updated. **A blank cell keeps the current value.** | Behaviour change from today (existing users are silently skipped). Blank = keep, so a sparse file can't wipe data — trade-off: a CSV can't clear a field. |
+| 12 | Users missing from the file are removed | ❌ | **Dropped — a CSV never removes anyone** | Decided (Ee). A partial, filtered or stale file would silently delete real people. Offboarding happens in the table. Retires R&D's points 2 and 4. |
+| 13 | Nothing changes until the admin reviews a preview (added / updated / removed, and which) | ✅ | Preview in the same dialog: "N new, N updated, N skipped" + the rows that change | No "removed" count because nothing is removed (#12). |
+| 14 | Admin can download the list of changes | ❓ | **Open:** cut when the dialog was simplified. **Recommend:** restore as a small link in the preview. | It was a firm requirement, not a nice-to-have — useful for sharing with Finance/IT. |
+| 15 | Invalid rows reported individually, with the reason | ✅ | Listed first in the preview: "Skipped — email isn't valid", "Skipped — same login ID as row 7" | — |
+| 16 | Correct and re-upload, or apply only the valid rows | ✅ | Valid rows apply; bad rows are skipped and listed; re-upload any time | Safe only because nothing is ever removed by file (#12). Duplicate login IDs are skipped, not blocking — differs from R&D's suggestion. |
+
+### Edit a single user *(nice to have)*
+
+| # | PO ask | Status | Decision | Why |
+|---|---|---|---|---|
+| 17 | Edit a user's details without deleting and re-adding | ❌ | Dropped | Decided (Ee). Import already updates name/email/site for an existing login ID, which covers the typo case. Login ID could never be edited anyway. |
+
+### Connection status
+
+| # | PO ask | Status | Decision | Why |
+|---|---|---|---|---|
+| 18 | Show *Pending connection* (never signed in) or *Connected* (signed in, active) | ❓ | Shown as a column. **Open:** the data means "has connected **at least once**", not "active now", and there's a third state (invite email failed). **Recommend:** use the PO's labels — *Pending connection* / *Connected* — with a tooltip "Has connected at least once", and fold "invite failed" into Connected with a small warning. | `registerStatus` is set the first time the widget calls in and never goes back. Only last seen could say "active", and that's dropped (#19). |
+| 19 | Show when the user was last seen *(nice to have)* | ❌ | Dropped | Needs a join with the analytics database. Trade-off: can't spot people who connected once and left. Bring back if that becomes a support problem. |
+| 20 | Filter on status, e.g. everyone still pending after a rollout | ✅ | "Widget" filter | Eng: the list API has no filter parameter today — needs adding server-side. |
+
+### Audit
+
+| # | PO ask | Status | Decision | Why |
+|---|---|---|---|---|
+| 21 | Every bulk action recorded: who, when, what, how many | ✅ | Counts only — never names or login IDs | PII policy in the audit library. Eng: edits and deactivations aren't audited today at all; needs adding. |
+
+### Scope
+
+| # | PO ask | Status | Decision | Why |
+|---|---|---|---|---|
+| 22 | Out: deployment mode in the CSV | ✅ | Out | — |
+| 23 | Out: directory sync / SCIM | ✅ | Out | — |
+| 24 | Out: roles and reporting lines | ✅ | Out | Covered by the RBAC work. |
+
+### Not asked for, but in the solution
+
+| # | Addition | Status | Why |
+|---|---|---|---|
+| 25 | **Deactivate / Reactivate** (row and bulk), suggested as the default way to offboard | ➕ | Reversible, frees the licence, keeps history. Already supported by the API, just not exposed. Standard in Okta, Mural, Apollo. Only offered where it applies (can't deactivate the deactivated). |
+| 26 | **Confirm on single remove** | ➕ | Today one click deletes, with no confirmation. |
+| 27 | **Select-all guard** — action refused if the matching count changed | ➕ | Several admins share one list. |
+| 28 | **Lookalike login ID warning** on import | ➕ | Mixed formats (`domain\name` vs `name`) would otherwise double-count people and licences. |
+| 29 | **Status filter, sort, total count** | ➕ | Today the list has no count and the sort only reorders loaded rows. |
+
+---
+
 ## 1. How each function works today
 
 | Function | What it does | Where |
@@ -200,7 +276,9 @@ then left. If that becomes a real support problem, last seen is the thing to bri
 
 1. Is **Deactivate** the default offboarding action, with Remove for mistakes and clean-up?
 2. Should re-importing an existing login ID **update** it (E1)? It changes today's behaviour.
-3. Agree to drop **one-file sync** (E2) and remove-by-file (E3), and offboard from the table instead?
+3. ✅ **Decided (Ee):** a CSV never removes anyone. No "the file is the whole list" sync (E2) and
+   no remove-by-file (E3) — someone missing from a file stays on the list. Offboarding happens
+   in the table. This also retires R&D's partial-file and skipped-row risks.
 4. In-file duplicates: **block** (R&D) or **first-wins with a warning** in the preview?
 5. ~~Last seen in v1?~~ Dropped with the other nice-to-haves (see below).
 6. Login ID cleanliness (`domain\name` vs `name`): flag in the preview, or normalise?
