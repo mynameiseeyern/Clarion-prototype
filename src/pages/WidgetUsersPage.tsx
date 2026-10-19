@@ -16,7 +16,7 @@ import {
   type Connection, type DataSize, type Query, type SortKey, type WidgetUser,
 } from "@/data/widgetUsers"
 import {
-  AddUserDialog, ConnectionBadge, CurrentCsvDialog, DeactivateDialog, RemoveDialog, type Target,
+  AddUserDialog, ConnectionBadge, CurrentCsvDialog, DeactivateDialog, EditUserDialog, RemoveDialog, type Target,
 } from "@/components/admin/widget-users/dialogs"
 import { ImportFlow } from "@/components/admin/widget-users/ImportFlow"
 
@@ -143,6 +143,7 @@ export function WidgetUsersPage() {
   const [importOpen, setImportOpen] = useState(false)
   const [removeTarget, setRemoveTarget] = useState<Target | null>(null)
   const [deactivateTarget, setDeactivateTarget] = useState<Target | null>(null)
+  const [editUser, setEditUser] = useState<WidgetUser | null>(null)
 
   const targetFor = (users: WidgetUser[]): Target => ({ users, count: users.length, label: users.length === 1 ? displayName(users[0]) : plural(users.length, "user") })
   /** Narrow a mixed selection to the users an action actually changes. */
@@ -349,6 +350,7 @@ export function WidgetUsersPage() {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="xs" aria-label={`Actions for ${displayName(u)}`}><MoreHorizontal /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onSelect={() => setEditUser(u)}>Edit details</DropdownMenuItem>
                               {u.active
                                 ? <DropdownMenuItem onSelect={() => setDeactivateTarget(targetFor([u]))}>Deactivate</DropdownMenuItem>
                                 : <DropdownMenuItem onSelect={() => doReactivate(targetFor([u]))}>Reactivate</DropdownMenuItem>}
@@ -413,6 +415,7 @@ export function WidgetUsersPage() {
       <ImportFlow open={importOpen} onOpenChange={setImportOpen} />
       <RemoveDialog open={!!removeTarget} onOpenChange={(o) => { if (!o) setRemoveTarget(null) }} target={removeTarget}
         onRemove={doRemove} onDeactivateInstead={() => { if (removeTarget) { setDeactivateTarget(onlyActive(removeTarget, true)); setRemoveTarget(null) } }} />
+      <EditUserDialog open={!!editUser} onOpenChange={(o) => { if (!o) setEditUser(null) }} user={editUser} />
       <DeactivateDialog open={!!deactivateTarget} onOpenChange={(o) => { if (!o) setDeactivateTarget(null) }} target={deactivateTarget}
         onConfirm={() => deactivateTarget && doDeactivate(deactivateTarget)} />
     </div>

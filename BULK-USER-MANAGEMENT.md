@@ -72,7 +72,7 @@ Six things in the code change the conversation:
 
 | # | PO ask | Status | Decision | Why |
 |---|---|---|---|---|
-| 17 | Edit a user's details without deleting and re-adding | ❌ | Dropped | Decided (Ee). Import already updates name/email/site for an existing login ID, which covers the typo case. Login ID could never be edited anyway. |
+| 17 | Edit a user's details without deleting and re-adding | ✅ | **Kept** — decided (Ee). "Edit details" in the row menu: name, email, site. Login ID shown read-only with the reason. | The quickest fix for a typo; the API already supports it. Login ID can't be edited — the user's ID is derived from it. Eng: edits aren't audited today. |
 
 ### Connection status
 
@@ -204,8 +204,7 @@ ideally recoverable; the list is knowable; safe with several admins.
 - **D1 — Edit dialog** for name, email, site (API exists). Explain why login ID is locked;
   "change login ID" = add the new one, remove the old one.
 - **D2 — Back-end login ID rename** that migrates config. Expensive; only if real need.
-- **Recommend (revised):** **drop for now** — it's one of the PO's nice-to-haves. Import already
-  updates name, email and site for an existing login ID, which covers the typo case.
+- **Decided (Ee):** **D1 — keep single-user edit** (name, email, site; login ID read-only).
 
 ### E. Bulk change by file
 - **E1 — Keep "Import" additive, add a preview, and let existing rows update.** New = add,
@@ -249,7 +248,7 @@ Most of the direction above is established practice, not invention:
 | **Type the count to confirm a mass delete** | [Customer.io](https://mobbin.com/screens/3e28b555-ff21-400b-bc0e-6858ed5c6124) ("Confirm how many people you're deleting") | A3, E2 |
 | **Undo after delete** | [HubSpot](https://mobbin.com/screens/bb7f0f5a-1de4-4773-b66a-f46e11c4ea24) toast: "2 Contacts were deleted. Restore Contacts." | A4 |
 | **Download → edit → upload → validate → review → apply** | [Deel bulk edit](https://mobbin.com/flows/f9e90f25-5d36-4474-86a5-d61fbc08051b) | E1 — the PO's ask, done as a staged flow rather than a silent sync |
-| **Bulk-edit one field, "keep current value" by default** | [Pipedrive](https://mobbin.com/screens/1c70f25d-7816-4204-a257-c5c4309dcb0c) | Considered for a "Set site" bulk action; dropped with single-user edit |
+| **Bulk-edit one field, "keep current value" by default** | [Pipedrive](https://mobbin.com/screens/1c70f25d-7816-4204-a257-c5c4309dcb0c) | Considered for a "Set site" bulk action; not included (single-user edit only) |
 | **CSV import with options before it runs** | [Okta import users](https://mobbin.com/flows/69efb81d-f7c3-463d-a757-cbac5b3bdcfe), [Sprig](https://mobbin.com/flows/10b68bf6-5954-47f7-b95f-075dd3f49378) | E1 |
 
 What we did **not** find: a mainstream product that makes "the uploaded file is the whole
@@ -258,7 +257,8 @@ separate, guarded action — which supports keeping E2 advanced (or out).
 
 ## 6. Scope: the PO's nice-to-haves are out
 
-Dropped from the proposal and the prototype, because each adds cost without serving a core job:
+Dropped from the proposal and the prototype, because each adds cost without serving a core job
+(single-user edit was reconsidered and **kept** — see decision log #17):
 
 - **Info-only columns in the export** (connection, date added, last seen). An export now has
   exactly the template columns, so it can be edited and imported straight back (round trip
@@ -266,8 +266,6 @@ Dropped from the proposal and the prototype, because each adds cost without serv
   visible and filterable in the table.
 - **Last seen.** Needs a join with the analytics database. "Never connected" already covers
   failed or incomplete rollouts.
-- **Single-user edit.** Import updates name, email and site for an existing login ID, which
-  covers the email-typo case without another screen. (Our own "Set site" bulk action went too.)
 
 Trade-off to note: without last seen there's no way to spot people who connected once and
 then left. If that becomes a real support problem, last seen is the thing to bring back.
@@ -296,7 +294,7 @@ then left. If that becomes a real support problem, last seen is the thing to bri
   ~12% not seen for 60+ days, a few deactivated.
 - **The list pages 15 at a time with latency**, like the real API, so "select all" is real.
 - **Proposed includes:** connection and status columns; filters; server-side sort; total count;
-  row menu (deactivate/reactivate, remove with confirm);
+  row menu (edit details, deactivate/reactivate, remove with confirm);
   floating bulk bar that only offers what applies (Deactivate if any are active, Reactivate if
   any are deactivated, with counts when mixed), plus export and remove (type the
   count for 10+); "select all N matching" with an **expected-count guard** (use *Another admin
