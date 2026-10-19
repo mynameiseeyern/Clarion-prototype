@@ -337,7 +337,13 @@ export function WidgetUsersPage() {
         )}
 
         {/* table */}
-        <div ref={scroller} className="max-h-[560px] overflow-y-auto">
+        {/* Sticky header: Picasso's Table wraps itself in an overflow-x box, which
+            would capture position:sticky. Let that box overflow visibly so this div is
+            the only scroller (both axes), then pin the header cells to it. */}
+        <div
+          ref={scroller}
+          className="max-h-[560px] overflow-auto [&_[data-slot=table-container]]:overflow-visible [&_th]:sticky [&_th]:top-0 [&_th]:z-10"
+        >
           {!loading && shown.length === 0 ? (
             <div className="py-10">
               <EmptyState size="sm" icon={<Search />}
@@ -346,7 +352,7 @@ export function WidgetUsersPage() {
             </div>
           ) : (
             <Table size="sm">
-              <TableHeader className="sticky top-0 z-10">
+              <TableHeader>
                 <TableRow>
                   {proposed && (
                     <TableHead className="w-10">
