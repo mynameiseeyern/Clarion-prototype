@@ -5,6 +5,7 @@ import { pageLabel, pageSubtitle, type PageId, type Experience } from "@/nav"
 import { AdminSidebar } from "@/components/dashboard/AdminSidebar"
 import { ExperienceMenu } from "@/components/dashboard/ExperienceMenu"
 import { UsersRolesPage } from "@/pages/UsersRolesPage"
+import { WidgetUsersPage } from "@/pages/WidgetUsersPage"
 import { SsoPage } from "@/pages/SsoPage"
 import { PlaceholderPage } from "@/pages/PlaceholderPage"
 import { RbacDocPage, GroupsDocPage, BillingDocPage } from "@/pages/AdminDocs"
@@ -93,6 +94,7 @@ export function AdminApp({
           <div className="flex flex-col gap-gutter">
           <PageHeader title={pageLabel(page)} description={pageSubtitle[page]} />
           {page === "users" && <UsersRolesPage />}
+          {page === "widgetusers" && <WidgetUsersPage />}
           {page === "groups" && (
             <PlaceholderPage title="Groups" icon={FolderTree} description="Build a Group hierarchy that mirrors your team structure (Country → Area → Office → Shift). A Manager assigned to a Group sees every Widget beneath it (visibility cascades). Bulk-assign and move Widgets between Groups." />
           )}

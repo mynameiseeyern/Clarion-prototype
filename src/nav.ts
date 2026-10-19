@@ -16,12 +16,13 @@ import {
   Network,
   ReceiptText,
   KeyRound,
+  Contact,
   type LucideIcon,
 } from "lucide-react"
 
 export type PageId =
   | "overview" | "endpoints" | "alerts" | "thresholds"
-  | "users" | "groups" | "widgets" | "sso" | "subscription" | "audit"
+  | "users" | "widgetusers" | "groups" | "widgets" | "sso" | "subscription" | "audit"
   | "rbacdoc" | "groupsdoc" | "billingdoc"
   | "glossary" | "issuesdoc" | "devicesdoc" | "scopedoc" | "components"
 
@@ -50,6 +51,7 @@ const offNavLabels: Partial<Record<PageId, string>> = {
 export const adminNavItems: NavItem[] = [
   { id: "widgets", label: "Device management", icon: RadioTower },
   { id: "users", label: "Members", icon: Users },
+  { id: "widgetusers", label: "Widget users", icon: Contact },
   { id: "groups", label: "Groups", icon: FolderTree },
   { id: "sso", label: "Single sign-on", icon: KeyRound },
   { id: "subscription", label: "Subscription", icon: CreditCard },
@@ -83,6 +85,7 @@ export const pageLabel = (id: PageId) =>
 export const pageSubtitle: Partial<Record<PageId, string>> = {
   thresholds: "Set when an endpoint is flagged warning or critical.",
   users: "Invite people, set their role, and manage access.",
+  widgetusers: "Who can run the Clarion widget, whether it has connected, and who uses a licence.",
   groups: "Organise Widgets into Groups that scope what each Manager sees.",
   widgets: "Register, assign and revoke endpoint Widgets. A Widget becomes an Endpoint once it's set up and reporting.",
   sso: "Let Members sign in with your company's identity provider.",
@@ -101,6 +104,7 @@ export const pagePath: Record<PageId, string> = {
   alerts: "/issues",
   thresholds: "/thresholds",
   users: "/admin/users",
+  widgetusers: "/admin/widget-users",
   groups: "/admin/groups",
   widgets: "/admin/widgets",
   sso: "/admin/sso",
@@ -146,7 +150,7 @@ export const buildPath = (page: PageId, drawer: DrawerParams = {}): string => {
 
 export type Experience = "fleet" | "admin"
 
-export const adminPageIds: PageId[] = ["users", "groups", "widgets", "sso", "subscription", "audit", "rbacdoc", "groupsdoc", "billingdoc"]
+export const adminPageIds: PageId[] = ["users", "widgetusers", "groups", "widgets", "sso", "subscription", "audit", "rbacdoc", "groupsdoc", "billingdoc"]
 
 export const experienceOf = (id: PageId): Experience =>
   (adminPageIds as string[]).includes(id) ? "admin" : "fleet"
