@@ -244,73 +244,29 @@ export function WidgetUsersPage() {
       <Card className="gap-0 overflow-hidden p-0">
         {/* header */}
         <div className="flex flex-col gap-4 p-5 pb-4">
-          {/* One action row with two modes. Normally: title + page actions. With rows
-              selected: the same row becomes the selection and its actions — so there's
-              only ever one set of buttons, and Export always means "these". */}
           <div className="flex min-h-9 flex-wrap items-center justify-between gap-3">
-            {proposed && selCount > 0 ? (
-              <>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <Button variant="ghost" size="sm" aria-label="Clear selection" onClick={clearSelection}><X /></Button>
-                  <h2 className="text-heading-xs text-content-neutral-emphasis">
-                    {allMatching ? `All ${fmt(allMatching.count)} selected` : `${fmt(selCount)} selected`}
-                  </h2>
-                  {hiddenSelected > 0 && (
-                    <span className="text-body-sm text-content-neutral-muted">
-                      {fmt(hiddenSelected)} not shown by this search or filter
-                    </span>
-                  )}
-                  {!allMatching && total > selCount && (
-                    <Button variant="link" size="sm" onClick={() => setAllMatching({ count: total })}>
-                      Select all {fmt(total)}{filtered ? " matching" : ""}
+              <div className="flex items-center gap-3">
+                <UserPlus className="size-5 text-content-neutral-muted" />
+                <h2 className="text-heading-xs text-content-neutral-emphasis">Clarion widget users</h2>
+                {proposed && <Badge>{filtered ? `${fmt(total)} of ${fmt(s.total)}` : fmt(s.total)}</Badge>}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {proposed ? (
+                  <>
+                    {/* Exports what you're looking at: everyone, or the filtered set. */}
+                    <Button variant="outline" onClick={() => exportUsers(filtered ? runQuery(query) : store.all(), "clarion-widget-users.csv")}>
+                      <Download /> Export
                     </Button>
-                  )}
-                  {allMatching && total > rows.length && (
-                    <span className="text-body-sm text-content-neutral-muted">including ones not loaded yet</span>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {/* Only what applies: you can't deactivate the deactivated or reactivate the active. */}
-                  {selMix.active > 0 && (
-                    <Button variant="outline" onClick={() => bulk((t) => setDeactivateTarget(onlyActive(t, true)))}>
-                      Deactivate{selMix.inactive > 0 ? ` ${fmt(selMix.active)}` : ""}
-                    </Button>
-                  )}
-                  {selMix.inactive > 0 && (
-                    <Button variant="outline" onClick={() => bulk((t) => doReactivate(onlyActive(t, false)))}>
-                      Reactivate{selMix.active > 0 ? ` ${fmt(selMix.inactive)}` : ""}
-                    </Button>
-                  )}
-                  <Button variant="outline" onClick={() => { const us = resolveSelection(); if (us) exportUsers(us, "clarion-widget-users-selected.csv") }}><Download /> Export {fmt(selCount)}</Button>
-                  <Button variant="destructive" onClick={() => bulk(setRemoveTarget)}>Remove…</Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center gap-3">
-                  <UserPlus className="size-5 text-content-neutral-muted" />
-                  <h2 className="text-heading-xs text-content-neutral-emphasis">Clarion widget users</h2>
-                  {proposed && <Badge>{filtered ? `${fmt(total)} of ${fmt(s.total)}` : fmt(s.total)}</Badge>}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {proposed ? (
-                    <>
-                      {/* Exports what you're looking at: everyone, or the filtered set. */}
-                      <Button variant="outline" onClick={() => exportUsers(filtered ? runQuery(query) : store.all(), "clarion-widget-users.csv")}>
-                        <Download /> Export
-                      </Button>
-                      <Button variant="outline" onClick={() => setImportOpen(true)}><Upload /> Import</Button>
-                      <Button onClick={() => setAddOpen(true)}>Add user</Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button variant="outline" onClick={() => setCsvOpen(true)}>CSV bulk upload</Button>
-                      <Button onClick={() => setAddOpen(true)}>Add users</Button>
-                    </>
-                  )}
-                </div>
-              </>
-            )}
+                    <Button variant="outline" onClick={() => setImportOpen(true)}><Upload /> Import</Button>
+                    <Button onClick={() => setAddOpen(true)}>Add user</Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="outline" onClick={() => setCsvOpen(true)}>CSV bulk upload</Button>
+                    <Button onClick={() => setAddOpen(true)}>Add users</Button>
+                  </>
+                )}
+              </div>
           </div>
 
           {/* Search and filters stay put while rows are selected. */}
@@ -341,6 +297,47 @@ export function WidgetUsersPage() {
             )}
           </div>
         </div>
+
+        {/* Selection strip — under the toolbar, like the active-filter strip in the
+            Iris console's audit Timeline. The header and toolbar stay as they are. */}
+        {proposed && selCount > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line-neutral-muted bg-surface-neutral-subtle px-5 py-3">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <Button variant="ghost" size="xs" aria-label="Clear selection" onClick={clearSelection}><X /></Button>
+                  <span className="text-label-md text-content-neutral-emphasis">
+                    {allMatching ? `All ${fmt(allMatching.count)} selected` : `${fmt(selCount)} selected`}
+                  </span>
+                  {hiddenSelected > 0 && (
+                    <span className="text-body-sm text-content-neutral-muted">
+                      {fmt(hiddenSelected)} not shown by this search or filter
+                    </span>
+                  )}
+                  {!allMatching && total > selCount && (
+                    <Button variant="link" size="xs" onClick={() => setAllMatching({ count: total })}>
+                      Select all {fmt(total)}{filtered ? " matching" : ""}
+                    </Button>
+                  )}
+                  {allMatching && total > rows.length && (
+                    <span className="text-body-sm text-content-neutral-muted">including ones not loaded yet</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {/* Only what applies: you can't deactivate the deactivated or reactivate the active. */}
+                  {selMix.active > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => bulk((t) => setDeactivateTarget(onlyActive(t, true)))}>
+                      Deactivate{selMix.inactive > 0 ? ` ${fmt(selMix.active)}` : ""}
+                    </Button>
+                  )}
+                  {selMix.inactive > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => bulk((t) => doReactivate(onlyActive(t, false)))}>
+                      Reactivate{selMix.active > 0 ? ` ${fmt(selMix.inactive)}` : ""}
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={() => { const us = resolveSelection(); if (us) exportUsers(us, "clarion-widget-users-selected.csv") }}><Download /> Export {fmt(selCount)}</Button>
+                  <Button variant="destructive" size="sm" onClick={() => bulk(setRemoveTarget)}>Remove…</Button>
+                </div>
+          </div>
+        )}
 
         {/* table */}
         <div ref={scroller} className="max-h-[560px] overflow-y-auto">
