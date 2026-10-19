@@ -305,7 +305,7 @@ export function WidgetUsersPage() {
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <Button variant="ghost" size="xs" aria-label="Clear selection" onClick={clearSelection}><X /></Button>
                   <span className="text-label-md text-content-neutral-emphasis">
-                    {allMatching ? `All ${fmt(allMatching.count)} selected` : `${fmt(selCount)} selected`}
+                    {allMatching ? `All ${fmt(allMatching.count)} ${filtered ? "matching users" : "users"} selected` : `${fmt(selCount)} selected`}
                   </span>
                   {hiddenSelected > 0 && (
                     <span className="text-body-sm text-content-neutral-muted">
@@ -316,9 +316,6 @@ export function WidgetUsersPage() {
                     <Button variant="link" size="xs" onClick={() => setAllMatching({ count: total })}>
                       Select all {fmt(total)}{filtered ? " matching" : ""}
                     </Button>
-                  )}
-                  {allMatching && total > rows.length && (
-                    <span className="text-body-sm text-content-neutral-muted">including ones not loaded yet</span>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
