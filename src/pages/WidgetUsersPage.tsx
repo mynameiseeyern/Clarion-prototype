@@ -106,7 +106,25 @@ export function WidgetUsersPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [allMatching, setAllMatching] = useState<{ count: number } | null>(null)
   function clearSelection() { setSelected(new Set()); setAllMatching(null) }
-  useEffect(() => { clearSelection() }, [query])
+  // Ticked rows survive a new search or filter, so a selection can be built across
+  // searches. "All matching" is defined by the query, so that one resets.
+  useEffect(() => { setAllMatching(null) }, [query])
+  // Drop ticks for users who no longer exist (removed, data reset).
+  useEffect(() => {
+    setSelected((s) => {
+      if (!s.size) return s
+      const ids = new Set(store.all().map((u) => u.userId))
+      const next = new Set([...s].filter((id) => ids.has(id)))
+      return next.size === s.size ? s : next
+    })
+  }, [version])
+  // Ticked users the current search/filters hide.
+  const hiddenSelected = useMemo(() => {
+    if (!selected.size || allMatching) return 0
+    const visible = new Set(runQuery(query).map((u) => u.userId))
+    return [...selected].filter((id) => !visible.has(id)).length
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, allMatching, query, version])
 
   const loadedIds = shown.map((u) => u.userId)
   const allLoadedSelected = loadedIds.length > 0 && loadedIds.every((id) => selected.has(id))
@@ -237,6 +255,11 @@ export function WidgetUsersPage() {
                   <h2 className="text-heading-xs text-content-neutral-emphasis">
                     {allMatching ? `All ${fmt(allMatching.count)} selected` : `${fmt(selCount)} selected`}
                   </h2>
+                  {hiddenSelected > 0 && (
+                    <span className="text-body-sm text-content-neutral-muted">
+                      {fmt(hiddenSelected)} not shown by this search or filter
+                    </span>
+                  )}
                   {!allMatching && total > selCount && (
                     <Button variant="link" size="sm" onClick={() => setAllMatching({ count: total })}>
                       Select all {fmt(total)}{filtered ? " matching" : ""}
@@ -258,7 +281,7 @@ export function WidgetUsersPage() {
                       Reactivate{selMix.active > 0 ? ` ${fmt(selMix.inactive)}` : ""}
                     </Button>
                   )}
-                  <Button variant="outline" onClick={() => { const us = resolveSelection(); if (us) exportUsers(us, "clarion-widget-users-selected.csv") }}><Download /> Export</Button>
+                  <Button variant="outline" onClick={() => { const us = resolveSelection(); if (us) exportUsers(us, "clarion-widget-users-selected.csv") }}><Download /> Export {fmt(selCount)}</Button>
                   <Button variant="destructive" onClick={() => bulk(setRemoveTarget)}>Remove…</Button>
                 </div>
               </>
