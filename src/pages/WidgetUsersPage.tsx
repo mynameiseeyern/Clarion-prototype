@@ -418,11 +418,6 @@ export function WidgetUsersPage() {
             <div className="flex items-center justify-center gap-2 py-3 text-body-sm text-content-neutral-muted"><Loader2 className="size-4 animate-spin" /> Loading users…</div>
           )}
         </div>
-        {proposed && (
-          <div className="border-t border-line-neutral-muted px-5 py-2 text-body-sm text-content-neutral-muted">
-            {fmt(rows.length)} of {fmt(total)} loaded · 15 per request, like the real API
-          </div>
-        )}
       </Card>
 
 
