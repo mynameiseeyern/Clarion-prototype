@@ -1,240 +1,416 @@
 import { useMemo, useState } from "react"
 import {
-  Search, X, Plus, MoreHorizontal, ShieldCheck, UserCog, Mail, KeyRound,
-  UserMinus, UserCheck, Users as UsersIcon, BadgeCheck,
+  Check, FolderTree, KeyRound, Lock, Mail, MapPin, MoreHorizontal, Plus, Search, ShieldCheck,
+  UserCheck, UserMinus, Users as UsersIcon, X,
 } from "lucide-react"
 import {
-  Avatar, AvatarFallback, Badge, Button,
-  Card, CardAction, CardFooter, CardHeader, CardHeaderText, CardTitle,
+  Alert, AlertDescription, Badge, Button, Card, CardAction, CardHeader, CardHeaderText, CardTitle, Checkbox,
+  Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Drawer, DrawerBody, DrawerCloseButton, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerHeading,
+  DrawerTitle, DrawerTitleGroup,
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
-  EmptyState, InputGroup, InputGroupAddon, InputGroupInput, KpiTile, Select,
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  EmptyState, Field, FieldControl, FieldDescription, FieldError, FieldLabel, Input, InputGroup, InputGroupAddon, InputGroupInput,
+  Select, Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@ir/ui"
 import { toast } from "@/components/ui/toast"
-import { InviteMemberDialog, type InviteDraft } from "@/components/admin/InviteMemberDialog"
 import {
-  users as seedUsers, groupName, roleLabel, roleBlurb, statusLabel,
-  type AccountUser, type UserRole, type UserStatus,
-} from "@/data/users"
+  ME, access, assignmentLabel, clarionAccess, clarionReach, grantsOf, groupsOf, isTenantAdmin, roleDef, roles,
+  statusLabel, tenantAdmins, wouldOrphanTenant, type Person, type PersonStatus,
+} from "@/data/access"
+import { AddRoleDialog, PersonCell, RoleBadge, fmt, locList, plural, useAccess } from "@/components/admin/access/AccessBits"
 
-const initials = (name: string) => name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
+const statusColor: Record<PersonStatus, "success" | "info" | "neutral"> = { active: "success", invited: "info", deactivated: "neutral" }
 
-const statusColor: Record<UserStatus, "success" | "info" | "neutral"> = {
-  active: "success", invited: "info", deactivated: "neutral",
-}
-
-const roleOptions = (Object.keys(roleLabel) as UserRole[]).map((r) => ({ value: r, label: roleLabel[r] }))
-const statusOptions = (Object.keys(statusLabel) as UserStatus[]).map((s) => ({ value: s, label: statusLabel[s] }))
-
+/**
+ * Users (Iris platform, Client Admin). Proposal for "Iris Platform: RBAC, Groups and
+ * Locations": people get access from the groups they're in. The list shows where
+ * each person's access comes from, and roles given directly are flagged as exceptions.
+ */
 export function UsersRolesPage() {
-  const [rows, setRows] = useState<AccountUser[]>(seedUsers)
+  useAccess()
   const [search, setSearch] = useState("")
-  const [roles, setRoles] = useState<string[]>([])
-  const [statuses, setStatuses] = useState<string[]>(["active"])
+  const [groupF, setGroupF] = useState<string[]>([])
+  const [roleF, setRoleF] = useState<string[]>([])
+  const [locF, setLocF] = useState<string[]>([])
+  const [statusF, setStatusF] = useState<string[]>([])
+  const [open, setOpen] = useState<string | null>(null)
   const [inviteOpen, setInviteOpen] = useState(false)
 
-  const stats = useMemo(() => ({
-    active: rows.filter((u) => u.status === "active").length,
-    invited: rows.filter((u) => u.status === "invited").length,
-    admins: rows.filter((u) => u.role === "admin" && u.status !== "deactivated").length,
-    deactivated: rows.filter((u) => u.status === "deactivated").length,
-  }), [rows])
-
-  const filtered = useMemo(() => {
+  const people = access.people()
+  const filtered = people.filter((p) => {
     const q = search.trim().toLowerCase()
-    return rows.filter((u) => {
-      if (roles.length && !roles.includes(u.role)) return false
-      if (statuses.length && !statuses.includes(u.status)) return false
-      if (q && !(u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))) return false
-      return true
-    })
-  }, [rows, search, roles, statuses])
-
-  const activeAdmins = rows.filter((u) => u.role === "admin" && u.status === "active").length
-
-  const setStatusFor = (id: string, next: UserStatus) =>
-    setRows((xs) => xs.map((u) => (u.id === id ? { ...u, status: next } : u)))
-
-  const onDeactivate = (u: AccountUser) => {
-    if (u.role === "admin" && activeAdmins <= 1) {
-      toast({ title: "Can't deactivate the last Admin", description: "Assign another Admin first.", variant: "danger" })
-      return
+    if (q && !(p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q))) return false
+    if (statusF.length && !statusF.includes(p.status)) return false
+    if (groupF.length && !groupsOf(p.id).some((g) => groupF.includes(g.id))) return false
+    const grants = grantsOf(p.id).map((g) => g.assignment)
+    if (roleF.length && !grants.some((x) => roleF.includes(x.role))) return false
+    if (locF.length) {
+      const acc = clarionAccess(p.id)
+      if (!acc.role) return false
+      if (acc.locations !== null && !acc.locations.some((l) => locF.includes(l))) return false
     }
-    setStatusFor(u.id, "deactivated")
-    toast({ title: `${u.name} deactivated`, description: "Access revoked. (Stubbed)", variant: "danger" })
-  }
-  const onReactivate = (u: AccountUser) => {
-    setStatusFor(u.id, "active")
-    toast({ title: `${u.name} reactivated`, variant: "success" })
-  }
-  const onResend = (u: AccountUser) =>
-    toast({ title: `Invite resent to ${u.email}`, description: "No duplicate account created. (Stubbed)", variant: "success" })
-  const onReset = (u: AccountUser) =>
-    toast({ title: `Password reset sent to ${u.email}`, description: "Email stubbed in prototype.", variant: "info" })
-  const onEditRole = (u: AccountUser) =>
-    toast({ title: `Edit role — ${u.name}`, description: "Role editor coming next.", variant: "info" })
-
-  const onInvite = ({ email, role: r, groups: gs }: InviteDraft) => {
-    const name = email.split("@")[0].split(/[._-]+/).filter(Boolean)
-      .map((p) => p[0].toUpperCase() + p.slice(1)).join(" ") || email
-    const newUser: AccountUser = {
-      id: `u-${Date.now()}`, name, email, role: r, status: "invited",
-      groups: gs, lastActive: null, invitedAgo: "just now",
-    }
-    setRows((xs) => [newUser, ...xs])
-    setStatuses(["invited"])
-    toast({ title: `Invite sent to ${email}`, description: "Email stubbed in prototype.", variant: "success" })
-  }
-
-  const clearFilters = () => { setSearch(""); setRoles([]); setStatuses([]) }
+    return true
+  })
+  const exceptions = people.filter((p) => p.status !== "deactivated" && p.direct.length > 0 && !p.breakGlass).length
+  const noAccess = people.filter((p) => p.status !== "deactivated" && grantsOf(p.id).length === 0).length
+  const filteredOn = !!search || groupF.length + roleF.length + locF.length + statusF.length > 0
 
   return (
     <div className="flex flex-col gap-4">
-      {/* KPI strip */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiTile label="Active" value={stats.active} />
-        <KpiTile label="Invited" value={stats.invited} />
-        <KpiTile label="Admins" value={stats.admins} />
-        <KpiTile label="Deactivated" value={stats.deactivated} />
-      </div>
+      {(exceptions > 0 || noAccess > 0) && (
+        <div className="flex flex-wrap gap-2">
+          {exceptions > 0 && <Badge color="warning">{plural(exceptions, "person has", "people have")} a direct role</Badge>}
+          {noAccess > 0 && <Badge>{plural(noAccess, "person has", "people have")} no access yet</Badge>}
+        </div>
+      )}
 
       <Card className="w-full overflow-hidden">
         <CardHeader className="pb-4">
           <CardHeaderText>
             <div className="flex items-center gap-2">
-              <CardTitle>Members</CardTitle>
-              <Badge>{filtered.length} {filtered.length === 1 ? "user" : "users"}</Badge>
+              <CardTitle>Users</CardTitle>
+              <Badge>{filteredOn ? `${fmt(filtered.length)} of ${fmt(people.length)}` : fmt(people.length)}</Badge>
             </div>
           </CardHeaderText>
           <CardAction>
-            <Button size="sm" onClick={() => setInviteOpen(true)}><Plus aria-hidden /> Invite member</Button>
+            <Button size="sm" onClick={() => setInviteOpen(true)}><Plus aria-hidden /> Invite user</Button>
           </CardAction>
         </CardHeader>
 
-        {/* toolbar */}
-        <div className="flex flex-col gap-2 px-6 pb-4 sm:flex-row sm:items-center">
-          <InputGroup className="sm:max-w-xs">
+        <div className="flex flex-wrap items-center gap-2 px-6 pb-4">
+          <InputGroup className="w-72">
             <InputGroupAddon><Search aria-hidden /></InputGroupAddon>
-            <InputGroupInput
-              aria-label="Search members"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search name or email…"
-            />
-            {search && (
-              <InputGroupAddon align="end">
-                <Button variant="ghost" size="icon-xs" aria-label="Clear search" onClick={() => setSearch("")}><X aria-hidden /></Button>
-              </InputGroupAddon>
-            )}
+            <InputGroupInput aria-label="Search users" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name or email" />
+            {search && <InputGroupAddon align="end"><Button variant="ghost" size="icon-xs" aria-label="Clear search" onClick={() => setSearch("")}><X aria-hidden /></Button></InputGroupAddon>}
           </InputGroup>
-          <div className="flex items-center gap-2 sm:ms-auto">
-            <Select label="Role" options={roleOptions} value={roles} onValueChange={setRoles} showDetail={false} icon={<UserCog />} className="min-w-40" />
-            <Select label="Status" options={statusOptions} value={statuses} onValueChange={setStatuses} showDetail={false} icon={<BadgeCheck />} className="min-w-40" />
-          </div>
+          <div className="w-40"><Select label="Group" options={access.groups().map((g) => ({ value: g.id, label: g.name }))} value={groupF} onValueChange={setGroupF} showDetail={false} icon={<FolderTree />} /></div>
+          <div className="w-36"><Select label="Role" options={roles.map((r) => ({ value: r.id, label: r.name }))} value={roleF} onValueChange={setRoleF} showDetail={false} icon={<ShieldCheck />} /></div>
+          <div className="w-40"><Select label="Location" options={access.locations().map((l) => ({ value: l.id, label: l.name }))} value={locF} onValueChange={setLocF} showDetail={false} icon={<MapPin />} /></div>
+          <div className="w-36"><Select label="Status" options={(Object.keys(statusLabel) as PersonStatus[]).map((s) => ({ value: s, label: statusLabel[s] }))} value={statusF} onValueChange={setStatusF} showDetail={false} /></div>
         </div>
 
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead align="start">User</TableHead>
-              <TableHead align="start">Role</TableHead>
               <TableHead align="start">Groups</TableHead>
+              <TableHead align="start">Access</TableHead>
               <TableHead align="start">Last active</TableHead>
               <TableHead align="start">Status</TableHead>
               <TableHead align="start" className="w-12"><span className="sr-only">Actions</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((u) => (
-              <TableRow key={u.id} className={u.status === "deactivated" ? "text-content-neutral-muted" : undefined}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar size="sm"><AvatarFallback>{initials(u.name)}</AvatarFallback></Avatar>
-                    <div className="flex min-w-0 flex-col">
-                      <span className="truncate text-label-md text-content-neutral-emphasis">{u.name}</span>
-                      <span className="truncate text-body-xs text-content-neutral-muted">{u.email}</span>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <span className="inline-flex items-center gap-1.5">
-                    {u.role === "admin"
-                      ? <ShieldCheck aria-hidden className="size-4 text-content-primary-emphasis" />
-                      : <UserCog aria-hidden className="size-4 text-content-neutral-subtle" />}
-                    {roleLabel[u.role]}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  {u.role === "admin" ? (
-                    <span className="text-content-neutral-subtle">All groups</span>
-                  ) : u.groups.length === 0 ? (
-                    <Badge color="warning">Unassigned</Badge>
-                  ) : (
-                    <div className="flex flex-wrap items-center gap-1">
-                      {u.groups.slice(0, 2).map((g) => <Badge key={g} variant="outline">{groupName(g)}</Badge>)}
-                      {u.groups.length > 2 && <span className="text-body-xs text-content-neutral-muted">+{u.groups.length - 2}</span>}
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell className="text-content-neutral-muted">
-                  {u.status === "invited" ? `Invited ${u.invitedAgo}` : (u.lastActive ?? "—")}
-                </TableCell>
-                <TableCell>
-                  <Badge color={statusColor[u.status]} dot>{statusLabel[u.status]}</Badge>
-                </TableCell>
-                <TableCell className="pe-3">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${u.name}`}><MoreHorizontal aria-hidden /></Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => onEditRole(u)}><UserCog aria-hidden /> Edit role &amp; groups</DropdownMenuItem>
-                      {u.status === "invited" && <DropdownMenuItem onSelect={() => onResend(u)}><Mail aria-hidden /> Resend invite</DropdownMenuItem>}
-                      {u.status === "active" && <DropdownMenuItem onSelect={() => onReset(u)}><KeyRound aria-hidden /> Send password reset</DropdownMenuItem>}
-                      <DropdownMenuSeparator />
-                      {u.status === "deactivated"
-                        ? <DropdownMenuItem onSelect={() => onReactivate(u)}><UserCheck aria-hidden /> Reactivate</DropdownMenuItem>
-                        : <DropdownMenuItem variant="destructive" onSelect={() => onDeactivate(u)}><UserMinus aria-hidden /> Deactivate</DropdownMenuItem>}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
+            {filtered.map((p) => {
+              const gs = groupsOf(p.id)
+              return (
+                <TableRow key={p.id} className={p.status === "deactivated" ? "cursor-pointer text-content-neutral-muted" : "cursor-pointer"} onClick={() => setOpen(p.id)}>
+                  <TableCell className="max-w-64"><PersonCell p={p} /></TableCell>
+                  <TableCell className="max-w-56">
+                    {gs.length ? (
+                      <div className="flex flex-wrap items-center gap-1">
+                        {gs.slice(0, 2).map((g) => <Badge key={g.id} variant="outline">{g.name}</Badge>)}
+                        {gs.length > 2 && <span className="text-body-xs text-content-neutral-muted">+{gs.length - 2}</span>}
+                      </div>
+                    ) : <span className="text-content-neutral-subtle">No groups</span>}
+                  </TableCell>
+                  <TableCell className="max-w-72"><AccessSummary p={p} /></TableCell>
+                  <TableCell className="text-content-neutral-muted">{p.status === "invited" ? `Invited ${p.invitedAgo}` : (p.lastActive ?? "—")}</TableCell>
+                  <TableCell><Badge color={statusColor[p.status]} dot>{statusLabel[p.status]}</Badge></TableCell>
+                  <TableCell className="pe-3" onClick={(e) => e.stopPropagation()}>
+                    <RowMenu p={p} onOpen={() => setOpen(p.id)} />
+                  </TableCell>
+                </TableRow>
+              )
+            })}
             {filtered.length === 0 && (
               <TableRow className="hover:bg-transparent">
                 <TableCell colSpan={6}>
-                  <EmptyState
-                    size="sm"
-                    icon={<UsersIcon />}
-                    title="No members match"
-                    description="Try a different name, or clear the role and status filters."
-                    action={<Button variant="outline" size="sm" onClick={clearFilters}>Clear filters</Button>}
-                  />
+                  <EmptyState size="sm" icon={<UsersIcon />} title="No users match" description="Try a different name, or clear the filters."
+                    action={<Button variant="outline" size="sm" onClick={() => { setSearch(""); setGroupF([]); setRoleF([]); setLocF([]); setStatusF([]) }}>Clear filters</Button>} />
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-
-        {/* role legend */}
-        <CardFooter className="flex-col items-start gap-1 pt-4 sm:flex-row sm:items-center sm:gap-6">
-          <span className="inline-flex items-center gap-1.5 text-body-xs text-content-neutral-muted">
-            <ShieldCheck aria-hidden className="size-3.5 text-content-primary-emphasis" />
-            <strong className="font-medium text-content-neutral-emphasis">{roleLabel.admin}</strong> — {roleBlurb.admin}
-          </span>
-          <span className="inline-flex items-center gap-1.5 text-body-xs text-content-neutral-muted">
-            <UserCog aria-hidden className="size-3.5 text-content-neutral-subtle" />
-            <strong className="font-medium text-content-neutral-emphasis">{roleLabel.manager}</strong> — {roleBlurb.manager}
-          </span>
-        </CardFooter>
       </Card>
 
-      <InviteMemberDialog
-        open={inviteOpen}
-        onOpenChange={setInviteOpen}
-        existingEmails={rows.map((u) => u.email)}
-        onInvite={onInvite}
-      />
+      <UserDrawer id={open} onClose={() => setOpen(null)} />
+      <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} />
     </div>
+  )
+}
+
+/** The access column: tenant roles, then what they get in Clarion. */
+function AccessSummary({ p }: { p: Person }) {
+  const grants = grantsOf(p.id)
+  if (!grants.length) return <span className="text-content-neutral-subtle">No access</span>
+  const tenant = [...new Set(grants.filter((g) => roleDef(g.assignment.role).level === "tenant").map((g) => g.assignment.role))]
+  const c = clarionAccess(p.id)
+  const direct = p.direct.length > 0 && !p.breakGlass
+  return (
+    <div className="flex min-w-0 flex-col gap-0.5">
+      {tenant.length > 0 && <span className="truncate text-label-md text-content-neutral-emphasis">{tenant.map((r) => roleDef(r).name).join(", ")}</span>}
+      {c.role && c.role !== "tenant_admin" && (
+        <span className="truncate text-body-sm text-content-neutral-muted">
+          Clarion {roleDef(c.role).name} · {locList(c.locations)}
+        </span>
+      )}
+      {direct && <span className="text-body-xs text-content-warning-emphasis">Includes a direct role</span>}
+    </div>
+  )
+}
+
+function RowMenu({ p, onOpen }: { p: Person; onOpen: () => void }) {
+  const lastAdmin = isTenantAdmin(p.id) && tenantAdmins().length <= 1
+  const deactivate = () => {
+    if (p.breakGlass) { toast({ title: "Break-glass accounts can't be deactivated here.", description: "Turn off \"SSO required\" first, then remove the break-glass flag in Single sign-on.", variant: "danger" }); return }
+    if (p.id === ME) { toast({ title: "You can't deactivate yourself.", variant: "danger" }); return }
+    if (lastAdmin) { toast({ title: "Can't deactivate the last Tenant Admin.", description: "Give someone else Tenant Admin first.", variant: "danger" }); return }
+    access.setStatus(p.id, "deactivated")
+    toast({ title: `${p.name} was deactivated.`, description: "They can't sign in. Their groups stay, so reactivating restores their access." })
+  }
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${p.name}`}><MoreHorizontal aria-hidden /></Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={onOpen}><ShieldCheck aria-hidden /> View access</DropdownMenuItem>
+        {p.status === "invited" && <DropdownMenuItem onSelect={() => toast({ title: `Invite resent to ${p.email}.` })}><Mail aria-hidden /> Resend invite</DropdownMenuItem>}
+        {p.status === "active" && <DropdownMenuItem onSelect={() => toast({ title: `Password reset sent to ${p.email}.` })}><KeyRound aria-hidden /> Send password reset</DropdownMenuItem>}
+        <DropdownMenuSeparator />
+        {p.status === "deactivated"
+          ? <DropdownMenuItem onSelect={() => { access.setStatus(p.id, "active"); toast({ title: `${p.name} was reactivated.` }) }}><UserCheck aria-hidden /> Reactivate</DropdownMenuItem>
+          : <DropdownMenuItem variant="destructive" onSelect={deactivate}><UserMinus aria-hidden /> Deactivate</DropdownMenuItem>}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+// ---------------------------------------------------------------- drawer ----
+
+function UserDrawer({ id, onClose }: { id: string | null; onClose: () => void }) {
+  useAccess()
+  const p = id ? access.person(id) : undefined
+  const [roleOpen, setRoleOpen] = useState(false)
+  const [groupOpen, setGroupOpen] = useState(false)
+  if (!p) return <Drawer open={false} />
+
+  const grants = grantsOf(p.id)
+  const gs = groupsOf(p.id)
+  const c = clarionAccess(p.id)
+  const reach = clarionReach(p.id)
+  const admin = c.role === "tenant_admin"
+  const canThresholds = admin || c.role === "product_admin"
+
+  const leaveGroup = (gid: string) => {
+    const g = access.group(gid)!
+    if (g.source === "linked") { toast({ title: "Membership of this group comes from your identity provider.", variant: "danger" }); return }
+    if (wouldOrphanTenant({ groupId: gid, personId: p.id })) { toast({ title: "Can't remove the last Tenant Admin.", description: "Give someone else Tenant Admin first.", variant: "danger" }); return }
+    if (p.id === ME && g.assignments.some((x) => x.role === "tenant_admin")) { toast({ title: "You can't remove your own admin access.", variant: "danger" }); return }
+    access.removeMember(gid, p.id)
+    toast({ title: `${p.name} was removed from ${g.name}.`, description: "Applies from their next request. Recorded in the audit log." })
+  }
+
+  return (
+    <Drawer open={!!id} onOpenChange={(o) => { if (!o) onClose() }}>
+      <DrawerContent size="wide">
+        <DrawerHeader type="title">
+          <DrawerHeading>
+            <DrawerTitleGroup>
+              <DrawerTitle>{p.name}</DrawerTitle>
+              <DrawerDescription>{p.email} · {statusLabel[p.status]}{p.breakGlass ? " · Break-glass account" : ""}</DrawerDescription>
+            </DrawerTitleGroup>
+            <DrawerCloseButton />
+          </DrawerHeading>
+        </DrawerHeader>
+        <DrawerBody className="gap-6">
+          {/* What they get */}
+          <section className="flex flex-col gap-3">
+            <h3 className="text-label-lg text-content-neutral-emphasis">What they can see in Clarion</h3>
+            {c.role ? (
+              <div className="flex flex-col gap-3 rounded-lg border border-line-neutral-muted p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge color={admin ? "info" : "success"}>{admin ? "Tenant Admin" : `Clarion ${roleDef(c.role).name}`}</Badge>
+                  <span className="text-body-sm text-content-neutral-muted">{locList(c.locations)} · {plural(reach, "widget user")}</span>
+                </div>
+                <ul className="grid grid-cols-2 gap-1.5 text-body-sm">
+                  <Can yes>Overview</Can>
+                  <Can yes>Endpoints</Can>
+                  <Can yes={canThresholds}>Thresholds</Can>
+                  <Can yes={canThresholds}>Manage widget users</Can>
+                  <Can yes={admin || grants.some((g) => g.assignment.role === "user_admin")}>Users and groups</Can>
+                  <Can yes={admin}>Sign-in settings</Can>
+                </ul>
+                {c.locations !== null && <p className="text-body-xs text-content-neutral-muted">Endpoints outside these locations, and widget users with no location, don&apos;t appear anywhere for them, including search and exports.</p>}
+              </div>
+            ) : (
+              <Alert variant="info"><AlertDescription>No Clarion access. Add them to a group with a Clarion role.</AlertDescription></Alert>
+            )}
+          </section>
+
+          {/* Groups */}
+          <section className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-label-lg text-content-neutral-emphasis">Groups</h3>
+              <Button variant="outline" size="sm" onClick={() => setGroupOpen(true)}><Plus aria-hidden /> Add to group</Button>
+            </div>
+            {gs.length ? (
+              <ul className="flex flex-col divide-y divide-line-neutral-muted rounded-lg border border-line-neutral-muted">
+                {gs.map((g) => (
+                  <li key={g.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <span className="text-label-md text-content-neutral-emphasis">{g.name}</span>
+                      <div className="flex flex-wrap gap-1">{g.assignments.length ? g.assignments.map((x) => <RoleBadge key={x.id} x={x} />) : <span className="text-body-xs text-content-neutral-subtle">No roles</span>}</div>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => leaveGroup(g.id)}>Remove</Button>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="text-body-sm text-content-neutral-muted">Not in any group.</p>}
+          </section>
+
+          {/* Where it comes from */}
+          <section className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-label-lg text-content-neutral-emphasis">Roles, and where they come from</h3>
+              <Button variant="ghost" size="sm" onClick={() => setRoleOpen(true)}>Give a role directly…</Button>
+            </div>
+            {grants.length ? (
+              <Table size="sm">
+                <TableHeader><TableRow><TableHead align="start">Role</TableHead><TableHead align="start">From</TableHead><TableHead className="w-10"><span className="sr-only">Remove</span></TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {grants.map((g) => (
+                    <TableRow key={g.assignment.id + (g.via.kind === "group" ? g.via.group.id : "d")}>
+                      <TableCell>{assignmentLabel(g.assignment)}</TableCell>
+                      <TableCell>
+                        {g.via.kind === "group" ? g.via.group.name : p.breakGlass
+                          ? <span className="inline-flex items-center gap-1 text-content-neutral-muted"><Lock className="size-3.5" aria-hidden /> Break-glass</span>
+                          : <Badge color="warning">Direct (exception)</Badge>}
+                      </TableCell>
+                      <TableCell>
+                        {g.via.kind === "direct" && !p.breakGlass && (
+                          <Button variant="ghost" size="icon-xs" aria-label="Remove direct role" onClick={() => {
+                            if (wouldOrphanTenant({ assignmentId: g.assignment.id })) { toast({ title: "Can't remove the last Tenant Admin.", variant: "danger" }); return }
+                            access.removeDirect(p.id, g.assignment.id); toast({ title: "Direct role removed." })
+                          }}><X aria-hidden /></Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : <p className="text-body-sm text-content-neutral-muted">No roles. They can sign in but see nothing.</p>}
+          </section>
+        </DrawerBody>
+        <DrawerFooter>
+          <Button variant="outline" onClick={onClose}>Done</Button>
+        </DrawerFooter>
+      </DrawerContent>
+
+      <AddRoleDialog open={roleOpen} onOpenChange={setRoleOpen} direct title={`Give ${p.name} a role directly`} existing={p.direct}
+        onAdd={(x) => { access.addDirect(p.id, x); toast({ title: `${p.name} now has ${assignmentLabel({ ...x, id: "" })}.`, description: "Shown as a direct role in access reviews." }) }} />
+      <JoinGroupDialog open={groupOpen} onOpenChange={setGroupOpen} person={p} />
+    </Drawer>
+  )
+}
+
+function Can({ yes, children }: { yes?: boolean; children: React.ReactNode }) {
+  return (
+    <li className={yes ? "flex items-center gap-2 text-content-neutral-emphasis" : "flex items-center gap-2 text-content-neutral-subtle"}>
+      {yes ? <Check className="size-4 text-content-success-emphasis" aria-label="Yes" /> : <X className="size-4" aria-label="No" />}
+      {children}
+    </li>
+  )
+}
+
+function JoinGroupDialog({ open, onOpenChange, person }: { open: boolean; onOpenChange: (o: boolean) => void; person: Person }) {
+  const [picked, setPicked] = useState<string[]>([])
+  const available = access.groups().filter((g) => !g.members.includes(person.id) && g.source === "local")
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (o) setPicked([]); onOpenChange(o) }}>
+      <DialogContent size="md">
+        <DialogHeader><DialogTitle>Add {person.name} to groups</DialogTitle><DialogDescription>They get every role these groups have.</DialogDescription></DialogHeader>
+        <DialogBody><GroupChecklist groups={available} value={picked} onChange={setPicked} /></DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button disabled={!picked.length} onClick={() => {
+            picked.forEach((g) => access.addMembers(g, [person.id]))
+            toast({ title: `${person.name} was added to ${plural(picked.length, "group")}.`, description: "Applies from their next request." })
+            onOpenChange(false)
+          }}>Add</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function GroupChecklist({ groups, value, onChange }: { groups: ReturnType<typeof access.groups>; value: string[]; onChange: (v: string[]) => void }) {
+  if (!groups.length) return <p className="text-body-sm text-content-neutral-muted">No more groups to add.</p>
+  return (
+    <div className="flex max-h-80 flex-col gap-1 overflow-y-auto rounded-lg border border-line-neutral-muted p-1">
+      {groups.map((g) => (
+        <label key={g.id} className="flex cursor-pointer items-start gap-3 rounded-md px-2 py-2 hover:bg-surface-neutral-subtle-hovered">
+          <Checkbox size="sm" className="mt-0.5" checked={value.includes(g.id)} onCheckedChange={() => onChange(value.includes(g.id) ? value.filter((x) => x !== g.id) : [...value, g.id])} />
+          <div className="flex min-w-0 flex-col gap-1">
+            <span className="text-label-md text-content-neutral-emphasis">{g.name}</span>
+            <span className="text-body-xs text-content-neutral-muted">{g.assignments.length ? g.assignments.map((x) => assignmentLabel(x)).join(" · ") : "No roles yet"}</span>
+          </div>
+        </label>
+      ))}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------- invite ----
+
+const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const [email, setEmail] = useState("")
+  const [groups, setGroups] = useState<string[]>([])
+  const [touched, setTouched] = useState(false)
+  const reset = () => { setEmail(""); setGroups([]); setTouched(false) }
+  const trimmed = email.trim().toLowerCase()
+  const valid = emailRe.test(trimmed)
+  const dupe = valid && access.people().some((p) => p.email.toLowerCase() === trimmed)
+  const err = touched && !valid ? "Enter a valid email address." : touched && dupe ? "Someone with this email is already a user." : null
+  const local = useMemo(() => access.groups().filter((g) => g.source === "local"), [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const send = () => {
+    setTouched(true)
+    if (!valid || dupe) return
+    const name = trimmed.split("@")[0].split(/[._-]+/).filter(Boolean).map((s) => s[0].toUpperCase() + s.slice(1)).join(" ")
+    access.invite({ email: email.trim(), name, groups })
+    toast({ title: `Invite sent to ${email.trim()}.`, description: groups.length ? `Added to ${plural(groups.length, "group")}.` : "They can sign in but see nothing until they're in a group." })
+    onOpenChange(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (o) reset(); onOpenChange(o) }}>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>Invite user</DialogTitle>
+          <DialogDescription>Their access comes from the groups you add them to.</DialogDescription>
+        </DialogHeader>
+        <DialogBody className="gap-5">
+          <Field invalid={!!err}>
+            <FieldLabel required>Email address</FieldLabel>
+            <FieldControl required><Input type="email" placeholder="name@company.com" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setTouched(true)} autoFocus /></FieldControl>
+            <FieldError>{err}</FieldError>
+          </Field>
+          <Field>
+            <FieldLabel>Groups</FieldLabel>
+            <GroupChecklist groups={local} value={groups} onChange={setGroups} />
+            <FieldDescription>To give one person a role outside a group, invite them, then open their access.</FieldDescription>
+          </Field>
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={send}>Send invite</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

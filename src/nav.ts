@@ -17,12 +17,14 @@ import {
   ReceiptText,
   KeyRound,
   Contact,
+  MapPin,
+  IdCard,
   type LucideIcon,
 } from "lucide-react"
 
 export type PageId =
   | "overview" | "endpoints" | "alerts" | "thresholds"
-  | "users" | "widgetusers" | "groups" | "widgets" | "sso" | "subscription" | "audit"
+  | "users" | "widgetusers" | "groups" | "locations" | "roles" | "widgets" | "sso" | "subscription" | "audit"
   | "rbacdoc" | "groupsdoc" | "billingdoc"
   | "glossary" | "issuesdoc" | "devicesdoc" | "scopedoc" | "components"
 
@@ -48,21 +50,32 @@ const offNavLabels: Partial<Record<PageId, string>> = {
 // Administration — shown only to Admins (role-gated within the one Fleet view).
 // "Members" is the scaffolded screen; the rest are placeholders mapping to the
 // Admin epics (see ADMIN-TICKETS.md).
-export const adminNavItems: NavItem[] = [
-  { id: "widgets", label: "Device management", icon: RadioTower },
-  { id: "users", label: "Members", icon: Users },
-  { id: "widgetusers", label: "Widget users", icon: Contact },
-  { id: "groups", label: "Groups", icon: FolderTree },
-  { id: "sso", label: "Single sign-on", icon: KeyRound },
-  { id: "subscription", label: "Subscription", icon: CreditCard },
-  { id: "audit", label: "Audit log", icon: ScrollText },
+// RBAC proposal (Iris platform, Client Admin): access is Users + Groups + Locations,
+// with IR's fixed Roles. Clarion-specific admin sits in its own section.
+export const adminNavSections: { label: string; items: NavItem[] }[] = [
+  { label: "Access", items: [
+    { id: "users", label: "Users", icon: Users },
+    { id: "groups", label: "Groups", icon: FolderTree },
+    { id: "locations", label: "Locations", icon: MapPin },
+    { id: "roles", label: "Roles", icon: IdCard },
+    { id: "sso", label: "Single sign-on", icon: KeyRound },
+  ] },
+  { label: "Clarion", items: [
+    { id: "widgetusers", label: "Widget users", icon: Contact },
+    { id: "widgets", label: "Device management", icon: RadioTower },
+  ] },
+  { label: "Tenant", items: [
+    { id: "subscription", label: "Subscription", icon: CreditCard },
+    { id: "audit", label: "Audit log", icon: ScrollText },
+  ] },
 ]
+export const adminNavItems: NavItem[] = adminNavSections.flatMap((s) => s.items)
 
 // Internal Administration docs (shown in the Admin sidebar's "Product
 // development" group). Scoped to admin concepts — RBAC, Groups, billing.
 export const adminDocNavItems: NavItem[] = [
   { id: "rbacdoc", label: "Roles & permissions", icon: ShieldCheck },
-  { id: "groupsdoc", label: "Groups & hierarchy", icon: Network },
+  { id: "groupsdoc", label: "Groups & locations", icon: Network },
   { id: "billingdoc", label: "Subscription & billing", icon: ReceiptText },
 ]
 
@@ -84,15 +97,17 @@ export const pageLabel = (id: PageId) =>
 // Add entries only where a subtitle is genuinely useful — keep pages lean otherwise.
 export const pageSubtitle: Partial<Record<PageId, string>> = {
   thresholds: "Set when an endpoint is flagged warning or critical.",
-  users: "Invite people, set their role, and manage access.",
+  users: "Everyone who can sign in to Iris, and what they can access.",
   widgetusers: "Who can run the Clarion widget, whether it has connected, and who uses a licence.",
-  groups: "Organise Widgets into Groups that scope what each Manager sees.",
+  groups: "Give access to groups of people instead of one person at a time.",
+  locations: "Sites, offices or regions. Limit a role to a location, and only that location's data shows.",
+  roles: "The roles IR provides, and what each one can do. Give them to groups.",
   widgets: "Register, assign and revoke endpoint Widgets. A Widget becomes an Endpoint once it's set up and reporting.",
-  sso: "Let Members sign in with your company's identity provider.",
+  sso: "Let people sign in with your company's identity provider.",
   subscription: "Review your plan, usage and billing.",
   audit: "Track who changed what, and when.",
   rbacdoc: "How roles, scope and permissions work.",
-  groupsdoc: "How the Group tree scopes visibility.",
+  groupsdoc: "How groups and locations decide what each person sees.",
   billingdoc: "Plan entitlements, usage and payment model.",
 }
 
@@ -106,6 +121,8 @@ export const pagePath: Record<PageId, string> = {
   users: "/admin/users",
   widgetusers: "/admin/widget-users",
   groups: "/admin/groups",
+  locations: "/admin/locations",
+  roles: "/admin/roles",
   widgets: "/admin/widgets",
   sso: "/admin/sso",
   subscription: "/admin/subscription",
@@ -150,7 +167,7 @@ export const buildPath = (page: PageId, drawer: DrawerParams = {}): string => {
 
 export type Experience = "fleet" | "admin"
 
-export const adminPageIds: PageId[] = ["users", "widgetusers", "groups", "widgets", "sso", "subscription", "audit", "rbacdoc", "groupsdoc", "billingdoc"]
+export const adminPageIds: PageId[] = ["users", "widgetusers", "groups", "locations", "roles", "widgets", "sso", "subscription", "audit", "rbacdoc", "groupsdoc", "billingdoc"]
 
 export const experienceOf = (id: PageId): Experience =>
   (adminPageIds as string[]).includes(id) ? "admin" : "fleet"

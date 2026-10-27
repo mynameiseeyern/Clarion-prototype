@@ -1,11 +1,14 @@
 import { useEffect } from "react"
-import { PanelLeft, ChevronRight, Sun, Moon, FolderTree, RadioTower, CreditCard, ScrollText } from "lucide-react"
+import { PanelLeft, ChevronRight, Sun, Moon, RadioTower, CreditCard, ScrollText } from "lucide-react"
 import { fleet } from "@/data/dashboard"
 import { pageLabel, pageSubtitle, type PageId, type Experience } from "@/nav"
 import { AdminSidebar } from "@/components/dashboard/AdminSidebar"
 import { ExperienceMenu } from "@/components/dashboard/ExperienceMenu"
 import { UsersRolesPage } from "@/pages/UsersRolesPage"
 import { WidgetUsersPage } from "@/pages/WidgetUsersPage"
+import { GroupsPage } from "@/pages/GroupsPage"
+import { LocationsPage } from "@/pages/LocationsPage"
+import { RolesPage } from "@/pages/RolesPage"
 import { SsoPage } from "@/pages/SsoPage"
 import { PlaceholderPage } from "@/pages/PlaceholderPage"
 import { RbacDocPage, GroupsDocPage, BillingDocPage } from "@/pages/AdminDocs"
@@ -95,9 +98,9 @@ export function AdminApp({
           <PageHeader title={pageLabel(page)} description={pageSubtitle[page]} />
           {page === "users" && <UsersRolesPage />}
           {page === "widgetusers" && <WidgetUsersPage />}
-          {page === "groups" && (
-            <PlaceholderPage title="Groups" icon={FolderTree} description="Build a Group hierarchy that mirrors your team structure (Country → Area → Office → Shift). A Manager assigned to a Group sees every Widget beneath it (visibility cascades). Bulk-assign and move Widgets between Groups." />
-          )}
+          {page === "groups" && <GroupsPage />}
+          {page === "locations" && <LocationsPage onOpenWidgetUsers={() => onNavigate("widgetusers")} />}
+          {page === "roles" && <RolesPage />}
           {page === "widgets" && (
             <PlaceholderPage title="Device management" icon={RadioTower} description="Register agents and generate auth tokens, assign unassigned Widgets to Groups, revoke compromised tokens, and review status and last-seen. A Widget becomes a Device once it's set up and reporting telemetry." />
           )}

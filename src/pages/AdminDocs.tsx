@@ -1,4 +1,4 @@
-import { ShieldCheck, UserCog, Crown, ReceiptText, KeyRound, Network, Users, Boxes, Check, AlertTriangle, type LucideIcon } from "lucide-react"
+import { ShieldCheck, UserCog, ReceiptText, KeyRound, Network, Users, Boxes, Check, AlertTriangle, MapPin, type LucideIcon } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
@@ -65,39 +65,33 @@ const tag = (label: string, phase: "MVP" | "1.0" | "Later") => (
 
 type Access = "full" | "scoped" | "view" | "none"
 
+// Iris platform roles (Ben Webb, "Iris Platform: RBAC, Groups and Locations", draft).
 const roleCols: { name: string; phase: "MVP" | "Later" }[] = [
-  { name: "Owner", phase: "Later" },
-  { name: "Admin", phase: "MVP" },
-  { name: "CC Manager", phase: "MVP" },
-  { name: "Billing admin", phase: "Later" },
+  { name: "Tenant Admin", phase: "MVP" },
+  { name: "User Admin", phase: "MVP" },
+  { name: "Auditor", phase: "MVP" },
+  { name: "Clarion Admin", phase: "MVP" },
+  { name: "Clarion Viewer", phase: "MVP" },
 ]
 
-// Order matches roleCols: [Owner, Admin, CC Manager, Billing admin]
-const matrix: { domain: string; rows: { cap: string; access: [Access, Access, Access, Access] }[] }[] = [
-  { domain: "Members", rows: [
-    { cap: "View members & roles", access: ["full", "full", "none", "none"] },
-    { cap: "Invite & deactivate members", access: ["full", "full", "none", "none"] },
-    { cap: "Assign & change roles", access: ["full", "full", "none", "none"] },
-    { cap: "Manage Admins & transfer ownership", access: ["full", "none", "none", "none"] },
+// Order matches roleCols. "Scoped" = within the locations the role is limited to.
+const matrix: { domain: string; rows: { cap: string; access: [Access, Access, Access, Access, Access] }[] }[] = [
+  { domain: "Users, groups and locations", rows: [
+    { cap: "View users, groups, locations and roles", access: ["full", "full", "view", "none", "none"] },
+    { cap: "Invite, deactivate, manage groups", access: ["full", "full", "none", "none", "none"] },
+    { cap: "Give roles (up to your own level)", access: ["full", "full", "none", "none", "none"] },
+    { cap: "Create, rename and delete locations", access: ["full", "none", "none", "none", "none"] },
   ] },
-  { domain: "Groups", rows: [
-    { cap: "View Group hierarchy", access: ["full", "full", "scoped", "none"] },
-    { cap: "Create & edit Groups", access: ["full", "full", "none", "none"] },
-    { cap: "Assign Managers & Widgets to Groups", access: ["full", "full", "none", "none"] },
+  { domain: "Sign-in", rows: [
+    { cap: "SSO, SCIM and break-glass settings", access: ["full", "none", "view", "none", "none"] },
   ] },
-  { domain: "Device management", rows: [
-    { cap: "View estate (status, last-seen)", access: ["full", "full", "scoped", "none"] },
-    { cap: "Register, move & revoke Widgets / tokens", access: ["full", "full", "none", "none"] },
+  { domain: "Clarion", rows: [
+    { cap: "Overview and Endpoints", access: ["full", "none", "none", "scoped", "scoped"] },
+    { cap: "Thresholds", access: ["full", "none", "none", "full", "none"] },
+    { cap: "Widget users (add, edit, set location)", access: ["full", "none", "none", "scoped", "none"] },
   ] },
-  { domain: "Monitoring", rows: [
-    { cap: "Monitor endpoints & alerts", access: ["full", "full", "scoped", "none"] },
-  ] },
-  { domain: "Subscription & billing", rows: [
-    { cap: "View plan, usage & invoices", access: ["full", "full", "none", "full"] },
-    { cap: "Change plan, add-ons & payment", access: ["full", "view", "none", "full"] },
-  ] },
-  { domain: "Audit log", rows: [
-    { cap: "View audit log", access: ["full", "full", "none", "none"] },
+  { domain: "Audit", rows: [
+    { cap: "Audit log and access export", access: ["full", "none", "full", "none", "none"] },
   ] },
 ]
 
@@ -112,7 +106,7 @@ function PermissionsMatrix() {
   return (
     <SectionCard title="Permissions matrix">
       <p className="mb-4 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-        A strawman of who can do what. {em("Admin")} and {em("CC Manager")} are the MVP roles; {em("Owner")} and {em("Billing admin")} are planned. CC Manager access is {em("scoped")} to their assigned Group(s) and everything beneath.
+        A strawman. {em("Clarion Admin")} is Product Admin for Clarion; {em("Clarion Viewer")} is the PO&apos;s CC Manager. Both can be limited to locations ({em("scoped")}).
       </p>
       <div className="overflow-x-auto" style={{ border: "1px solid var(--border-neutral-subtle)", borderRadius: "10px" }}>
         <table className="w-full border-collapse text-sm">
@@ -121,10 +115,7 @@ function PermissionsMatrix() {
               <th className="px-4 py-2.5 text-left text-xs font-medium" style={{ color: "var(--fg-neutral-muted)" }}>Capability</th>
               {roleCols.map((r) => (
                 <th key={r.name} className="px-3 py-2.5 text-center">
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-xs font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{r.name}</span>
-                    <Badge variant={r.phase === "MVP" ? "success" : "secondary"} className="uppercase tracking-wide">{r.phase}</Badge>
-                  </div>
+                  <span className="text-xs font-semibold" style={{ color: "var(--fg-neutral-emphasis)" }}>{r.name}</span>
                 </th>
               ))}
             </tr>
@@ -132,27 +123,17 @@ function PermissionsMatrix() {
           {matrix.map((group) => (
             <tbody key={group.domain}>
               <tr style={{ background: "var(--bg-neutral-subtle)" }}>
-                <td colSpan={5} className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>{group.domain}</td>
+                <td colSpan={6} className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--fg-neutral-subtle)" }}>{group.domain}</td>
               </tr>
               {group.rows.map((row) => (
                 <tr key={row.cap} style={{ borderBottom: "1px solid var(--border-neutral-subtle)" }}>
                   <td className="px-4 py-2.5" style={{ color: "var(--fg-neutral-emphasis)" }}>{row.cap}</td>
-                  {row.access.map((a, i) => (
-                    <td key={i} className="px-3 py-2.5 text-center">
-                      <Cell access={a} />
-                    </td>
-                  ))}
+                  {row.access.map((a, i) => <td key={i} className="px-3 py-2.5 text-center"><Cell access={a} /></td>)}
                 </tr>
               ))}
             </tbody>
           ))}
         </table>
-      </div>
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" style={{ color: "var(--fg-neutral-muted)" }}>
-        <span className="inline-flex items-center gap-1.5"><Check className="size-3.5" style={{ color: "var(--fg-success-emphasis)" }} /> Full</span>
-        <span className="inline-flex items-center gap-1.5"><b style={{ color: "var(--fg-warning-emphasis)" }}>Scoped</b> within their Groups</span>
-        <span className="inline-flex items-center gap-1.5"><b style={{ color: "var(--fg-neutral-muted)" }}>View</b> read-only</span>
-        <span className="inline-flex items-center gap-1.5"><span style={{ color: "var(--fg-neutral-subtle)" }}>–</span> No access</span>
       </div>
     </SectionCard>
   )
@@ -165,44 +146,42 @@ export function RbacDocPage() {
     <div className="flex flex-col gap-4">
       <DocHeader
         title="Roles & permissions (RBAC)"
-        blurb="Who can do what in Clarion. Role sets the permission level; Group assignment sets the scope. Two roles for MVP, with Owner and a billing-scoped role planned for later."
+        blurb="Iris platform access, shared by every Iris product. IR owns a fixed set of roles; customers give them to groups, for the whole tenant or for one product, limited to locations if they need to."
       />
 
-      <SectionCard title="Roles">
+      <SectionCard title="The model">
         <div className="flex flex-col gap-4">
-          <ConceptRow icon={ShieldCheck} title={<>Admin <span>{tag("MVP", "MVP")}</span></>}>
-            Full administrative control across the whole org: manage Members &amp; roles, Groups, Device management (Widgets), subscription, and read the audit log. Sees the entire estate.
+          <ConceptRow icon={ShieldCheck} title={<>Roles, owned by IR <span>{tag("MVP", "MVP")}</span></>}>
+            Tenant roles: Tenant Admin, User Admin, Auditor. Product roles: Product Admin, Editor, Viewer. No custom roles.
           </ConceptRow>
-          <ConceptRow icon={UserCog} title={<>CC Manager (Supervisor) <span>{tag("MVP", "MVP")}</span></>}>
-            Operational role scoped to assigned Group(s). Sees and acts on the Widgets/Alerts in their Groups only — a subset of the org. No access to the Administration area.
+          <ConceptRow icon={Users} title={<>Groups, flat <span>{tag("MVP", "MVP")}</span></>}>
+            Roles go to groups and members inherit them. Groups can&apos;t contain groups, because identity providers flatten groups before sharing them over SCIM.
           </ConceptRow>
-          <ConceptRow icon={Crown} title={<>Owner / Super Admin <span>{tag("Later", "Later")}</span></>}>
-            Billing/ownership root: manages Admins, owns the subscription, can transfer ownership. Nearly every SaaS has exactly one (Slack Primary Owner, Atlassian Org admin). Planned, not in MVP.
+          <ConceptRow icon={MapPin} title={<>Locations, flat <span>{tag("MVP", "MVP")}</span></>}>
+            Named by the customer (Sydney, London). A product role can be limited to locations. In Clarion, each widget user sits in at most one location.
           </ConceptRow>
-          <ConceptRow icon={ReceiptText} title={<>Billing admin (Finance) <span>{tag("Later", "Later")}</span></>}>
-            A billing-scoped role that sees Subscription &amp; billing only — no Device management. Models GitHub&apos;s &ldquo;Billing manager&rdquo; / Google&apos;s &ldquo;Billing admin&rdquo;. Lets Finance manage spend without operational access.
+          <ConceptRow icon={UserCog} title="Direct roles are exceptions">
+            A role can be given straight to a person, but it&apos;s flagged as direct in the UI and in access exports.
           </ConceptRow>
         </div>
       </SectionCard>
 
       <SectionCard title="How access is decided">
         <div className="flex flex-col gap-3 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          <p>{em("Role = permission level")}; {em("scope = position in the Group tree")}. A CC Manager&apos;s reach is the union of their Groups (and everything beneath them — see Groups &amp; hierarchy).</p>
-          <p>Gating is {em("per capability")}, not one all-or-nothing admin flag. That&apos;s what lets Owner and Billing admin layer on later without restructuring: each nav item checks the specific capability it needs.</p>
-          <p>Guardrails: at least one Admin must always exist (can&apos;t deactivate or demote the last Admin). The audit log is read-only — no one can edit or delete entries.</p>
+          <p>{em("Everything all your roles allow")}, from groups and direct roles together. No deny rules.</p>
+          <p>The PO&apos;s {em("CC Manager")} isn&apos;t a role: it&apos;s a group such as &ldquo;Sydney CC managers&rdquo; with {em("Clarion Viewer, limited to Sydney")}. They see Overview and Endpoints for Sydney only; Thresholds and Administration don&apos;t appear.</p>
+          <p>Enforced on the server by a central authorisation service, including lists, search, the map, drill-downs and exports. Hiding UI is for usability only.</p>
+          <p>Safeguards: always at least one Tenant Admin; you can&apos;t give more access than you hold; you can&apos;t remove your own admin access; break-glass accounts are always Tenant Admin.</p>
         </div>
       </SectionCard>
 
       <PermissionsMatrix />
 
-      <SectionCard title="Authentication">
-        <div className="flex flex-col gap-3">
-          <ConceptRow icon={KeyRound} title={<>Email / password + admin reset <span>{tag("MVP", "MVP")}</span></>}>
-            Members sign in with email and password. Admins can trigger a reset on a Member&apos;s behalf from the Members list (no IR ticket needed).
-          </ConceptRow>
-          <ConceptRow icon={ShieldCheck} title={<>SSO <span>{tag("1.0", "1.0")}</span></>}>
-            Single sign-on via the customer&apos;s identity provider, offered as an add-on. When enabled, &ldquo;reset&rdquo; is handled by the IdP rather than in-app.
-          </ConceptRow>
+      <SectionCard title="Open questions">
+        <div className="flex flex-col gap-2 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
+          <p>{em("Reporting line vs locations.")} The PO asked for a manager to see their reporting line, all levels down. The platform model scopes by location instead. Does location cover the CC Manager need, or is a reporting line still needed later?</p>
+          <p>{em("Editor in Clarion.")} Clarion has little to edit yet, so Editor behaves like Viewer. Is there a Clarion action that belongs here?</p>
+          <p>{em("Site vs Location.")} Widget users have a free-text site today. Proposal: Location replaces it, and the CSV takes a location name.</p>
         </div>
       </SectionCard>
     </div>
@@ -215,43 +194,37 @@ export function GroupsDocPage() {
   return (
     <div className="flex flex-col gap-4">
       <DocHeader
-        title="Groups & hierarchy"
-        blurb="Groups organise Widgets to mirror your team structure and scope what each Manager sees. Visibility cascades down the tree; depth is flexible."
+        title="Groups & locations"
+        blurb="Two flat lists. Groups say who gets a role; locations say which data a product role covers."
       />
 
-      <SectionCard title="The hierarchy">
-        <div className="flex flex-col gap-4">
-          <ConceptRow icon={Network} title="A Group tree, mirroring the org">
-            Groups nest to match how the business is organised. A real example is four levels deep:
-            <span className="mt-2 block rounded-lg p-3 font-mono text-xs leading-6" style={{ background: "var(--bg-neutral-subtle)", color: "var(--fg-neutral-muted)" }}>
-              Australia — Head of Country<br />
-              &nbsp;&nbsp;→ Sydney — Area Manager<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;→ Chatswood office — Supervisor<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ Shift 1 — Team Lead<br />
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ Shift 2 — Team Lead
-            </span>
-            <span className="mt-2 block">Depth is {em("flexible")} — design for arbitrary nesting, not a fixed cap.</span>
-          </ConceptRow>
-          <ConceptRow icon={Users} title="Titles are positions, not roles">
-            Head of Country, Area Manager, Supervisor and Team Lead are all the same role — {em("CC Manager")}. What differs is where they sit, which sets how much they see.
-          </ConceptRow>
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Cascading visibility">
+      <SectionCard title="Worked example">
         <div className="flex flex-col gap-3 text-sm" style={{ color: "var(--fg-neutral-muted)" }}>
-          <p>A Manager assigned to a Group sees that Group {em("and every Group beneath it")}. Head of Country sees all of Australia; a Team Lead on Shift 1 sees only that shift.</p>
-          <p>Changing a Manager&apos;s Group assignment updates their visible estate immediately — without touching individual Widget records.</p>
+          <span className="block rounded-lg p-3 font-mono text-xs leading-6" style={{ background: "var(--bg-neutral-subtle)" }}>
+            Locations: Sydney, Melbourne, Manila, London<br />
+            Group &ldquo;Sydney CC managers&rdquo; → Clarion Viewer · Sydney<br />
+            Group &ldquo;APAC operations leads&rdquo; → Clarion Viewer · Sydney, Melbourne, Auckland<br />
+            Group &ldquo;Contact centre leadership&rdquo; → Clarion Viewer · All locations
+          </span>
+          <p>A head of APAC sees three sites because their group lists three, not because of where they sit in a tree. Someone in two groups gets both.</p>
         </div>
       </SectionCard>
 
-      <SectionCard title="Assigning Widgets">
+      <SectionCard title="Why flat">
         <div className="flex flex-col gap-3">
-          <ConceptRow icon={Boxes} title={<>Bulk-assign unassigned Widgets <span>{tag("MVP", "MVP")}</span></>}>
-            New Widgets arrive unassigned. Multi-select them and place them in the right Group so they become visible to the right Manager(s) immediately.
+          <ConceptRow icon={Network} title="Ready for SSO and SCIM">
+            Identity providers send direct members only, so a nested group would silently lose people. One Iris group links to one IdP group.
           </ConceptRow>
-          <ConceptRow icon={Network} title={<>Bulk-move between Groups <span>{tag("MVP", "MVP")}</span></>}>
-            Restructuring a team? Move Widgets between Groups in bulk to keep the hierarchy aligned with the business.
+          <ConceptRow icon={MapPin} title="Locations replace the hierarchy">
+            Instead of Country → Area → Office, give a group the set of locations it covers.
+          </ConceptRow>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Putting widget users in locations">
+        <div className="flex flex-col gap-3">
+          <ConceptRow icon={Boxes} title={<>Bulk-set location <span>{tag("MVP", "MVP")}</span></>}>
+            Select widget users and set their location. Users with no location are seen only by people with access to all locations.
           </ConceptRow>
         </div>
       </SectionCard>

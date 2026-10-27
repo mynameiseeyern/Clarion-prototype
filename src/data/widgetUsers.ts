@@ -22,6 +22,9 @@ export interface WidgetUser {
   updatedAt: number
   /** From the analytics database, not fleet-config. Null = never reported. */
   lastSeen: number | null
+  /** Proposed (RBAC): the Iris location this user's endpoints belong to. Replaces the
+   *  free-text site for access. Null = no location: only product-wide roles see them. */
+  locationId: string | null
 }
 
 export type DataSize = "demo" | "2k" | "20k"
@@ -172,8 +175,27 @@ function makeUser(r: () => number, name: string, loginId: string, email: string,
   }
   return {
     userId: hashId(lid), loginId: lid, name, email, site,
-    active: r() > 0.04, registerStatus, createdAt, updatedAt: createdAt, lastSeen,
+    active: r() > 0.04, registerStatus, createdAt, updatedAt: createdAt, lastSeen, locationId: null,
   }
+}
+
+// Location ids match the seed in data/access.ts.
+const LOCS: [string | null, number][] = [["loc-syd", 10], ["loc-mel", 5], ["loc-mnl", 8], ["loc-ldn", 4], ["loc-chi", 3], ["loc-akl", 2], [null, 6]]
+/** The free-text site, read as one of the tenant's locations where it obviously is one. */
+export function siteToLocation(site: string): string | null {
+  const s = site.trim().toLowerCase()
+  if (!s) return null
+  if (s.startsWith("syd")) return "loc-syd"
+  if (s.startsWith("melb")) return "loc-mel"
+  if (s.startsWith("manila")) return "loc-mnl"
+  if (s.startsWith("chicago")) return "loc-chi"
+  if (s.startsWith("london") || s === "ldn") return "loc-ldn"
+  if (s.startsWith("auckland")) return "loc-akl"
+  return null
+}
+function placeAll(users: WidgetUser[], r: () => number) {
+  for (const u of users) u.locationId = u.site.trim() ? siteToLocation(u.site) : pickWeighted(r, LOCS)
+  return users
 }
 
 function generate(size: DataSize): WidgetUser[] {
@@ -194,7 +216,7 @@ function generate(size: DataSize): WidgetUser[] {
     set("demo\\zoe.ram.crit", { registerStatus: "registered", lastSeen: NOW - 96 * DAY })
     set("demo\\maya.nogeo", { active: false })
     users.forEach((u) => { if (!["demo\\maya.nogeo"].includes(u.loginId)) u.active = true })
-    return users
+    return placeAll(users, r)
   }
 
   const n = sizeMeta[size].count
@@ -232,7 +254,7 @@ function generate(size: DataSize): WidgetUser[] {
       users[Math.floor(r() * users.length)] = makeUser(r, src.name, alt, src.email, src.site)
     }
   }
-  return users
+  return placeAll(users, r)
 }
 
 // ------------------------------------------------------------------ store --
@@ -264,10 +286,12 @@ export interface Query {
   q: string
   connection: Connection[]
   status: ("active" | "deactivated")[]
+  /** Location ids; "none" = no location. */
+  location: string[]
   sort: SortKey
 }
 
-export const emptyQuery: Query = { q: "", connection: [], status: [], sort: "hash" }
+export const emptyQuery: Query = { q: "", connection: [], status: [], location: [], sort: "hash" }
 
 /** Search is a case-insensitive "contains" over name, login ID, email and site — as
  *  fleet-config's matchesSearch. Filters and sorts beyond that are proposed. */
@@ -277,6 +301,7 @@ export function runQuery(query: Query): WidgetUser[] {
     if (q && ![u.name, u.loginId, u.email, u.site].some((v) => v.toLowerCase().includes(q))) return false
     if (query.connection.length && !query.connection.includes(connectionOf(u))) return false
     if (query.status.length && !query.status.includes(u.active ? "active" : "deactivated")) return false
+    if (query.location.length && !query.location.includes(u.locationId ?? "none")) return false
     return true
   })
   const by: Record<SortKey, (a: WidgetUser, b: WidgetUser) => number> = {
@@ -307,7 +332,7 @@ export function createUser(input: { loginId: string; name: string; email: string
   const now = Date.now()
   state.users = [...state.users, {
     userId: hashId(loginId), loginId, name: input.name.trim(), email: input.email.trim(), site: input.site.trim(),
-    active: true, registerStatus: "", createdAt: now, updatedAt: now, lastSeen: null,
+    active: true, registerStatus: "", createdAt: now, updatedAt: now, lastSeen: null, locationId: null,
   }]
   bump()
   return { ok: true }
@@ -342,6 +367,25 @@ export function setActive(ids: string[], active: boolean): Result<{ changed: num
   state.users = state.users.map((u) => (moveSet.has(u.userId) ? { ...u, active, updatedAt: Date.now() } : u))
   bump()
   return { ok: true, changed: moving.length }
+}
+
+/** Proposed (RBAC): put users in a location, or take them out of one (null). */
+export function setLocation(ids: string[], locationId: string | null): Result<{ changed: number }> {
+  const set = new Set(ids)
+  let changed = 0
+  state.users = state.users.map((u) => {
+    if (!set.has(u.userId) || u.locationId === locationId) return u
+    changed++
+    return { ...u, locationId, updatedAt: Date.now() }
+  })
+  bump()
+  return { ok: true, changed }
+}
+
+/** Locations are deleted in Iris; their users lose the location. */
+export function clearLocation(locationId: string) {
+  state.users = state.users.map((u) => (u.locationId === locationId ? { ...u, locationId: null } : u))
+  bump()
 }
 
 // --------------------------------------------------------------------- CSV --
@@ -423,7 +467,7 @@ export function importCurrent(text: string): Result<{ imported: number }> {
     if (existing.has(loginId)) continue
     const get = (c: string) => (idx.has(c) ? (row[idx.get(c)!] ?? "") : "")
     toCreate.push({ userId: hashId(loginId), loginId, name: get("name"), email: get("email"), site: get("site"),
-      active: true, registerStatus: "", createdAt: now, updatedAt: now, lastSeen: null })
+      active: true, registerStatus: "", createdAt: now, updatedAt: now, lastSeen: null, locationId: null })
   }
   const s = stats()
   if (s.active + toCreate.length > s.limit)
@@ -523,7 +567,7 @@ export function applyPlan(plan: Plan, text: string) {
       const row = byRow.get(r.row)!
       const get = (c: string) => (idx.has(c) ? (row[idx.get(c)!] ?? "").trim() : "")
       adds.push({ userId: hashId(r.loginId), loginId: r.loginId, name: get("name"), email: get("email"), site: get("site"),
-        active: true, registerStatus: "", createdAt: now, updatedAt: now, lastSeen: null })
+        active: true, registerStatus: "", createdAt: now, updatedAt: now, lastSeen: null, locationId: null })
       summary.added++
     } else if (r.kind === "invalid" || r.kind === "duplicate") summary.skipped++
   }

@@ -1,0 +1,47 @@
+# RBAC — initial design proposal (Iris platform, Client Admin)
+
+Draft, 27 Oct 2026. Built in the prototype under **Administration → Access** (Users, Groups, Locations, Roles) and **Clarion → Widget users** (Location column).
+
+## Sources
+- Ben Webb — *Iris Platform: RBAC, Groups and Locations* (draft) — the model this follows
+- Ben Webb — *Iris Platform: SSO Implementation*, *Iris Platform: SCIM User Provisioning* (build on RBAC)
+- Swathi Sreenath — *Role base access control for Clarion* (PO ask) and Louis Zhu's work breakdown
+
+## The model in one paragraph
+IR owns a fixed set of roles. **Tenant roles** (Tenant Admin, User Admin, Auditor) cover the whole tenant. **Product roles** (Product Admin, Editor, Viewer) cover one product and can be **limited to locations**. Roles go to **groups**; members inherit them. Groups and locations are both **flat**. A role given straight to a person is allowed but flagged as an **exception**. Access is the sum of all roles — no deny rules.
+
+## How the PO's ask maps
+| PO ask (Clarion RBAC page) | In this model |
+| --- | --- |
+| CC Manager role | Not a role. A group, e.g. "Sydney CC managers", with **Clarion Viewer · Sydney** |
+| Only Overview + Endpoints; no Thresholds, no admin portal | Viewer: Overview and Endpoints, read-only. Thresholds need Product Admin; Administration needs a tenant role |
+| Scope = reporting line, all levels down | **Changed.** Scope = locations. A "manager of managers" gets a group with several locations, or all locations |
+| Server-side scoping everywhere | Same — central authorisation service filters lists, search, map, drill-downs, exports |
+| Assign the role in Iris user management | Users / Groups pages in Iris (Client Admin), not OPS Console |
+| IT Admin unchanged | Existing Client Admins become Tenant Admins at migration |
+
+## Screens
+- **Users** — who can sign in, their groups and a one-line access summary ("Clarion Viewer · Sydney"). Filters: group, role, location, status. Flags people with a direct role and people with no access. Drawer: what they can see in Clarion (ticks), groups, and every role with where it came from (group or Direct).
+- **Groups** — flat list with roles, members and membership source ("Managed in Iris"; later "Linked to IdP group"). Drawer: add/remove roles and people. Delete shows the roles members will lose.
+- **Locations** — flat list, widget-user counts, and which groups are limited to each one. Warns about widget users with no location. Delete shows impact.
+- **Roles** — read-only catalogue, what each role means in Clarion, who holds it, and a Clarion capability matrix.
+- **Widget users** — Site column becomes **Location**; Location filter; bulk and per-row **Set location**.
+
+Safeguards built in: last Tenant Admin can't be removed, demoted or deactivated; you can't remove your own admin access; break-glass accounts are always Tenant Admin and can't be deactivated here.
+
+## To discuss with Swathi
+1. **Reporting line vs locations.** Does location scoping meet the CC Manager need for launch? If a manager's team is spread across sites, location doesn't fit. Reporting line could come later through SCIM (manager attribute is out of scope there today).
+2. **Editor in Clarion.** Nothing to edit yet, so it equals Viewer. Is there an action (acknowledging alerts, notes) that should need Editor?
+3. **Site → Location.** Free-text site becomes a managed location. The CSV would take a location name; unknown names are flagged in the import preview. Who cleans up existing sites (Sydney / sydney / SYD)?
+4. **Unassigned widget users.** Visible only to people with all-location access. Should new users default to a location?
+5. **Clarion Product Admin limited to locations.** Can a site admin manage widget users only in their site? (Model allows it; licences are tenant-wide.)
+
+## SSO and SCIM knock-ons
+- **JIT and licences.** JIT creates an Iris user on first SSO login. Ben's SSO page flags admin licence limits; if admin seats are capped, JIT needs: a default group or deny when no IdP group matches, and a clear rejection when the limit is hit. Recommend **default = deny** (no access until linked to a group), so JIT never hands out data by accident.
+- **SSO wizard** still maps IdP groups to the old two roles. Under this model it maps **IdP group → Iris group**. Needs updating.
+- **SCIM** needs groups to be flat — this model already is.
+
+## Not in the prototype yet
+- Auditor's access export (CSV), the audit events, migration report
+- Location in Add/Edit widget user and in the CSV import
+- "Can't grant more than you hold" for User Admins (only one admin persona is modelled)

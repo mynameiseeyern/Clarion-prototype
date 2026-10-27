@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import {
-  ArrowDownUp, ChevronDown, ChevronsUpDown, ChevronUp, CircleMinus, Download, FlaskConical, Loader2,
+  ArrowDownUp, ChevronDown, ChevronsUpDown, ChevronUp, CircleMinus, Download, FlaskConical, Loader2, MapPin,
   MoreHorizontal, RotateCcw, Search, Upload, UserPlus, UserRoundPlus, X,
 } from "lucide-react"
 import {
@@ -12,13 +12,16 @@ import {
 import { toast } from "@/components/ui/toast"
 import {
   PAGE_SIZE, connectionLabel, createUser, downloadText, emptyQuery, fetchPage, removeUsers, runQuery,
-  setActive, sizeMeta, stats, store, toCsv,
+  setActive, setLocation, sizeMeta, stats, store, toCsv,
   type Connection, type DataSize, type Query, type SortKey, type WidgetUser,
 } from "@/data/widgetUsers"
 import {
   AddUserDialog, ConnectionBadge, CurrentCsvDialog, DeactivateDialog, EditUserDialog, RemoveDialog, type Target,
 } from "@/components/admin/widget-users/dialogs"
 import { ImportFlow } from "@/components/admin/widget-users/ImportFlow"
+import { SetLocationDialog } from "@/components/admin/widget-users/SetLocationDialog"
+import { access, locationName } from "@/data/access"
+import { useAccess } from "@/components/admin/access/AccessBits"
 
 type View = "current" | "proposed"
 // Module-level so the prototype remembers the view while you move between pages.
@@ -32,6 +35,7 @@ const sortLabel: Record<SortKey, string> = { hash: "Default order", name: "Name"
 
 export function WidgetUsersPage() {
   const version = useSyncExternalStore(store.subscribe, store.version)
+  useAccess()
   const size = store.size()
   const [view, setViewState] = useState<View>(rememberedView)
   const setView = (v: View) => { rememberedView = v; setViewState(v); clearSelection() }
@@ -41,12 +45,12 @@ export function WidgetUsersPage() {
   const [search, setSearch] = useState("")
   const [debounced, setDebounced] = useState("")
   useEffect(() => { const t = setTimeout(() => setDebounced(search.trim()), 300); return () => clearTimeout(t) }, [search])
-  const [filters, setFilters] = useState<Pick<Query, "connection" | "status" | "sort">>({ connection: [], status: [], sort: "hash" })
+  const [filters, setFilters] = useState<Pick<Query, "connection" | "status" | "location" | "sort">>({ connection: [], status: [], location: [], sort: "hash" })
   const query: Query = useMemo(
     () => (proposed ? { ...emptyQuery, q: debounced, ...filters } : { ...emptyQuery, q: debounced }),
     [proposed, debounced, filters],
   )
-  const filtered = proposed && (filters.connection.length + filters.status.length > 0 || !!debounced)
+  const filtered = proposed && (filters.connection.length + filters.status.length + filters.location.length > 0 || !!debounced)
 
   // ---- paged list, 15 at a time like the real API -----------------------
   const [rows, setRows] = useState<WidgetUser[]>([])
@@ -162,6 +166,12 @@ export function WidgetUsersPage() {
   const [removeTarget, setRemoveTarget] = useState<Target | null>(null)
   const [deactivateTarget, setDeactivateTarget] = useState<Target | null>(null)
   const [editUser, setEditUser] = useState<WidgetUser | null>(null)
+  const [locationTarget, setLocationTarget] = useState<Target | null>(null)
+  const doSetLocation = (t: Target, loc: string | null) => {
+    const r = setLocation(t.users.map((u) => u.userId), loc)
+    if (r.ok) toast({ title: loc ? `${r.changed === 1 ? t.label : plural(r.changed, "user")} moved to ${locationName(loc)}.` : `${r.changed === 1 ? t.label : plural(r.changed, "user")} now ${r.changed === 1 ? "has" : "have"} no location.`, description: "Who can see them changes from the next request. Recorded in the audit log." })
+    setLocationTarget(null); clearSelection()
+  }
 
   const targetFor = (users: WidgetUser[]): Target => ({ users, count: users.length, label: users.length === 1 ? displayName(users[0]) : plural(users.length, "user") })
   /** Narrow a mixed selection to the users an action actually changes. */
@@ -273,7 +283,7 @@ export function WidgetUsersPage() {
           <div className="flex flex-wrap items-center gap-2">
             <InputGroup className="w-72">
               <InputGroupAddon><Search /></InputGroupAddon>
-              <InputGroupInput placeholder={proposed ? "Search name, login ID, email or site" : "Search users by name, login or email..."} value={search} onChange={(e) => setSearch(e.target.value)} />
+              <InputGroupInput placeholder={proposed ? "Search name, login ID or email" : "Search users by name, login or email..."} value={search} onChange={(e) => setSearch(e.target.value)} />
               {search && <InputGroupAddon align="end"><button type="button" aria-label="Clear search" onClick={() => setSearch("")}><X className="size-4" /></button></InputGroupAddon>}
             </InputGroup>
             {proposed && (
@@ -284,8 +294,11 @@ export function WidgetUsersPage() {
                 <div className="w-40"><Select size="md" label="Status" value={filters.status}
                   options={[{ value: "active", label: "Active" }, { value: "deactivated", label: "Deactivated" }]}
                   onValueChange={(v) => setFilters({ ...filters, status: v as Query["status"] })} /></div>
-                {(filters.connection.length + filters.status.length > 0) && (
-                  <Button variant="ghost" size="sm" onClick={() => setFilters({ ...filters, connection: [], status: [] })}>Clear filters</Button>
+                <div className="w-40"><Select size="md" label="Location" value={filters.location} icon={<MapPin />}
+                  options={[...access.locations().map((l) => ({ value: l.id, label: l.name })), { value: "none", label: "No location" }]}
+                  onValueChange={(v) => setFilters({ ...filters, location: v })} /></div>
+                {(filters.connection.length + filters.status.length + filters.location.length > 0) && (
+                  <Button variant="ghost" size="sm" onClick={() => setFilters({ ...filters, connection: [], status: [], location: [] })}>Clear filters</Button>
                 )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild><Button variant="ghost" size="sm" className="ms-auto"><ArrowDownUp /> {sortLabel[filters.sort]}</Button></DropdownMenuTrigger>
@@ -330,6 +343,7 @@ export function WidgetUsersPage() {
                       Reactivate{selMix.active > 0 ? ` ${fmt(selMix.inactive)}` : ""}
                     </Button>
                   )}
+                  <Button variant="outline" size="sm" onClick={() => bulk(setLocationTarget)}><MapPin /> Set location</Button>
                   <Button variant="outline" size="sm" onClick={() => { const us = resolveSelection(); if (us) exportUsers(us, "clarion-widget-users-selected.csv") }}><Download /> Export {fmt(selCount)}</Button>
                   <Button variant="destructive" size="sm" onClick={() => bulk(setRemoveTarget)}>Remove…</Button>
                 </div>
@@ -368,7 +382,7 @@ export function WidgetUsersPage() {
                   </TableHead>
                   <TableHead className="text-start">Login ID</TableHead>
                   {!proposed && <TableHead className="text-start">Email</TableHead>}
-                  <TableHead className="text-start">Site</TableHead>
+                  <TableHead className="text-start">{proposed ? "Location" : "Site"}</TableHead>
                   {proposed && <TableHead className="text-start">Widget</TableHead>}
                   {proposed && <TableHead className="text-start">Status</TableHead>}
                   <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead>
@@ -390,7 +404,9 @@ export function WidgetUsersPage() {
                       </TableCell>
                       <TableCell className="max-w-56 truncate font-mono text-body-sm">{u.loginId}</TableCell>
                       {!proposed && <TableCell className="max-w-64 truncate">{u.email || "-"}</TableCell>}
-                      <TableCell className="max-w-40 truncate">{u.site || (proposed ? <span className="text-content-neutral-subtle">—</span> : "-")}</TableCell>
+                      {proposed
+                        ? <TableCell className="max-w-40 truncate">{u.locationId ? locationName(u.locationId) : <Badge color="warning">No location</Badge>}</TableCell>
+                        : <TableCell className="max-w-40 truncate">{u.site || "-"}</TableCell>}
                       {proposed && <TableCell><ConnectionBadge user={u} /></TableCell>}
                       {proposed && <TableCell>{u.active ? <Badge color="success">Active</Badge> : <Badge>Deactivated</Badge>}</TableCell>}
                       <TableCell>
@@ -399,6 +415,7 @@ export function WidgetUsersPage() {
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="xs" aria-label={`Actions for ${displayName(u)}`}><MoreHorizontal /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onSelect={() => setEditUser(u)}>Edit details</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setLocationTarget(targetFor([u]))}>Set location…</DropdownMenuItem>
                               {u.active
                                 ? <DropdownMenuItem onSelect={() => setDeactivateTarget(targetFor([u]))}>Deactivate</DropdownMenuItem>
                                 : <DropdownMenuItem onSelect={() => doReactivate(targetFor([u]))}>Reactivate</DropdownMenuItem>}
@@ -432,6 +449,7 @@ export function WidgetUsersPage() {
       <ImportFlow open={importOpen} onOpenChange={setImportOpen} />
       <RemoveDialog open={!!removeTarget} onOpenChange={(o) => { if (!o) setRemoveTarget(null) }} target={removeTarget}
         onRemove={doRemove} onDeactivateInstead={() => { if (removeTarget) { setDeactivateTarget(onlyActive(removeTarget, true)); setRemoveTarget(null) } }} />
+      <SetLocationDialog target={locationTarget} onClose={() => setLocationTarget(null)} onConfirm={doSetLocation} />
       <EditUserDialog open={!!editUser} onOpenChange={(o) => { if (!o) setEditUser(null) }} user={editUser} />
       <DeactivateDialog open={!!deactivateTarget} onOpenChange={(o) => { if (!o) setDeactivateTarget(null) }} target={deactivateTarget}
         onConfirm={() => deactivateTarget && doDeactivate(deactivateTarget)} />

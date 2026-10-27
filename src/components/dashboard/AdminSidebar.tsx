@@ -1,4 +1,4 @@
-import { adminNavItems, adminDocNavItems, type NavItem, type PageId } from "@/nav"
+import { adminNavSections, adminDocNavItems, type NavItem, type PageId } from "@/nav"
 
 /**
  * Sidebar for the Administration experience. Same chrome as the Fleet sidebar
@@ -28,7 +28,11 @@ export function AdminSidebar({
 
       {/* Content — admin nav + shared docs */}
       <div className="flex-1 overflow-y-auto p-2">
-        <NavGroup label="Administration" items={adminNavItems} active={active} onNavigate={onNavigate} />
+        {adminNavSections.map((sec, i) => (
+          <div key={sec.label} className={i ? "mt-3" : undefined}>
+            <NavGroup label={sec.label} items={sec.items} active={active} onNavigate={onNavigate} />
+          </div>
+        ))}
         <div className="mt-3">
           <NavGroup label="Product development" items={adminDocNavItems} active={active} onNavigate={onNavigate} />
         </div>
