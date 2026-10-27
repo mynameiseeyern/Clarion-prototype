@@ -10,11 +10,11 @@ import {
   DrawerTitle, DrawerTitleGroup,
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
   EmptyState, Field, FieldControl, FieldDescription, FieldError, FieldLabel, Input, InputGroup, InputGroupAddon, InputGroupInput,
-  FieldOption, Radio, RadioGroup, Select, Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  FieldOption, Radio, RadioGroup, Select, Tabs, TabsList, TabsTrigger, Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@ir/ui"
 import { toast } from "@/components/ui/toast"
 import {
-  ME, access, assignmentLabel, describeRole, locationName, moveTarget, siteGroupsOf, clarionAccess, clarionReach, grantsOf, groupsOf, isTenantAdmin, roleDef, roles,
+  ME, access, assignmentLabel, groupScopes, productAccess, products, scopes, tenantRolesOf, type Scope, describeRole, locationName, moveTarget, siteGroupsOf, clarionAccess, clarionReach, grantsOf, groupsOf, isTenantAdmin, roleDef, roles,
   statusLabel, tenantAdmins, wouldOrphanTenant, type Person, type PersonStatus,
 } from "@/data/access"
 import { AddRoleDialog, PersonCell, RoleBadge, fmt, locList, plural, useAccess } from "@/components/admin/access/AccessBits"
@@ -27,6 +27,9 @@ const statusColor: Record<PersonStatus, "success" | "info" | "neutral"> = { acti
  * Locations": people get access from the groups they're in. The list shows where
  * each person's access comes from, and roles given directly are flagged as exceptions.
  */
+// Remembered while moving between pages in the prototype.
+let rememberedTab: Scope = "tenant"
+
 export function UsersRolesPage() {
   useAccess()
   const [search, setSearch] = useState("")
@@ -40,17 +43,22 @@ export function UsersRolesPage() {
   const [give, setGive] = useState<string[] | null>(null)
   const [bulkGroup, setBulkGroup] = useState<"add" | "remove" | null>(null)
   const [moveFor, setMoveFor] = useState<string | null>(null)
+  const [tab, setTabState] = useState<Scope>(rememberedTab)
+  const setTab = (t: Scope) => { rememberedTab = t; setTabState(t); setRoleF([]); setLocF([]); setSelected([]) }
+  const isProduct = tab !== "tenant"
+  const tabName = scopes.find((x) => x.id === tab)!.name
+  const inTab = (pid: string) => (tab === "tenant" ? true : !!productAccess(pid, tab).role)
 
-  const people = access.people()
+  const people = access.people().filter((p) => inTab(p.id))
   const filtered = people.filter((p) => {
     const q = search.trim().toLowerCase()
     if (q && !(p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q))) return false
     if (statusF.length && !statusF.includes(p.status)) return false
     if (groupF.length && !groupsOf(p.id).some((g) => groupF.includes(g.id))) return false
     const grants = grantsOf(p.id).map((g) => g.assignment)
-    if (roleF.length && !grants.some((x) => roleF.includes(x.role))) return false
-    if (locF.length) {
-      const acc = clarionAccess(p.id)
+    if (roleF.length && !grants.some((x) => roleF.includes(x.role) && (tab === "tenant" ? !x.product : x.product === tab || x.role === "tenant_admin"))) return false
+    if (locF.length && isProduct) {
+      const acc = productAccess(p.id, tab)
       if (!acc.role) return false
       if (acc.locations !== null && !acc.locations.some((l) => locF.includes(l))) return false
     }
@@ -62,7 +70,21 @@ export function UsersRolesPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      {(exceptions > 0 || noAccess > 0) && (
+      <Tabs value={tab} onValueChange={(v) => setTab(v as Scope)}>
+        <TabsList>
+          {scopes.map((x) => (
+            <TabsTrigger key={x.id} value={x.id}>
+              {x.name} <span className="ms-1.5 text-content-neutral-muted">{fmt(access.people().filter((p) => x.id === "tenant" || !!productAccess(p.id, x.id).role).length)}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+      <p className="-mt-1 text-body-sm text-content-neutral-muted">
+        {tab === "tenant"
+          ? "Everyone who can sign in to Iris. Invite, deactivate and give tenant roles here."
+          : `People with ${tabName} access. Each person is one Iris account; their other products show on their page.`}
+      </p>
+      {(exceptions > 0 || noAccess > 0) && tab === "tenant" && (
         <div className="flex flex-wrap gap-2">
           {exceptions > 0 && <Badge color="warning">{plural(exceptions, "person has", "people have")} a direct role</Badge>}
           {noAccess > 0 && <Badge>{plural(noAccess, "person has", "people have")} no access yet</Badge>}
@@ -73,13 +95,13 @@ export function UsersRolesPage() {
         <CardHeader className="pb-4">
           <CardHeaderText>
             <div className="flex items-center gap-2">
-              <CardTitle>Users</CardTitle>
+              <CardTitle>{tab === "tenant" ? "All users" : `${tabName} users`}</CardTitle>
               <Badge>{filteredOn ? `${fmt(filtered.length)} of ${fmt(people.length)}` : fmt(people.length)}</Badge>
             </div>
           </CardHeaderText>
           <CardAction className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => setGive([])}><ShieldCheck aria-hidden /> Give access</Button>
-            <Button size="sm" onClick={() => setInviteOpen(true)}><Plus aria-hidden /> Invite user</Button>
+            <Button size="sm" variant="outline" onClick={() => setGive([])}><ShieldCheck aria-hidden /> {isProduct ? `Give ${tabName} access` : "Give tenant role"}</Button>
+            <Button size="sm" onClick={() => setInviteOpen(true)}><Plus aria-hidden /> {isProduct ? `Invite to ${tabName}` : "Invite user"}</Button>
           </CardAction>
         </CardHeader>
 
@@ -90,8 +112,8 @@ export function UsersRolesPage() {
             {search && <InputGroupAddon align="end"><Button variant="ghost" size="icon-xs" aria-label="Clear search" onClick={() => setSearch("")}><X aria-hidden /></Button></InputGroupAddon>}
           </InputGroup>
           <div className="w-40"><Select label="Group" options={access.groups().map((g) => ({ value: g.id, label: g.name }))} value={groupF} onValueChange={setGroupF} showDetail={false} icon={<FolderTree />} /></div>
-          <div className="w-36"><Select label="Role" options={roles.map((r) => ({ value: r.id, label: r.name }))} value={roleF} onValueChange={setRoleF} showDetail={false} icon={<ShieldCheck />} /></div>
-          <div className="w-40"><Select label="Location" options={access.locations().map((l) => ({ value: l.id, label: l.name }))} value={locF} onValueChange={setLocF} showDetail={false} icon={<MapPin />} /></div>
+          <div className="w-36"><Select label="Role" options={roles.filter((r) => (tab === "tenant" ? r.level === "tenant" : r.level === "product" || r.id === "tenant_admin")).map((r) => ({ value: r.id, label: r.name }))} value={roleF} onValueChange={setRoleF} showDetail={false} icon={<ShieldCheck />} /></div>
+          {isProduct && <div className="w-40"><Select label="Location" options={access.locations().map((l) => ({ value: l.id, label: l.name }))} value={locF} onValueChange={setLocF} showDetail={false} icon={<MapPin />} /></div>}
           <div className="w-36"><Select label="Status" options={(Object.keys(statusLabel) as PersonStatus[]).map((s) => ({ value: s, label: statusLabel[s] }))} value={statusF} onValueChange={setStatusF} showDetail={false} /></div>
         </div>
 
@@ -118,7 +140,7 @@ export function UsersRolesPage() {
               </TableHead>
               <TableHead align="start">User</TableHead>
               <TableHead align="start">Groups</TableHead>
-              <TableHead align="start">Access</TableHead>
+              <TableHead align="start">{tab === "tenant" ? "Tenant role · products" : `${tabName} role`}</TableHead>
               <TableHead align="start">Last active</TableHead>
               <TableHead align="start">Status</TableHead>
               <TableHead align="start" className="w-12"><span className="sr-only">Actions</span></TableHead>
@@ -142,7 +164,7 @@ export function UsersRolesPage() {
                       </div>
                     ) : <span className="text-content-neutral-subtle">No groups</span>}
                   </TableCell>
-                  <TableCell className="max-w-72"><AccessSummary p={p} /></TableCell>
+                  <TableCell className="max-w-72"><AccessSummary p={p} tab={tab} /></TableCell>
                   <TableCell className="text-content-neutral-muted">{p.status === "invited" ? `Invited ${p.invitedAgo}` : (p.lastActive ?? "—")}</TableCell>
                   <TableCell><Badge color={statusColor[p.status]} dot>{statusLabel[p.status]}</Badge></TableCell>
                   <TableCell className="pe-3" onClick={(e) => e.stopPropagation()}>
@@ -165,28 +187,33 @@ export function UsersRolesPage() {
 
       <UserDrawer id={open} onClose={() => setOpen(null)} onGive={(id) => setGive([id])} onMove={(id) => setMoveFor(id)} />
       <MoveSiteDialog personId={moveFor} onClose={() => setMoveFor(null)} />
-      <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} />
-      <GiveAccessDialog open={give !== null} onOpenChange={(o) => { if (!o) { if (give && give.length > 1) setSelected([]); setGive(null) } }} people={give ?? []} />
+      <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} scope={tab} />
+      <GiveAccessDialog open={give !== null} onOpenChange={(o) => { if (!o) { if (give && give.length > 1) setSelected([]); setGive(null) } }} people={give ?? []} scope={tab} />
       <BulkGroupDialog mode={bulkGroup} people={selected} onClose={(done) => { setBulkGroup(null); if (done) setSelected([]) }} />
     </div>
   )
 }
 
 /** The access column: tenant roles, then what they get in Clarion. */
-function AccessSummary({ p }: { p: Person }) {
+function AccessSummary({ p, tab }: { p: Person; tab: Scope }) {
   const grants = grantsOf(p.id)
-  if (!grants.length) return <span className="text-content-neutral-subtle">No access</span>
-  const tenant = [...new Set(grants.filter((g) => roleDef(g.assignment.role).level === "tenant").map((g) => g.assignment.role))]
-  const c = clarionAccess(p.id)
-  const direct = p.direct.length > 0 && !p.breakGlass
+  if (tab === "tenant") {
+    const tenant = tenantRolesOf(p.id)
+    const prods = products.filter((x) => !!productAccess(p.id, x.id).role)
+    if (!grants.length) return <span className="text-content-neutral-subtle">No access</span>
+    return (
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="truncate text-label-md text-content-neutral-emphasis">{tenant.length ? tenant.map((r) => roleDef(r).name).join(", ") : "—"}</span>
+        <span className="flex flex-wrap gap-1">{prods.map((x) => <Badge key={x.id} variant="outline">{x.name}</Badge>)}</span>
+      </div>
+    )
+  }
+  const c = productAccess(p.id, tab)
+  const direct = p.direct.some((x) => x.product === tab) && !p.breakGlass
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
-      {tenant.length > 0 && <span className="truncate text-label-md text-content-neutral-emphasis">{tenant.map((r) => roleDef(r).name).join(", ")}</span>}
-      {c.role && c.role !== "tenant_admin" && (
-        <span className="truncate text-body-sm text-content-neutral-muted">
-          Clarion {roleDef(c.role).name} · {locList(c.locations)}
-        </span>
-      )}
+      <span className="truncate text-label-md text-content-neutral-emphasis">{c.role === "tenant_admin" ? "Tenant Admin (includes Product Admin)" : roleDef(c.role!).name}</span>
+      <span className="truncate text-body-sm text-content-neutral-muted">{locList(c.locations)}</span>
       {direct && <span className="text-body-xs text-content-warning-emphasis">Includes a direct role</span>}
     </div>
   )
@@ -258,6 +285,30 @@ function UserDrawer({ id, onClose, onGive, onMove }: { id: string | null; onClos
           </DrawerHeading>
         </DrawerHeader>
         <DrawerBody className="gap-6">
+          {/* Every area at once — tabs answer "who has Clarion?", this answers "what can Priya do?" */}
+          <section className="flex flex-col gap-3">
+            <h3 className="text-label-lg text-content-neutral-emphasis">Access by area</h3>
+            <Table size="sm">
+              <TableHeader><TableRow><TableHead align="start">Area</TableHead><TableHead align="start">Role</TableHead><TableHead align="start">Where</TableHead><TableHead align="start">From</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {(() => { const t = tenantRolesOf(p.id); const from = grants.filter((g) => roleDef(g.assignment.role).level === "tenant"); return (
+                  <TableRow>
+                    <TableCell className="text-label-md">Iris tenant</TableCell>
+                    <TableCell>{t.length ? t.map((r) => roleDef(r).name).join(", ") : <span className="text-content-neutral-subtle">None</span>}</TableCell>
+                    <TableCell className="text-content-neutral-muted">—</TableCell>
+                    <TableCell className="text-body-sm text-content-neutral-muted">{from.map((g) => (g.via.kind === "group" ? g.via.group.name : p.breakGlass ? "Break-glass" : "Direct")).join(", ") || "—"}</TableCell>
+                  </TableRow>) })()}
+                {products.map((x) => { const acc = productAccess(p.id, x.id); const from = grants.filter((g) => g.assignment.product === x.id || g.assignment.role === "tenant_admin"); return (
+                  <TableRow key={x.id}>
+                    <TableCell className="text-label-md">{x.name}</TableCell>
+                    <TableCell>{acc.role ? (acc.role === "tenant_admin" ? "Product Admin (via Tenant Admin)" : roleDef(acc.role).name) : <span className="text-content-neutral-subtle">No access</span>}</TableCell>
+                    <TableCell className="text-content-neutral-muted">{acc.role ? locList(acc.locations) : "—"}</TableCell>
+                    <TableCell className="text-body-sm text-content-neutral-muted">{from.map((g) => (g.via.kind === "group" ? g.via.group.name : p.breakGlass ? "Break-glass" : "Direct")).filter((v, i, xs) => xs.indexOf(v) === i).join(", ") || "—"}</TableCell>
+                  </TableRow>) })}
+              </TableBody>
+            </Table>
+          </section>
+
           {/* What they get */}
           <section className="flex flex-col gap-3">
             <h3 className="text-label-lg text-content-neutral-emphasis">What they can see in Clarion</h3>
@@ -403,7 +454,8 @@ function GroupChecklist({ groups, value, onChange }: { groups: ReturnType<typeof
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+function InviteDialog({ open, onOpenChange, scope }: { open: boolean; onOpenChange: (o: boolean) => void; scope: Scope }) {
+  const scopeName = scopes.find((x) => x.id === scope)!.name
   const [email, setEmail] = useState("")
   const [groups, setGroups] = useState<string[]>([])
   const [touched, setTouched] = useState(false)
@@ -412,7 +464,7 @@ function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
   const valid = emailRe.test(trimmed)
   const dupe = valid && access.people().some((p) => p.email.toLowerCase() === trimmed)
   const err = touched && !valid ? "Enter a valid email address." : touched && dupe ? "Someone with this email is already a user." : null
-  const local = useMemo(() => access.groups().filter((g) => g.source === "local"), [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  const local = useMemo(() => access.groups().filter((g) => g.source === "local" && (scope === "tenant" || groupScopes(g).includes(scope))), [open, scope]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const send = () => {
     setTouched(true)
@@ -427,8 +479,8 @@ function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
     <Dialog open={open} onOpenChange={(o) => { if (o) reset(); onOpenChange(o) }}>
       <DialogContent size="md">
         <DialogHeader>
-          <DialogTitle>Invite user</DialogTitle>
-          <DialogDescription>Their access comes from the groups you add them to.</DialogDescription>
+          <DialogTitle>{scope === "tenant" ? "Invite user" : `Invite to ${scopeName}`}</DialogTitle>
+          <DialogDescription>{scope === "tenant" ? "Their access comes from the groups you add them to." : `Creates their Iris account and gives ${scopeName} access through the groups you pick.`}</DialogDescription>
         </DialogHeader>
         <DialogBody className="gap-5">
           <Field invalid={!!err}>
@@ -437,7 +489,7 @@ function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
             <FieldError>{err}</FieldError>
           </Field>
           <Field>
-            <FieldLabel>Groups</FieldLabel>
+            <FieldLabel>{scope === "tenant" ? "Groups" : `${scopeName} groups`}</FieldLabel>
             <GroupChecklist groups={local} value={groups} onChange={setGroups} />
             <FieldDescription>To give one person a role outside a group, invite them, then open their access.</FieldDescription>
           </Field>

@@ -7,7 +7,7 @@ import {
 } from "@ir/ui"
 import { toast } from "@/components/ui/toast"
 import {
-  access, describeRole, grantsOf, jobDef, jobs, matchingGroup, suggestGroupName, type Assignment, type Job,
+  access, describeRole, grantsOf, jobsFor, matchingGroup, productName, suggestGroupName, type Assignment, type Job, type Scope,
 } from "@/data/access"
 import { LocationChecklist, PersonCell, plural, useAccess } from "@/components/admin/access/AccessBits"
 
@@ -17,8 +17,9 @@ import { LocationChecklist, PersonCell, plural, useAccess } from "@/components/a
  * with a direct role by accident, and the preview says what they'll see before saving.
  */
 export function GiveAccessDialog({
-  open, onOpenChange, people: preset = [], locations: presetLocs = [],
+  open, onOpenChange, people: preset = [], locations: presetLocs = [], scope = "clarion",
 }: {
+  scope?: Scope
   open: boolean
   onOpenChange: (o: boolean) => void
   people?: string[]
@@ -36,21 +37,22 @@ export function GiveAccessDialog({
 
   useEffect(() => {
     if (!open) return
-    setWho(preset); setJob("view"); setWhere("some"); setLocs(presetLocs)
+    setWho(preset); setJob(jobsFor(scope)[0].id); setWhere("some"); setLocs(presetLocs)
     setName(""); setNameTouched(false); setTried(false); setQ("")
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
-  const def = jobDef(job)
+  const jobs = jobsFor(scope)
+  const def = jobs.find((j) => j.id === job) ?? jobs[0]
   const scopedLocs = def.scoped && where === "some" ? locs : []
-  const draft: Omit<Assignment, "id"> = { role: def.role, product: def.scoped ? "clarion" : undefined, locations: scopedLocs }
+  const draft: Omit<Assignment, "id"> = { role: def.role, product: def.product, locations: scopedLocs }
   const match = matchingGroup(draft)
-  const suggested = suggestGroupName(job, scopedLocs)
+  const suggested = suggestGroupName(def.id, scopedLocs, def.product)
   const groupName = nameTouched ? name : suggested
   const already = match ? who.filter((id) => match.members.includes(id)) : []
   const needLocs = def.scoped && where === "some" && locs.length === 0
   const nameClash = !match && access.groups().some((g) => g.name.trim().toLowerCase() === groupName.trim().toLowerCase())
-  const d = describeRole(def.role, scopedLocs)
+  const d = describeRole(def.role, scopedLocs, def.product)
   const first = access.person(who[0] ?? "")
   const hasOther = who.some((id) => grantsOf(id).length > 0)
 
@@ -85,7 +87,7 @@ export function GiveAccessDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="lg">
         <DialogHeader>
-          <DialogTitle>Give access</DialogTitle>
+          <DialogTitle>{scope === "tenant" ? "Give tenant access" : `Give ${productName(scope)} access`}</DialogTitle>
           <DialogDescription>Say what they should do and where. We&apos;ll add them to the right group.</DialogDescription>
         </DialogHeader>
         <DialogBody className="max-h-[68vh] gap-6 overflow-y-auto">
@@ -119,7 +121,7 @@ export function GiveAccessDialog({
           {/* What */}
           <section className="flex flex-col gap-2">
             <span className="text-label-md text-content-neutral-emphasis">What should they do?</span>
-            <RadioGroup value={job} onValueChange={(v) => setJob(v as Job)} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <RadioGroup value={def.id} onValueChange={(v) => setJob(v as Job)} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {jobs.map((j) => (
                 <div key={j.id} className="rounded-lg border border-line-neutral-muted p-3">
                   <FieldOption control={<Radio value={j.id} />} description={j.hint}>{j.label}</FieldOption>

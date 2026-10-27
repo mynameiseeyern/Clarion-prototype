@@ -20,9 +20,13 @@ import { clearLocation, setLocation, setLocationResolver, store as widgetStore, 
 // ------------------------------------------------------------------ catalogue --
 
 export type RoleId = "tenant_admin" | "user_admin" | "auditor" | "product_admin" | "editor" | "viewer"
-export type ProductId = "clarion"
+export type ProductId = "clarion" | "productx"
+/** Where a role applies: the whole tenant, or one product. Drives the tabs on Users, Groups and Roles. */
+export type Scope = "tenant" | ProductId
 
-export const products: { id: ProductId; name: string }[] = [{ id: "clarion", name: "Clarion" }]
+/** Product X stands in for the next Iris product, to show how the console scales. */
+export const products: { id: ProductId; name: string; placeholder?: boolean }[] = [{ id: "clarion", name: "Clarion" }, { id: "productx", name: "Product X", placeholder: true }]
+export const scopes: { id: Scope; name: string }[] = [{ id: "tenant", name: "Tenant" }, ...products.map((p) => ({ id: p.id as Scope, name: p.name }))]
 export const productName = (id?: ProductId) => products.find((p) => p.id === id)?.name ?? ""
 
 export interface RoleDef {
@@ -141,7 +145,8 @@ const seedGroups: Group[] = [
   { id: "g-desk", name: "Service desk", description: "Onboards and offboards people", source: "local", members: ["p12"], assignments: [a("user_admin")] },
   { id: "g-sec", name: "Security and compliance", description: "Quarterly access reviews", source: "local", members: ["p9"], assignments: [a("auditor")] },
   { id: "g-clarion-admin", name: "Clarion administrators", description: "Sets thresholds and manages widget users", source: "local", members: ["p2", "p12"], assignments: [a("product_admin")] },
-  { id: "g-lead", name: "Contact centre leadership", description: "Sees every site", source: "local", members: ["p8"], assignments: [a("viewer")] },
+  { id: "g-lead", name: "Contact centre leadership", description: "Sees every site, in every product", source: "local", members: ["p8"], assignments: [a("viewer"), a("viewer", [], "productx")] },
+  { id: "g-px", name: "Product X analysts", description: "Read-only in Product X", source: "local", members: ["p13", "p9"], assignments: [a("viewer", [], "productx")] },
   { id: "g-apac", name: "APAC operations leads", description: "", source: "local", members: ["p5"], assignments: [a("viewer", [L.syd, L.mel, L.akl])] },
   { id: "g-syd", name: "Sydney CC managers", description: "", source: "local", members: ["p3", "p4"], assignments: [a("viewer", [L.syd])] },
   { id: "g-mnl", name: "Manila CC managers", description: "Outsourcer team leads", source: "local", members: ["p6", "p7"], assignments: [a("viewer", [L.mnl])] },
@@ -257,15 +262,29 @@ export interface ProductAccess {
   locations: string[] | null
 }
 
-/** What someone can do in Clarion, combining every role they hold. */
-export function clarionAccess(personId: string): ProductAccess {
+/** What someone can do in a product, combining every role they hold. */
+export function productAccess(personId: string, product: ProductId): ProductAccess {
   const gs = grantsOf(personId).map((g) => g.assignment)
   if (gs.some((x) => x.role === "tenant_admin")) return { role: "tenant_admin", locations: null }
-  const prod = gs.filter((x) => x.product === "clarion")
+  const prod = gs.filter((x) => x.product === product)
   if (!prod.length) return { role: null, locations: [] }
   const role = prod.reduce<RoleId>((best, x) => (productRank[x.role] > productRank[best] ? x.role : best), prod[0].role)
   const everywhere = prod.some((x) => x.locations.length === 0)
   return { role, locations: everywhere ? null : [...new Set(prod.flatMap((x) => x.locations))] }
+}
+
+export const clarionAccess = (personId: string) => productAccess(personId, "clarion")
+
+/** Tenant roles someone holds (directly or through groups). */
+export const tenantRolesOf = (personId: string) =>
+  [...new Set(grantsOf(personId).map((g) => g.assignment.role).filter((r) => roleDef(r).level === "tenant"))]
+
+/** Which tabs a group belongs in. A group with no roles yet shows everywhere. */
+export function groupScopes(g: Group): Scope[] {
+  if (!g.assignments.length) return scopes.map((x) => x.id)
+  const out = new Set<Scope>()
+  for (const x of g.assignments) out.add(roleDef(x.role).level === "tenant" ? "tenant" : (x.product as Scope))
+  return [...out]
 }
 
 /** How many Clarion widget users someone can see. */
@@ -320,15 +339,23 @@ export const initials = (name: string) => name.split(" ").map((p) => p[0]).slice
 // "What should they do?" + "Where?" → a role, then the group that already holds
 // exactly that role (or a new one). People always land in a group, never a direct role.
 
-export type Job = "view" | "manage" | "users" | "review"
+export type Job = "view" | "manage" | "users" | "review" | "admin"
+export interface JobDef { id: Job; label: string; hint: string; role: RoleId; scoped: boolean; product?: ProductId }
 
-export const jobs: { id: Job; label: string; hint: string; role: RoleId; scoped: boolean }[] = [
-  { id: "view", label: "See the Clarion dashboard", hint: "Overview and Endpoints, read-only", role: "viewer", scoped: true },
-  { id: "manage", label: "Manage Clarion", hint: "Also Thresholds and widget users", role: "product_admin", scoped: true },
-  { id: "users", label: "Manage users and groups", hint: "No Clarion data", role: "user_admin", scoped: false },
-  { id: "review", label: "Review access", hint: "Read-only settings and audit log", role: "auditor", scoped: false },
-]
-export const jobDef = (j: Job) => jobs.find((x) => x.id === j)!
+/** The choices in Give access, per tab: a product's own jobs, or the tenant's. */
+export function jobsFor(scope: Scope): JobDef[] {
+  if (scope === "tenant") return [
+    { id: "users", label: "Manage users and groups", hint: "No product data", role: "user_admin", scoped: false },
+    { id: "review", label: "Review access", hint: "Read-only settings and audit log", role: "auditor", scoped: false },
+    { id: "admin", label: "Run the whole tenant", hint: "Tenant Admin: everything, every product", role: "tenant_admin", scoped: false },
+  ]
+  const name = productName(scope)
+  return scope === "clarion"
+    ? [{ id: "view", label: "See the Clarion dashboard", hint: "Overview and Endpoints, read-only", role: "viewer", scoped: true, product: scope },
+       { id: "manage", label: "Manage Clarion", hint: "Also Thresholds and widget users", role: "product_admin", scoped: true, product: scope }]
+    : [{ id: "view", label: `View ${name}`, hint: "Read-only", role: "viewer", scoped: true, product: scope },
+       { id: "manage", label: `Manage ${name}`, hint: "Its settings and content", role: "product_admin", scoped: true, product: scope }]
+}
 
 const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x))
 
@@ -338,18 +365,27 @@ export function matchingGroup(x: Omit<Assignment, "id">) {
     g.assignments[0].role === x.role && g.assignments[0].product === x.product && sameSet(g.assignments[0].locations, x.locations))
 }
 
-export function suggestGroupName(job: Job, locations: string[]) {
+export function suggestGroupName(job: Job, locations: string[], product: ProductId = "clarion") {
   const where = locations.map(locationName).join(", ")
+  const name = productName(product)
   switch (job) {
-    case "view": return locations.length ? `${where} CC managers` : "Clarion viewers (all locations)"
-    case "manage": return locations.length ? `Clarion administrators – ${where}` : "Clarion administrators"
+    case "view": return product === "clarion" ? (locations.length ? `${where} CC managers` : "Clarion viewers (all locations)") : (locations.length ? `${name} viewers – ${where}` : `${name} viewers`)
+    case "manage": return locations.length ? `${name} administrators – ${where}` : `${name} administrators`
     case "users": return "User administrators"
     case "review": return "Auditors"
+    case "admin": return "IT administrators"
   }
 }
 
 /** Plain-language result of holding one role. */
-export function describeRole(role: RoleId, locations: string[]) {
+export function describeRole(role: RoleId, locations: string[], product: ProductId = "clarion") {
+  if (product !== "clarion" && (role === "viewer" || role === "editor" || role === "product_admin")) {
+    const where = locations.length ? locations.map(locationName).join(", ") : "all locations"
+    const name = productName(product)
+    return role === "product_admin"
+      ? { sees: `${name}'s settings and content for ${where}`, not: "users, groups or sign-in settings" }
+      : { sees: `${name}, read-only, for ${where}`, not: `${name} settings or Administration` }
+  }
   const reach = role === "user_admin" || role === "auditor" ? 0
     : locations.length ? widgetStore.all().filter((u) => u.locationId && locations.includes(u.locationId)).length : widgetStore.all().length
   const where = locations.length ? locations.map(locationName).join(", ") : "all locations"
@@ -359,11 +395,11 @@ export function describeRole(role: RoleId, locations: string[]) {
     case "product_admin":
       return { sees: `Overview, Endpoints, Thresholds and widget users for ${where} (${reach.toLocaleString()} widget users)`, not: "users, groups or sign-in settings" }
     case "user_admin":
-      return { sees: "users and groups, and can give roles up to their own", not: "Clarion data, locations or sign-in settings" }
+      return { sees: "users and groups, and can give roles up to their own", not: "product data, locations or sign-in settings" }
     case "auditor":
-      return { sees: "settings, users, groups, roles and the audit log, read-only", not: "Clarion data" }
+      return { sees: "settings, users, groups, roles and the audit log, read-only", not: "product data" }
     case "tenant_admin":
-      return { sees: "everything, including sign-in settings", not: "" }
+      return { sees: "everything in every product, including sign-in settings", not: "" }
   }
 }
 
@@ -483,6 +519,6 @@ export function moveTarget(fromGroupId: string, toLocation: string) {
   const draft = { role: x.role, product: x.product, locations: [toLocation] }
   const match = matchingGroup(draft)
   const oldName = locationName(x.locations[0]), newName = locationName(toLocation)
-  const name = g.name.includes(oldName) ? g.name.replace(oldName, newName) : suggestGroupName(x.role === "product_admin" ? "manage" : "view", [toLocation])
+  const name = g.name.includes(oldName) ? g.name.replace(oldName, newName) : suggestGroupName(x.role === "product_admin" ? "manage" : "view", [toLocation], x.product ?? "clarion")
   return { draft, match, name }
 }

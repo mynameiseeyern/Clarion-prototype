@@ -7,10 +7,10 @@ import {
   DrawerTitle, DrawerTitleGroup,
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
   EmptyState, Field, FieldControl, FieldError, FieldLabel, Input, InputGroup, InputGroupAddon, InputGroupInput,
-  SegmentedControl, SegmentedControlItem, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea,
+  SegmentedControl, SegmentedControlItem, Tabs, TabsList, TabsTrigger, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea,
 } from "@ir/ui"
 import { toast } from "@/components/ui/toast"
-import { ME, access, assignmentLabel, createSuggested, describeRole, locationName, updateGroupRole, initials, suggestedGroups, wouldOrphanTenant, type Group, type Suggestion } from "@/data/access"
+import { ME, access, assignmentLabel, groupScopes, scopes, type Scope, createSuggested, describeRole, locationName, updateGroupRole, initials, suggestedGroups, wouldOrphanTenant, type Group, type Suggestion } from "@/data/access"
 import { AddRoleDialog, LocationChecklist, PeoplePicker, PersonCell, RoleBadge, fmt, plural, useAccess } from "@/components/admin/access/AccessBits"
 
 /**
@@ -19,6 +19,7 @@ import { AddRoleDialog, LocationChecklist, PeoplePicker, PersonCell, RoleBadge, 
  */
 // Remembered while moving between pages in the prototype.
 let suggestionsDismissed = false
+let rememberedGroupTab: Scope = "tenant"
 
 export function GroupsPage() {
   useAccess()
@@ -30,13 +31,28 @@ export function GroupsPage() {
   const [editing, setEditing] = useState<Group | "new" | null>(null)
   const [deleting, setDeleting] = useState<Group | null>(null)
 
-  const all = access.groups()
+  const [tab, setTabState] = useState<Scope>(rememberedGroupTab)
+  const setTab = (t: Scope) => { rememberedGroupTab = t; setTabState(t) }
+  const tabName = scopes.find((x) => x.id === tab)!.name
+  const all = access.groups().filter((g) => groupScopes(g).includes(tab))
   const q = search.trim().toLowerCase()
   const groups = all.filter((g) => !q || g.name.toLowerCase().includes(q) || g.description.toLowerCase().includes(q))
 
   return (
     <div className="flex flex-col gap-4">
-      {suggestions.length > 0 && !dismissed && (
+      <Tabs value={tab} onValueChange={(v) => setTab(v as Scope)}>
+        <TabsList>
+          {scopes.map((x) => (
+            <TabsTrigger key={x.id} value={x.id}>
+              {x.name} <span className="ms-1.5 text-content-neutral-muted">{fmt(access.groups().filter((g) => groupScopes(g).includes(x.id)).length)}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+      <p className="-mt-1 text-body-sm text-content-neutral-muted">
+        {tab === "tenant" ? "Groups that give tenant roles: who runs Iris. Only Tenant Admins can change these." : `Groups that give ${tabName} roles. A group can also give roles in another product; it shows in both tabs.`}
+      </p>
+      {tab === "clarion" && suggestions.length > 0 && !dismissed && (
         <Alert variant="info" onDismiss={() => { suggestionsDismissed = true; setDismissed(true) }} dismissLabel="Not now"
           action={<Button variant="outline" size="xs" onClick={() => setSuggestOpen(true)}><Sparkles aria-hidden /> Review {suggestions.length} suggestions</Button>}>
           <AlertTitle>Set up groups from your locations</AlertTitle>
@@ -50,7 +66,7 @@ export function GroupsPage() {
       <Card className="w-full overflow-hidden">
         <CardHeader className="pb-4">
           <CardHeaderText>
-            <div className="flex items-center gap-2"><CardTitle>Groups</CardTitle><Badge>{fmt(all.length)}</Badge></div>
+            <div className="flex items-center gap-2"><CardTitle>{tab === "tenant" ? "Tenant groups" : `${tabName} groups`}</CardTitle><Badge>{fmt(all.length)}</Badge></div>
           </CardHeaderText>
           <CardAction><Button size="sm" onClick={() => setEditing("new")}><Plus aria-hidden /> Create group</Button></CardAction>
         </CardHeader>
@@ -82,8 +98,11 @@ export function GroupsPage() {
                 </TableCell>
                 <TableCell className="max-w-80">
                   {g.assignments.length
-                    ? <div className="flex flex-wrap gap-1">{g.assignments.map((x) => <RoleBadge key={x.id} x={x} />)}</div>
-                    : <Badge color="warning">No roles</Badge>}
+                    ? <div className="flex flex-col gap-1">
+                        <div className="flex flex-wrap gap-1">{g.assignments.filter((x) => (tab === "tenant" ? !x.product : x.product === tab)).map((x) => <RoleBadge key={x.id} x={x} />)}</div>
+                        {groupScopes(g).length > 1 && <span className="text-body-xs text-content-warning-emphasis">Also gives {groupScopes(g).filter((sc) => sc !== tab).map((sc) => scopes.find((x) => x.id === sc)!.name).join(" and ")} access</span>}
+                      </div>
+                    : <Badge color="warning">No roles yet</Badge>}
                 </TableCell>
                 <TableCell><Members ids={g.members} /></TableCell>
                 <TableCell className="text-content-neutral-muted">{g.source === "local" ? "Managed in Iris" : <span className="inline-flex items-center gap-1"><Link2 className="size-3.5" aria-hidden /> {g.idpGroup}</span>}</TableCell>

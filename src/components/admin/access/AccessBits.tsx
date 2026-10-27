@@ -7,8 +7,8 @@ import {
   SegmentedControl, SegmentedControlItem,
 } from "@ir/ui"
 import {
-  access, assignmentLabel, describeRole, initials, locationName, roleDef, roles, widgetUsersIn,
-  type Assignment, type Person, type RoleId,
+  access, assignmentLabel, describeRole, initials, locationName, productName, products, roleDef, roles, widgetUsersIn,
+  type Assignment, type Person, type ProductId, type RoleId, type Scope,
 } from "@/data/access"
 import { store as widgetStore } from "@/data/widgetUsers"
 
@@ -55,8 +55,10 @@ export function RoleBadge({ x, exception }: { x: Assignment; exception?: boolean
  * limited to some locations.
  */
 export function AddRoleDialog({
-  open, onOpenChange, title, direct, onAdd, existing = [],
+  open, onOpenChange, title, direct, onAdd, existing = [], scope,
 }: {
+  /** Limit the choices to one tab's roles. Omitted = every product and the tenant. */
+  scope?: Scope
   open: boolean
   onOpenChange: (o: boolean) => void
   title: string
@@ -65,16 +67,19 @@ export function AddRoleDialog({
   onAdd: (x: Omit<Assignment, "id">) => void
 }) {
   useAccess()
-  const [role, setRole] = useState<RoleId>("viewer")
+  const first = !scope || scope === "tenant" ? (scope === "tenant" ? "tenant:auditor" : "clarion:viewer") : `${scope}:viewer`
+  const [pick, setPick] = useState(first)
+  const [sc, role] = pick.split(":") as [Scope, RoleId]
+  const prodId = sc === "tenant" ? undefined : (sc as ProductId)
   const [where, setWhere] = useState<"all" | "some">("some")
   const [locs, setLocs] = useState<string[]>([])
   const [tried, setTried] = useState(false)
-  useEffect(() => { if (open) { setRole("viewer"); setWhere("some"); setLocs([]); setTried(false) } }, [open])
+  useEffect(() => { if (open) { setPick(first); setWhere("some"); setLocs([]); setTried(false) } }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const def = roleDef(role)
   const product = def.level === "product"
   const needLocs = product && where === "some" && locs.length === 0
-  const draft: Omit<Assignment, "id"> = { role, product: product ? "clarion" : undefined, locations: product && where === "some" ? locs : [] }
+  const draft: Omit<Assignment, "id"> = { role, product: product ? prodId : undefined, locations: product && where === "some" ? locs : [] }
   const dupe = existing.some((x) => x.role === draft.role && x.product === draft.product && [...x.locations].sort().join() === [...draft.locations].sort().join())
 
   const submit = () => {
@@ -96,15 +101,15 @@ export function AddRoleDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogBody className="max-h-[64vh] gap-5 overflow-y-auto">
-          <RadioGroup value={role} onValueChange={(v) => setRole(v as RoleId)} className="gap-4">
-            <RoleGroup label="Clarion" ids={["viewer", "editor", "product_admin"]} />
-            <RoleGroup label="Whole tenant" ids={["auditor", "user_admin", "tenant_admin"]} />
+          <RadioGroup value={pick} onValueChange={setPick} className="gap-4">
+            {products.filter((p) => !scope || scope === p.id).map((p) => <RoleGroup key={p.id} scope={p.id} label={p.name} ids={["viewer", "editor", "product_admin"]} />)}
+            {(!scope || scope === "tenant") && <RoleGroup scope="tenant" label="Whole tenant" ids={["auditor", "user_admin", "tenant_admin"]} />}
           </RadioGroup>
 
           {product && (
             <div className="flex flex-col gap-3 rounded-lg border border-line-neutral-muted p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-label-md text-content-neutral-emphasis">Which Clarion data?</span>
+                <span className="text-label-md text-content-neutral-emphasis">Which {productName(prodId)} data?</span>
                 <SegmentedControl size="sm" value={where} onValueChange={(v: string) => setWhere(v as "all" | "some")} aria-label="Which locations">
                   <SegmentedControlItem value="some">Some locations</SegmentedControlItem>
                   <SegmentedControlItem value="all">All locations</SegmentedControlItem>
@@ -116,11 +121,11 @@ export function AddRoleDialog({
                   {tried && needLocs && <p className="text-body-sm text-content-danger-emphasis">Pick at least one location, or choose All locations.</p>}
                 </>
               ) : (
-                <p className="text-body-sm text-content-neutral-muted">Every location, plus widget users with no location.</p>
+                <p className="text-body-sm text-content-neutral-muted">Every location, plus anything with no location.</p>
               )}
             </div>
           )}
-          {!needLocs && (() => { const d = describeRole(role, draft.locations); return (
+          {!needLocs && (() => { const d = describeRole(role, draft.locations, prodId); return (
             <div className="flex items-start gap-3 rounded-lg bg-surface-neutral-subtle p-4" aria-live="polite">
               <Eye className="mt-0.5 size-4 shrink-0 text-content-neutral-muted" aria-hidden />
               <div className="flex flex-col gap-1">
@@ -145,14 +150,14 @@ export function AddRoleDialog({
   )
 }
 
-function RoleGroup({ label, ids }: { label: string; ids: RoleId[] }) {
+function RoleGroup({ label, ids, scope }: { label: string; ids: RoleId[]; scope: Scope }) {
   return (
     <div className="flex flex-col gap-2">
       <span className="text-label-sm text-content-neutral-muted">{label}</span>
       {ids.map((id) => {
         const r = roles.find((x) => x.id === id)!
         return (
-          <FieldOption key={id} control={<Radio value={id} />} description={r.level === "product" ? r.clarion : r.summary}>
+          <FieldOption key={id} control={<Radio value={`${scope}:${id}`} />} description={r.level === "product" ? (scope === "clarion" ? r.clarion : r.summary) : r.summary}>
             {r.name}
           </FieldOption>
         )
