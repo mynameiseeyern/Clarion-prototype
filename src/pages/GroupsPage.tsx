@@ -1,8 +1,8 @@
 import { useState } from "react"
-import { FolderTree, Link2, Lock, MoreHorizontal, Pencil, Plus, Search, Trash2, X } from "lucide-react"
+import { FolderTree, Link2, Lock, MoreHorizontal, Pencil, Plus, Search, Sparkles, Trash2, X } from "lucide-react"
 import {
-  Alert, AlertDescription, Avatar, AvatarFallback, Badge, Button, Card, CardAction, CardHeader, CardHeaderText, CardTitle,
-  Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Alert, AlertDescription, AlertTitle, Avatar, AvatarFallback, Badge, Button, Card, CardAction, CardHeader, CardHeaderText, CardTitle,
+  Checkbox, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
   Drawer, DrawerBody, DrawerCloseButton, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerHeading,
   DrawerTitle, DrawerTitleGroup,
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -10,15 +10,21 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea,
 } from "@ir/ui"
 import { toast } from "@/components/ui/toast"
-import { ME, access, assignmentLabel, initials, wouldOrphanTenant, type Group } from "@/data/access"
+import { ME, access, assignmentLabel, createSuggested, initials, suggestedGroups, wouldOrphanTenant, type Group, type Suggestion } from "@/data/access"
 import { AddRoleDialog, PeoplePicker, PersonCell, RoleBadge, fmt, plural, useAccess } from "@/components/admin/access/AccessBits"
 
 /**
  * Groups (Iris platform, Client Admin). Flat — groups can't contain groups — so they
  * map one-to-one onto IdP groups later. Roles are given to groups; members inherit them.
  */
+// Remembered while moving between pages in the prototype.
+let suggestionsDismissed = false
+
 export function GroupsPage() {
   useAccess()
+  const [dismissed, setDismissed] = useState(suggestionsDismissed)
+  const [suggestOpen, setSuggestOpen] = useState(false)
+  const suggestions = suggestedGroups()
   const [search, setSearch] = useState("")
   const [open, setOpen] = useState<string | null>(null)
   const [editing, setEditing] = useState<Group | "new" | null>(null)
@@ -30,6 +36,17 @@ export function GroupsPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      {suggestions.length > 0 && !dismissed && (
+        <Alert variant="info" onDismiss={() => { suggestionsDismissed = true; setDismissed(true) }} dismissLabel="Not now"
+          action={<Button variant="outline" size="xs" onClick={() => setSuggestOpen(true)}><Sparkles aria-hidden /> Review {suggestions.length} suggestions</Button>}>
+          <AlertTitle>Set up groups from your locations</AlertTitle>
+          <AlertDescription>
+            {(() => { const sites = suggestions.filter((x) => x.key.startsWith("site-")).length; return sites
+              ? `${plural(sites, "location has", "locations have")} no CC managers group yet. We can create them for you, ready to add people to.`
+              : "A few common groups are missing. We can create them for you, ready to add people to." })()}
+          </AlertDescription>
+        </Alert>
+      )}
       <Card className="w-full overflow-hidden">
         <CardHeader className="pb-4">
           <CardHeaderText>
@@ -92,6 +109,7 @@ export function GroupsPage() {
         </Table>
       </Card>
 
+      <SuggestGroupsDialog open={suggestOpen} onOpenChange={setSuggestOpen} suggestions={suggestions} />
       <GroupDrawer id={open} onClose={() => setOpen(null)} onRename={(g) => setEditing(g)} onDelete={(g) => setDeleting(g)} />
       <GroupDialog value={editing} onClose={(id) => { setEditing(null); if (id) setOpen(id) }} />
       <DeleteGroupDialog group={deleting} onClose={() => setDeleting(null)} onDeleted={() => { setDeleting(null); setOpen(null) }} />
@@ -284,6 +302,65 @@ function DeleteGroupDialog({ group, onClose, onDeleted }: { group: Group | null;
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button variant="destructive" disabled={blocked} onClick={() => { access.deleteGroup(g!.id); toast({ title: `${g!.name} was deleted.`, description: "Recorded in the audit log." }); onDeleted() }}>Delete group</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ------------------------------------------------------- suggested groups ---
+
+function SuggestGroupsDialog({ open, onOpenChange, suggestions }: { open: boolean; onOpenChange: (o: boolean) => void; suggestions: Suggestion[] }) {
+  const [picked, setPicked] = useState<Record<string, boolean>>({})
+  const [names, setNames] = useState<Record<string, string>>({})
+  const [wasOpen, setWasOpen] = useState(false)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) { setPicked(Object.fromEntries(suggestions.map((x) => [x.key, true]))); setNames(Object.fromEntries(suggestions.map((x) => [x.key, x.name]))) }
+  }
+  const chosen = suggestions.filter((x) => picked[x.key])
+  const taken = (k: string) => { const n = (names[k] ?? "").trim().toLowerCase(); return !n || access.groups().some((g) => g.name.toLowerCase() === n) || chosen.some((x) => x.key !== k && (names[x.key] ?? "").trim().toLowerCase() === n) }
+  const bad = chosen.some((x) => taken(x.key))
+  const sites = suggestions.filter((x) => x.key.startsWith("site-"))
+  const others = suggestions.filter((x) => !x.key.startsWith("site-"))
+
+  const row = (x: Suggestion) => (
+    <li key={x.key} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2">
+      <Checkbox aria-label={`Create ${names[x.key]}`} checked={!!picked[x.key]} onCheckedChange={() => setPicked((p) => ({ ...p, [x.key]: !p[x.key] }))} />
+      <Input size="sm" aria-label="Group name" value={names[x.key] ?? ""} disabled={!picked[x.key]} aria-invalid={!!picked[x.key] && taken(x.key)} onChange={(e) => setNames((n) => ({ ...n, [x.key]: e.target.value }))} />
+      <RoleBadge x={{ ...x.assignment, id: x.key }} />
+    </li>
+  )
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent size="lg">
+        <DialogHeader>
+          <DialogTitle>Suggested groups</DialogTitle>
+          <DialogDescription>Built from your locations. Rename or untick any you don&apos;t need. They&apos;re created empty; add people with Give access.</DialogDescription>
+        </DialogHeader>
+        <DialogBody className="max-h-[64vh] gap-5 overflow-y-auto">
+          {sites.length > 0 && (
+            <section className="flex flex-col gap-2">
+              <span className="text-label-md text-content-neutral-emphasis">One per location <span className="text-content-neutral-muted">· see the dashboard for that site</span></span>
+              <ul className="flex flex-col divide-y divide-line-neutral-muted rounded-lg border border-line-neutral-muted">{sites.map(row)}</ul>
+            </section>
+          )}
+          {others.length > 0 && (
+            <section className="flex flex-col gap-2">
+              <span className="text-label-md text-content-neutral-emphasis">Across every location</span>
+              <ul className="flex flex-col divide-y divide-line-neutral-muted rounded-lg border border-line-neutral-muted">{others.map(row)}</ul>
+            </section>
+          )}
+          <p className="text-body-sm text-content-neutral-muted">Organise by team or line of business instead? Skip this and use Create group.</p>
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button disabled={!chosen.length || bad} onClick={() => {
+            createSuggested(chosen.map((x) => ({ name: names[x.key].trim(), description: x.description, assignment: x.assignment })))
+            toast({ title: `${plural(chosen.length, "group")} created.`, description: "They're empty. Add people with Give access on Users." })
+            onOpenChange(false)
+          }}>{chosen.length ? `Create ${plural(chosen.length, "group")}` : "Create groups"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -366,3 +366,29 @@ export function describeRole(role: RoleId, locations: string[]) {
       return { sees: "everything, including sign-in settings", not: "" }
   }
 }
+
+// ------------------------------------------------------- suggested groups --
+// Most contact centres want the same few groups. Suggest them from the tenant's own
+// locations; nothing is created until the admin confirms.
+
+export interface Suggestion { key: string; name: string; description: string; assignment: Omit<Assignment, "id"> }
+
+export function suggestedGroups(): Suggestion[] {
+  const out: Suggestion[] = [
+    ...state.locations.map((l) => ({
+      key: `site-${l.id}`, name: `${l.name} CC managers`, description: `Contact centre managers at ${l.name}`,
+      assignment: { role: "viewer" as RoleId, product: "clarion" as ProductId, locations: [l.id] },
+    })),
+    { key: "leadership", name: "Contact centre leadership", description: "Sees every site", assignment: { role: "viewer", product: "clarion", locations: [] } },
+    { key: "clarion-admins", name: "Clarion administrators", description: "Sets thresholds and manages widget users", assignment: { role: "product_admin", product: "clarion", locations: [] } },
+  ]
+  const names = new Set(state.groups.map((g) => g.name.trim().toLowerCase()))
+  return out.filter((s) => !matchingGroup(s.assignment) && !names.has(s.name.toLowerCase()))
+}
+
+export function createSuggested(list: { name: string; description: string; assignment: Omit<Assignment, "id"> }[]) {
+  for (const s of list) {
+    const id = access.createGroup({ name: s.name, description: s.description })
+    access.addGroupRole(id, s.assignment)
+  }
+}

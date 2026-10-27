@@ -4,11 +4,11 @@ import {
   Alert, AlertDescription, AlertTitle, Badge, Button, Card, CardAction, CardHeader, CardHeaderText, CardTitle,
   Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
-  EmptyState, Field, FieldControl, FieldDescription, FieldError, FieldLabel, Input,
+  Checkbox, EmptyState, Field, FieldControl, FieldDescription, FieldError, FieldLabel, FieldOption, Input,
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea,
 } from "@ir/ui"
 import { toast } from "@/components/ui/toast"
-import { access, unassignedWidgetUsers, whoSees, widgetUsersIn, type Location } from "@/data/access"
+import { access, createSuggested, unassignedWidgetUsers, whoSees, widgetUsersIn, type Location } from "@/data/access"
 import { RoleBadge, fmt, plural, useAccess } from "@/components/admin/access/AccessBits"
 import { GiveAccessDialog } from "@/components/admin/access/GiveAccessDialog"
 
@@ -110,15 +110,23 @@ function LocationDialog({ value, onClose }: { value: Location | "new" | null; on
   const [name, setName] = useState("")
   const [desc, setDesc] = useState("")
   const [tried, setTried] = useState(false)
+  const [withGroup, setWithGroup] = useState(true)
   const [lastKey, setLastKey] = useState<string | null>(null)
   const key = value === null ? null : isNew ? "new" : l!.id
-  if (key !== lastKey) { setLastKey(key); setName(l?.name ?? ""); setDesc(l?.description ?? ""); setTried(false) }
+  if (key !== lastKey) { setLastKey(key); setName(l?.name ?? ""); setDesc(l?.description ?? ""); setTried(false); setWithGroup(true) }
+  const groupName = `${name.trim() || "[Location]"} CC managers`
+  const groupClash = access.groups().some((g) => g.name.toLowerCase() === groupName.toLowerCase())
   const clash = access.locations().some((x) => x.id !== l?.id && x.name.trim().toLowerCase() === name.trim().toLowerCase())
   const err = tried && !name.trim() ? "Give the location a name." : clash ? "Another location already has this name." : null
   const save = () => {
     setTried(true)
     if (!name.trim() || clash) return
-    if (isNew) { access.createLocation({ name, description: desc }); toast({ title: `${name.trim()} was added.`, description: "Put widget users in it from Widget users." }) }
+    if (isNew) {
+      const id = access.createLocation({ name, description: desc })
+      const makeGroup = withGroup && !groupClash
+      if (makeGroup) createSuggested([{ name: groupName, description: `Contact centre managers at ${name.trim()}`, assignment: { role: "viewer", product: "clarion", locations: [id] } }])
+      toast({ title: makeGroup ? `${name.trim()} and ${groupName} were created.` : `${name.trim()} was added.`, description: "Next: put widget users in it from Widget users." })
+    }
     else { access.updateLocation(l!.id, { name: name.trim(), description: desc.trim() }); toast({ title: "Location updated." }) }
     onClose()
   }
@@ -140,6 +148,14 @@ function LocationDialog({ value, onClose }: { value: Location | "new" | null; on
             <FieldLabel>Description</FieldLabel>
             <FieldControl><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={2} /></FieldControl>
           </Field>
+          {isNew && (
+            <div className="rounded-lg border border-line-neutral-muted p-3">
+              <FieldOption control={<Checkbox checked={withGroup && !groupClash} disabled={groupClash} onCheckedChange={() => setWithGroup((v) => !v)} />}
+                description={groupClash ? "A group with this name already exists." : "Clarion dashboard, read-only, for this location. Created empty; add people with Give access."}>
+                Also create a {groupName} group
+              </FieldOption>
+            </div>
+          )}
         </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
