@@ -1,7 +1,7 @@
-import { Check, X } from "lucide-react"
+import { Check, Eye, MapPin, X } from "lucide-react"
 import {
   Alert, AlertDescription, AlertTitle, Badge, Card, CardHeader, CardHeaderText, CardTitle, CardDescription,
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger,
 } from "@ir/ui"
 import { access, roles, type RoleDef } from "@/data/access"
 import { useAccess } from "@/components/admin/access/AccessBits"
@@ -19,7 +19,12 @@ export function RolesPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <Tabs defaultValue="overview" className="flex flex-col gap-4">
+      <TabsList>
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="details">Permission details</TabsTrigger>
+      </TabsList>
+      <TabsContent value="overview" className="flex flex-col gap-4">
       <Alert variant="info">
         <AlertTitle>IR maintains these roles</AlertTitle>
         <AlertDescription>You can&apos;t create or edit roles. Give them to groups, and limit Clarion roles to locations where you need to.</AlertDescription>
@@ -66,7 +71,88 @@ export function RolesPage() {
           Limited to locations, a role only covers widget users and endpoints in those locations — in lists, search, the map, drill-downs and exports.
         </p>
       </Card>
-    </div>
+      </TabsContent>
+      <TabsContent value="details"><PermissionDetails /></TabsContent>
+    </Tabs>
+  )
+}
+
+// ------------------------------------------------------- permission details --
+// Vanta-style: every permission against every role, in words rather than ticks.
+
+type P = "full" | "loc" | "view" | "none"
+const roleCols = ["Tenant Admin", "User Admin", "Auditor", "Product Admin", "Editor", "Viewer"]
+const details: { area: string; rows: [string, P, P, P, P, P, P][] }[] = [
+  { area: "Clarion", rows: [
+    ["Overview and Endpoints", "full", "none", "none", "loc", "loc", "loc"],
+    ["Search and export endpoints", "full", "none", "none", "loc", "loc", "loc"],
+    ["Thresholds", "full", "none", "none", "full", "none", "none"],
+    ["Add, edit and remove widget users", "full", "none", "none", "loc", "none", "none"],
+    ["Set a widget user's location", "full", "none", "none", "loc", "none", "none"],
+  ] },
+  { area: "Users and groups", rows: [
+    ["See users, groups and roles", "full", "full", "view", "none", "none", "none"],
+    ["Invite and deactivate users", "full", "full", "none", "none", "none", "none"],
+    ["Create groups and change members", "full", "full", "none", "none", "none", "none"],
+    ["Give roles (up to their own)", "full", "full", "none", "none", "none", "none"],
+  ] },
+  { area: "Locations", rows: [
+    ["See locations", "full", "view", "view", "none", "none", "none"],
+    ["Create, rename and delete locations", "full", "none", "none", "none", "none", "none"],
+  ] },
+  { area: "Sign-in", rows: [
+    ["SSO, SCIM and break-glass settings", "full", "none", "view", "none", "none", "none"],
+  ] },
+  { area: "Audit", rows: [
+    ["Audit log", "full", "none", "view", "none", "none", "none"],
+    ["Export who has access", "full", "none", "full", "none", "none", "none"],
+  ] },
+]
+
+function Perm({ v }: { v: P }) {
+  if (v === "full") return <span className="inline-flex items-center gap-1 text-body-sm text-content-success-emphasis"><Check className="size-4" aria-hidden /> Full</span>
+  if (v === "loc") return <span className="inline-flex items-center gap-1 text-body-sm text-content-neutral-emphasis"><MapPin className="size-4" aria-hidden /> Their locations</span>
+  if (v === "view") return <span className="inline-flex items-center gap-1 text-body-sm text-content-neutral-muted"><Eye className="size-4" aria-hidden /> View only</span>
+  return <span className="inline-flex items-center gap-1 text-body-sm text-content-neutral-subtle"><X className="size-4" aria-hidden /> No access</span>
+}
+
+function PermissionDetails() {
+  return (
+    <Card className="w-full overflow-hidden">
+      <CardHeader className="pb-4">
+        <CardHeaderText>
+          <CardTitle>Permission details</CardTitle>
+          <CardDescription>What each role can do. &ldquo;Their locations&rdquo; means everywhere, unless the role is limited to some locations.</CardDescription>
+        </CardHeaderText>
+      </CardHeader>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead align="start" className="min-w-56">Permission</TableHead>
+              {roleCols.map((r, i) => (
+                <TableHead key={r} align="start" className={i === 3 ? "border-s border-line-neutral-muted" : undefined}>
+                  <div className="flex flex-col"><span>{r}</span><span className="text-body-xs font-normal text-content-neutral-muted">{i < 3 ? "Whole tenant" : "Clarion"}</span></div>
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {details.map((d) => [
+              <TableRow key={d.area} className="bg-surface-neutral-subtle hover:bg-surface-neutral-subtle">
+                <TableCell colSpan={7} className="text-label-sm text-content-neutral-muted">{d.area}</TableCell>
+              </TableRow>,
+              ...d.rows.map(([cap, ...cells]) => (
+                <TableRow key={d.area + cap}>
+                  <TableCell className="text-content-neutral-emphasis">{cap}</TableCell>
+                  {cells.map((c, i) => <TableCell key={i} className={i === 3 ? "border-s border-line-neutral-muted" : undefined}><Perm v={c as P} /></TableCell>)}
+                </TableRow>
+              )),
+            ])}
+          </TableBody>
+        </Table>
+      </div>
+    </Card>
   )
 }
 

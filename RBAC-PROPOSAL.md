@@ -27,6 +27,14 @@ IR owns a fixed set of roles. **Tenant roles** (Tenant Admin, User Admin, Audito
 - **Roles** — read-only catalogue, what each role means in Clarion, who holds it, and a Clarion capability matrix.
 - **Widget users** — Site column becomes **Location**; Location filter; bulk and per-row **Set location**.
 
+### Making assignment easier (added 27 Oct)
+- **Give access** — from Users (header, bulk strip, user drawer) and from Locations ("Give access to Sydney"). Two questions — *What should they do?* (See the Clarion dashboard / Manage Clarion / Manage users and groups / Review access) and *Where?* (locations). It finds the group that already gives exactly that, or creates one with a suggested name ("Melbourne CC managers"). People always land in a group, never a direct role.
+- **Preview before saving** — every assign dialog says what they'll see and what they won't ("Overview and Endpoints for Sydney (16 widget users). Not Thresholds or Administration.").
+- **Bulk on Users** — tick people, then Give access, Add to group or Remove from group (with last-admin safeguards).
+- **Roles → Permission details** — Vanta-style full matrix in words (Full / Their locations / View only / No access).
+- **Built-in IT administrators group** — locked like Retool's Admin group: always Tenant Admin, can't be renamed or deleted; membership can still change.
+- Later: group templates, "Same access as…", a needs-attention strip.
+
 Safeguards built in: last Tenant Admin can't be removed, demoted or deactivated; you can't remove your own admin access; break-glass accounts are always Tenant Admin and can't be deactivated here.
 
 ## To discuss with Swathi

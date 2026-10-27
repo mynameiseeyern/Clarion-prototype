@@ -78,6 +78,8 @@ export interface Group {
   /** Local = managed in Iris. Linked = managed by the IdP (arrives with SSO / SCIM), read-only here. */
   source: "local" | "linked"
   idpGroup?: string
+  /** Built-in (like Retool's Admin group): can't be deleted, renamed or lose Tenant Admin. */
+  locked?: boolean
   members: string[]
   assignments: Assignment[]
 }
@@ -135,7 +137,7 @@ const seedPeople: Person[] = [
 ]
 
 const seedGroups: Group[] = [
-  { id: "g-it", name: "IT administrators", description: "Runs the Iris tenant", source: "local", members: ["p2"], assignments: [a("tenant_admin")] },
+  { id: "g-it", name: "IT administrators", description: "Runs the Iris tenant", source: "local", locked: true, members: ["p2"], assignments: [a("tenant_admin")] },
   { id: "g-desk", name: "Service desk", description: "Onboards and offboards people", source: "local", members: ["p12"], assignments: [a("user_admin")] },
   { id: "g-sec", name: "Security and compliance", description: "Quarterly access reviews", source: "local", members: ["p9"], assignments: [a("auditor")] },
   { id: "g-clarion-admin", name: "Clarion administrators", description: "Sets thresholds and manages widget users", source: "local", members: ["p2", "p12"], assignments: [a("product_admin")] },
@@ -192,7 +194,7 @@ export const access = {
     return id
   },
   updateGroup(id: string, patch: Partial<Pick<Group, "name" | "description">>) { state.groups = state.groups.map((g) => (g.id === id ? { ...g, ...patch } : g)); bump() },
-  deleteGroup(id: string) { state.groups = state.groups.filter((g) => g.id !== id); bump() },
+  deleteGroup(id: string) { state.groups = state.groups.filter((g) => g.id !== id || g.locked); bump() },
   addMembers(groupId: string, ids: string[]) {
     state.groups = state.groups.map((g) => (g.id === groupId ? { ...g, members: [...new Set([...g.members, ...ids])] } : g)); bump()
   },
@@ -313,3 +315,54 @@ export function wouldOrphanTenant(change: { groupId?: string; assignmentId?: str
 }
 
 export const initials = (name: string) => name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
+
+// ------------------------------------------------------------- give access --
+// "What should they do?" + "Where?" → a role, then the group that already holds
+// exactly that role (or a new one). People always land in a group, never a direct role.
+
+export type Job = "view" | "manage" | "users" | "review"
+
+export const jobs: { id: Job; label: string; hint: string; role: RoleId; scoped: boolean }[] = [
+  { id: "view", label: "See the Clarion dashboard", hint: "Overview and Endpoints, read-only", role: "viewer", scoped: true },
+  { id: "manage", label: "Manage Clarion", hint: "Also Thresholds and widget users", role: "product_admin", scoped: true },
+  { id: "users", label: "Manage users and groups", hint: "No Clarion data", role: "user_admin", scoped: false },
+  { id: "review", label: "Review access", hint: "Read-only settings and audit log", role: "auditor", scoped: false },
+]
+export const jobDef = (j: Job) => jobs.find((x) => x.id === j)!
+
+const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x))
+
+/** A local group whose only role is exactly this one. */
+export function matchingGroup(x: Omit<Assignment, "id">) {
+  return state.groups.find((g) => g.source === "local" && g.assignments.length === 1 &&
+    g.assignments[0].role === x.role && g.assignments[0].product === x.product && sameSet(g.assignments[0].locations, x.locations))
+}
+
+export function suggestGroupName(job: Job, locations: string[]) {
+  const where = locations.map(locationName).join(", ")
+  switch (job) {
+    case "view": return locations.length ? `${where} CC managers` : "Clarion viewers (all locations)"
+    case "manage": return locations.length ? `Clarion administrators – ${where}` : "Clarion administrators"
+    case "users": return "User administrators"
+    case "review": return "Auditors"
+  }
+}
+
+/** Plain-language result of holding one role. */
+export function describeRole(role: RoleId, locations: string[]) {
+  const reach = role === "user_admin" || role === "auditor" ? 0
+    : locations.length ? widgetStore.all().filter((u) => u.locationId && locations.includes(u.locationId)).length : widgetStore.all().length
+  const where = locations.length ? locations.map(locationName).join(", ") : "all locations"
+  switch (role) {
+    case "viewer": case "editor":
+      return { sees: `Overview and Endpoints for ${where} (${reach.toLocaleString()} widget users)`, not: "Thresholds or Administration" }
+    case "product_admin":
+      return { sees: `Overview, Endpoints, Thresholds and widget users for ${where} (${reach.toLocaleString()} widget users)`, not: "users, groups or sign-in settings" }
+    case "user_admin":
+      return { sees: "users and groups, and can give roles up to their own", not: "Clarion data, locations or sign-in settings" }
+    case "auditor":
+      return { sees: "settings, users, groups, roles and the audit log, read-only", not: "Clarion data" }
+    case "tenant_admin":
+      return { sees: "everything, including sign-in settings", not: "" }
+  }
+}

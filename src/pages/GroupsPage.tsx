@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { FolderTree, Link2, MoreHorizontal, Pencil, Plus, Search, Trash2, X } from "lucide-react"
+import { FolderTree, Link2, Lock, MoreHorizontal, Pencil, Plus, Search, Trash2, X } from "lucide-react"
 import {
   Alert, AlertDescription, Avatar, AvatarFallback, Badge, Button, Card, CardAction, CardHeader, CardHeaderText, CardTitle,
   Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -59,7 +59,7 @@ export function GroupsPage() {
               <TableRow key={g.id} className="cursor-pointer" onClick={() => setOpen(g.id)}>
                 <TableCell className="max-w-64">
                   <div className="flex min-w-0 flex-col">
-                    <span className="truncate text-label-md text-content-neutral-emphasis">{g.name}</span>
+                    <span className="flex items-center gap-2 truncate text-label-md text-content-neutral-emphasis">{g.name}{g.locked && <Badge><Lock className="size-3" aria-hidden /> Built-in</Badge>}</span>
                     {g.description && <span className="truncate text-body-xs text-content-neutral-muted">{g.description}</span>}
                   </div>
                 </TableCell>
@@ -75,9 +75,9 @@ export function GroupsPage() {
                     <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm" aria-label={`Actions for ${g.name}`}><MoreHorizontal aria-hidden /></Button></DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onSelect={() => setOpen(g.id)}>Open</DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => setEditing(g)}><Pencil aria-hidden /> Rename</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem variant="destructive" onSelect={() => setDeleting(g)}><Trash2 aria-hidden /> Delete…</DropdownMenuItem>
+                      {!g.locked && <DropdownMenuItem onSelect={() => setEditing(g)}><Pencil aria-hidden /> Rename</DropdownMenuItem>}
+                      {!g.locked && <DropdownMenuSeparator />}
+                      {!g.locked && <DropdownMenuItem variant="destructive" onSelect={() => setDeleting(g)}><Trash2 aria-hidden /> Delete…</DropdownMenuItem>}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -144,11 +144,19 @@ function GroupDrawer({ id, onClose, onRename, onDelete }: { id: string | null; o
               <DrawerTitle>{g.name}</DrawerTitle>
               <DrawerDescription>{g.description || "No description"}</DrawerDescription>
             </DrawerTitleGroup>
-            <Button variant="ghost" size="icon-sm" aria-label="Rename group" onClick={() => onRename(g)}><Pencil aria-hidden /></Button>
+            {!g.locked && <Button variant="ghost" size="icon-sm" aria-label="Rename group" onClick={() => onRename(g)}><Pencil aria-hidden /></Button>}
             <DrawerCloseButton />
           </DrawerHeading>
         </DrawerHeader>
         <DrawerBody className="gap-6">
+          {g.locked && (
+            <Alert variant="info">
+              <AlertDescription>
+                <span className="inline-flex items-center gap-1.5 font-medium"><Lock className="size-3.5" aria-hidden /> Built-in group.</span>{" "}
+                It always has Tenant Admin and can&apos;t be renamed or deleted, so your tenant can&apos;t lose its admins by accident. You can still change who&apos;s in it.
+              </AlertDescription>
+            </Alert>
+          )}
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <h3 className="text-label-lg text-content-neutral-emphasis">Roles</h3>
@@ -159,7 +167,9 @@ function GroupDrawer({ id, onClose, onRename, onDelete }: { id: string | null; o
                 {g.assignments.map((x) => (
                   <li key={x.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
                     <RoleBadge x={x} />
-                    <Button variant="ghost" size="icon-xs" aria-label={`Remove ${assignmentLabel(x)}`} onClick={() => removeRole(x.id)}><X aria-hidden /></Button>
+                    {g.locked && x.role === "tenant_admin"
+                      ? <Lock className="size-4 text-content-neutral-subtle" aria-label="Locked" />
+                      : <Button variant="ghost" size="icon-xs" aria-label={`Remove ${assignmentLabel(x)}`} onClick={() => removeRole(x.id)}><X aria-hidden /></Button>}
                   </li>
                 ))}
               </ul>
@@ -189,7 +199,7 @@ function GroupDrawer({ id, onClose, onRename, onDelete }: { id: string | null; o
           </section>
         </DrawerBody>
         <DrawerFooter className="justify-between">
-          <Button variant="ghost" className="text-content-danger-emphasis" onClick={() => onDelete(g)}><Trash2 aria-hidden /> Delete group</Button>
+          {g.locked ? <span /> : <Button variant="ghost" className="text-content-danger-emphasis" onClick={() => onDelete(g)}><Trash2 aria-hidden /> Delete group</Button>}
           <Button variant="outline" onClick={onClose}>Done</Button>
         </DrawerFooter>
       </DrawerContent>

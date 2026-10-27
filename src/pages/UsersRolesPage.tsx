@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import {
-  Check, FolderTree, KeyRound, Lock, Mail, MapPin, MoreHorizontal, Plus, Search, ShieldCheck,
+  Check, FolderTree, KeyRound, Lock, Mail, MapPin, MoreHorizontal, Plus, Search, ShieldCheck, UserPlus,
   UserCheck, UserMinus, Users as UsersIcon, X,
 } from "lucide-react"
 import {
@@ -18,6 +18,7 @@ import {
   statusLabel, tenantAdmins, wouldOrphanTenant, type Person, type PersonStatus,
 } from "@/data/access"
 import { AddRoleDialog, PersonCell, RoleBadge, fmt, locList, plural, useAccess } from "@/components/admin/access/AccessBits"
+import { GiveAccessDialog } from "@/components/admin/access/GiveAccessDialog"
 
 const statusColor: Record<PersonStatus, "success" | "info" | "neutral"> = { active: "success", invited: "info", deactivated: "neutral" }
 
@@ -35,6 +36,9 @@ export function UsersRolesPage() {
   const [statusF, setStatusF] = useState<string[]>([])
   const [open, setOpen] = useState<string | null>(null)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [selected, setSelected] = useState<string[]>([])
+  const [give, setGive] = useState<string[] | null>(null)
+  const [bulkGroup, setBulkGroup] = useState<"add" | "remove" | null>(null)
 
   const people = access.people()
   const filtered = people.filter((p) => {
@@ -72,7 +76,8 @@ export function UsersRolesPage() {
               <Badge>{filteredOn ? `${fmt(filtered.length)} of ${fmt(people.length)}` : fmt(people.length)}</Badge>
             </div>
           </CardHeaderText>
-          <CardAction>
+          <CardAction className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setGive([])}><ShieldCheck aria-hidden /> Give access</Button>
             <Button size="sm" onClick={() => setInviteOpen(true)}><Plus aria-hidden /> Invite user</Button>
           </CardAction>
         </CardHeader>
@@ -89,9 +94,27 @@ export function UsersRolesPage() {
           <div className="w-36"><Select label="Status" options={(Object.keys(statusLabel) as PersonStatus[]).map((s) => ({ value: s, label: statusLabel[s] }))} value={statusF} onValueChange={setStatusF} showDetail={false} /></div>
         </div>
 
+        {selected.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line-neutral-muted bg-surface-neutral-subtle px-6 py-3">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="icon-xs" aria-label="Clear selection" onClick={() => setSelected([])}><X aria-hidden /></Button>
+              <span className="text-label-md text-content-neutral-emphasis">{fmt(selected.length)} selected</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" onClick={() => setGive(selected)}><ShieldCheck aria-hidden /> Give access</Button>
+              <Button size="sm" variant="outline" onClick={() => setBulkGroup("add")}><UserPlus aria-hidden /> Add to group</Button>
+              <Button size="sm" variant="outline" onClick={() => setBulkGroup("remove")}>Remove from group</Button>
+            </div>
+          </div>
+        )}
+
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox aria-label="Select all shown" checked={filtered.length > 0 && filtered.every((p) => selected.includes(p.id)) ? true : filtered.some((p) => selected.includes(p.id)) ? "indeterminate" : false}
+                  onCheckedChange={() => setSelected(filtered.every((p) => selected.includes(p.id)) ? selected.filter((id) => !filtered.some((p) => p.id === id)) : [...new Set([...selected, ...filtered.filter((p) => p.status !== "deactivated").map((p) => p.id)])])} />
+              </TableHead>
               <TableHead align="start">User</TableHead>
               <TableHead align="start">Groups</TableHead>
               <TableHead align="start">Access</TableHead>
@@ -104,7 +127,11 @@ export function UsersRolesPage() {
             {filtered.map((p) => {
               const gs = groupsOf(p.id)
               return (
-                <TableRow key={p.id} className={p.status === "deactivated" ? "cursor-pointer text-content-neutral-muted" : "cursor-pointer"} onClick={() => setOpen(p.id)}>
+                <TableRow key={p.id} selected={selected.includes(p.id)} className={p.status === "deactivated" ? "cursor-pointer text-content-neutral-muted" : "cursor-pointer"} onClick={() => setOpen(p.id)}>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Checkbox aria-label={`Select ${p.name}`} disabled={p.status === "deactivated"} checked={selected.includes(p.id)}
+                      onCheckedChange={() => setSelected((xs) => (xs.includes(p.id) ? xs.filter((x) => x !== p.id) : [...xs, p.id]))} />
+                  </TableCell>
                   <TableCell className="max-w-64"><PersonCell p={p} /></TableCell>
                   <TableCell className="max-w-56">
                     {gs.length ? (
@@ -125,7 +152,7 @@ export function UsersRolesPage() {
             })}
             {filtered.length === 0 && (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={6}>
+                <TableCell colSpan={7}>
                   <EmptyState size="sm" icon={<UsersIcon />} title="No users match" description="Try a different name, or clear the filters."
                     action={<Button variant="outline" size="sm" onClick={() => { setSearch(""); setGroupF([]); setRoleF([]); setLocF([]); setStatusF([]) }}>Clear filters</Button>} />
                 </TableCell>
@@ -135,8 +162,10 @@ export function UsersRolesPage() {
         </Table>
       </Card>
 
-      <UserDrawer id={open} onClose={() => setOpen(null)} />
+      <UserDrawer id={open} onClose={() => setOpen(null)} onGive={(id) => setGive([id])} />
       <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+      <GiveAccessDialog open={give !== null} onOpenChange={(o) => { if (!o) { if (give && give.length > 1) setSelected([]); setGive(null) } }} people={give ?? []} />
+      <BulkGroupDialog mode={bulkGroup} people={selected} onClose={(done) => { setBulkGroup(null); if (done) setSelected([]) }} />
     </div>
   )
 }
@@ -190,7 +219,7 @@ function RowMenu({ p, onOpen }: { p: Person; onOpen: () => void }) {
 
 // ---------------------------------------------------------------- drawer ----
 
-function UserDrawer({ id, onClose }: { id: string | null; onClose: () => void }) {
+function UserDrawer({ id, onClose, onGive }: { id: string | null; onClose: () => void; onGive: (id: string) => void }) {
   useAccess()
   const p = id ? access.person(id) : undefined
   const [roleOpen, setRoleOpen] = useState(false)
@@ -254,7 +283,10 @@ function UserDrawer({ id, onClose }: { id: string | null; onClose: () => void })
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <h3 className="text-label-lg text-content-neutral-emphasis">Groups</h3>
-              <Button variant="outline" size="sm" onClick={() => setGroupOpen(true)}><Plus aria-hidden /> Add to group</Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => onGive(p.id)}><ShieldCheck aria-hidden /> Give access</Button>
+                <Button variant="ghost" size="sm" onClick={() => setGroupOpen(true)}><Plus aria-hidden /> Add to group</Button>
+              </div>
             </div>
             {gs.length ? (
               <ul className="flex flex-col divide-y divide-line-neutral-muted rounded-lg border border-line-neutral-muted">
@@ -409,6 +441,50 @@ function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={send}>Send invite</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ------------------------------------------------------------ bulk groups ---
+
+function BulkGroupDialog({ mode, people, onClose }: { mode: "add" | "remove" | null; people: string[]; onClose: (done?: boolean) => void }) {
+  const [picked, setPicked] = useState<string[]>([])
+  const [lastMode, setLastMode] = useState<typeof mode>(null)
+  if (mode !== lastMode) { setLastMode(mode); setPicked([]) }
+  const local = access.groups().filter((g) => g.source === "local")
+  const groups = mode === "remove" ? local.filter((g) => people.some((id) => g.members.includes(id))) : local
+  const n = people.length
+
+  const apply = () => {
+    if (mode === "add") {
+      picked.forEach((g) => access.addMembers(g, people))
+      toast({ title: `${plural(n, "person", "people")} added to ${plural(picked.length, "group")}.`, description: "Applies from their next request." })
+    } else {
+      let blocked = 0
+      for (const gid of picked) for (const pid of people) {
+        const g = access.group(gid)!
+        if (!g.members.includes(pid)) continue
+        if (wouldOrphanTenant({ groupId: gid, personId: pid }) || (pid === ME && g.assignments.some((x) => x.role === "tenant_admin"))) { blocked++; continue }
+        access.removeMember(gid, pid)
+      }
+      toast({ title: `Removed from ${plural(picked.length, "group")}.`, description: blocked ? `${plural(blocked, "removal was", "removals were")} skipped to keep a Tenant Admin, or your own admin access.` : "Applies from their next request.", variant: blocked ? "danger" : undefined })
+    }
+    onClose(true)
+  }
+
+  return (
+    <Dialog open={mode !== null} onOpenChange={(o) => { if (!o) onClose() }}>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>{mode === "add" ? `Add ${plural(n, "person", "people")} to groups` : `Remove ${plural(n, "person", "people")} from groups`}</DialogTitle>
+          <DialogDescription>{mode === "add" ? "They get every role these groups have." : "They lose the roles these groups give them, unless another group gives the same."}</DialogDescription>
+        </DialogHeader>
+        <DialogBody><GroupChecklist groups={groups} value={picked} onChange={setPicked} /></DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onClose()}>Cancel</Button>
+          <Button variant={mode === "remove" ? "destructive" : undefined} disabled={!picked.length} onClick={apply}>{mode === "add" ? "Add" : "Remove"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

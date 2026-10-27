@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { MapPin, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react"
+import { MapPin, MoreHorizontal, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react"
 import {
   Alert, AlertDescription, AlertTitle, Badge, Button, Card, CardAction, CardHeader, CardHeaderText, CardTitle,
   Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -10,6 +10,7 @@ import {
 import { toast } from "@/components/ui/toast"
 import { access, unassignedWidgetUsers, whoSees, widgetUsersIn, type Location } from "@/data/access"
 import { RoleBadge, fmt, plural, useAccess } from "@/components/admin/access/AccessBits"
+import { GiveAccessDialog } from "@/components/admin/access/GiveAccessDialog"
 
 /**
  * Locations (Iris platform, Client Admin). Flat, named by the customer, shared by every
@@ -20,6 +21,7 @@ export function LocationsPage({ onOpenWidgetUsers }: { onOpenWidgetUsers?: () =>
   useAccess()
   const [editing, setEditing] = useState<Location | "new" | null>(null)
   const [deleting, setDeleting] = useState<Location | null>(null)
+  const [giveFor, setGiveFor] = useState<string | null>(null)
   const locs = access.locations()
   const unassigned = unassignedWidgetUsers()
 
@@ -67,11 +69,13 @@ export function LocationsPage({ onOpenWidgetUsers }: { onOpenWidgetUsers?: () =>
                         {who.people.length > 0 && <Badge color="warning">{plural(who.people.length, "person", "people")} directly</Badge>}
                       </div>
                     ) : <span className="text-content-neutral-subtle">Nobody yet</span>}
+                    <Button variant="link" size="xs" className="mt-1 px-0" onClick={() => setGiveFor(l.id)}>Give someone access</Button>
                   </TableCell>
                   <TableCell className="pe-3">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm" aria-label={`Actions for ${l.name}`}><MoreHorizontal aria-hidden /></Button></DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => setGiveFor(l.id)}><ShieldCheck aria-hidden /> Give access to {l.name}</DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => setEditing(l)}><Pencil aria-hidden /> Rename</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem variant="destructive" onSelect={() => setDeleting(l)}><Trash2 aria-hidden /> Delete…</DropdownMenuItem>
@@ -95,6 +99,7 @@ export function LocationsPage({ onOpenWidgetUsers }: { onOpenWidgetUsers?: () =>
 
       <LocationDialog value={editing} onClose={() => setEditing(null)} />
       <DeleteLocationDialog loc={deleting} onClose={() => setDeleting(null)} />
+      <GiveAccessDialog open={giveFor !== null} onOpenChange={(o) => { if (!o) setGiveFor(null) }} locations={giveFor ? [giveFor] : []} />
     </div>
   )
 }

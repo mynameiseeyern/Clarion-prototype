@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react"
-import { Search, X } from "lucide-react"
+import { Eye, Search, X } from "lucide-react"
 import {
   Alert, AlertDescription, Avatar, AvatarFallback, Badge, Button, Checkbox,
   Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -7,7 +7,7 @@ import {
   SegmentedControl, SegmentedControlItem,
 } from "@ir/ui"
 import {
-  access, assignmentLabel, initials, locationName, roleDef, roles, widgetUsersIn,
+  access, assignmentLabel, describeRole, initials, locationName, roleDef, roles, widgetUsersIn,
   type Assignment, type Person, type RoleId,
 } from "@/data/access"
 import { store as widgetStore } from "@/data/widgetUsers"
@@ -120,6 +120,15 @@ export function AddRoleDialog({
               )}
             </div>
           )}
+          {!needLocs && (() => { const d = describeRole(role, draft.locations); return (
+            <div className="flex items-start gap-3 rounded-lg bg-surface-neutral-subtle p-4" aria-live="polite">
+              <Eye className="mt-0.5 size-4 shrink-0 text-content-neutral-muted" aria-hidden />
+              <div className="flex flex-col gap-1">
+                <span className="text-body-md text-content-neutral-emphasis">{direct ? "They'll" : "Members will"} see {d.sees}.</span>
+                {d.not && <span className="text-body-sm text-content-neutral-muted">Not {d.not}.</span>}
+              </div>
+            </div>
+          ) })()}
           {tried && dupe && (
             <Alert variant="warning"><AlertDescription>{direct ? "They" : "This group"} already {direct ? "have" : "has"} this role.</AlertDescription></Alert>
           )}
