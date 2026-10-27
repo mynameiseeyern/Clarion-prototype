@@ -44,6 +44,12 @@ Safeguards built in: last Tenant Admin can't be removed, demoted or deactivated;
 4. **Unassigned widget users.** Visible only to people with all-location access. Should new users default to a location?
 5. **Clarion Product Admin limited to locations.** Can a site admin manage widget users only in their site? (Model allows it; licences are tenant-wide.)
 
+## Decided: locations follow Ben's model (27 Oct)
+- Flat list, named by the customer. No nesting — a country or regional manager's group lists each site.
+- Each widget user is in at most one location, set by an admin. Detected country / city / suburb is for the map and filters only, never for access.
+- No location = only people with all-location access see them.
+- Thresholds stay tenant-wide for V1.
+
 ## SSO and SCIM knock-ons
 - **JIT and licences.** JIT creates an Iris user on first SSO login. Ben's SSO page flags admin licence limits; if admin seats are capped, JIT needs: a default group or deny when no IdP group matches, and a clear rejection when the limit is hit. Recommend **default = deny** (no access until linked to a group), so JIT never hands out data by accident.
 - **SSO wizard** still maps IdP groups to the old two roles. Under this model it maps **IdP group → Iris group**. Needs updating.
