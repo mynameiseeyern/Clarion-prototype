@@ -181,20 +181,8 @@ function makeUser(r: () => number, name: string, loginId: string, email: string,
 
 // Location ids match the seed in data/access.ts.
 const LOCS: [string | null, number][] = [["loc-syd", 10], ["loc-mel", 5], ["loc-mnl", 8], ["loc-ldn", 4], ["loc-chi", 3], ["loc-akl", 2], [null, 6]]
-/** The free-text site, read as one of the tenant's locations where it obviously is one. */
-export function siteToLocation(site: string): string | null {
-  const s = site.trim().toLowerCase()
-  if (!s) return null
-  if (s.startsWith("syd")) return "loc-syd"
-  if (s.startsWith("melb")) return "loc-mel"
-  if (s.startsWith("manila")) return "loc-mnl"
-  if (s.startsWith("chicago")) return "loc-chi"
-  if (s.startsWith("london") || s === "ldn") return "loc-ldn"
-  if (s.startsWith("auckland")) return "loc-akl"
-  return null
-}
 function placeAll(users: WidgetUser[], r: () => number) {
-  for (const u of users) u.locationId = u.site.trim() ? siteToLocation(u.site) : pickWeighted(r, LOCS)
+  for (const u of users) u.locationId = u.site.trim() ? null : pickWeighted(r, LOCS)
   return users
 }
 
@@ -390,16 +378,21 @@ export function clearLocation(locationId: string) {
 
 // --------------------------------------------------------------------- CSV --
 
-const TEMPLATE_COLS = ["loginId", "name", "email", "site"] as const
+/** Locations live in data/access.ts (which imports this file), so it hands us a
+ *  resolver instead of us importing it. */
+let locs: { byName: (name: string) => string | null; name: (id: string | null) => string } = { byName: () => null, name: () => "" }
+export function setLocationResolver(r: typeof locs) { locs = r }
+
+const TEMPLATE_COLS = ["loginId", "name", "email", "site", "location"] as const
 
 const esc = (v: string) => (/[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v)
 
 /** Same columns as the import template, so an export can be edited and imported back. */
 export function toCsv(users: WidgetUser[]) {
-  return [TEMPLATE_COLS.join(","), ...users.map((u) => [u.loginId, u.name, u.email, u.site].map(esc).join(","))].join("\n")
+  return [TEMPLATE_COLS.join(","), ...users.map((u) => [u.loginId, u.name, u.email, u.site, locs.name(u.locationId)].map(esc).join(","))].join("\n")
 }
 
-export const TEMPLATE_CSV = "loginId,name,email,site\ndomainname\\emma.johnson,Emma Johnson,emma.johnson@example.com,Sydney\n"
+export const TEMPLATE_CSV = "loginId,name,email,site,location\ndomainname\\emma.johnson,Emma Johnson,emma.johnson@example.com,Sydney,Sydney\n"
 
 /** Same quote-aware parser as csv-bulk-upload-modal.tsx. */
 export function parseCsv(text: string): string[][] {
@@ -488,8 +481,10 @@ export interface PlanRow {
   loginId: string
   name?: string
   kind: PlanKind
-  changes?: { field: "name" | "email" | "site"; from: string; to: string }[]
+  changes?: { field: "name" | "email" | "site" | "location"; from: string; to: string }[]
   reason?: string
+  /** Imported, but something was left as it was (an unknown location name). */
+  note?: string
   /** A new login ID whose username matches someone already on the list. */
   lookalike?: string
 }
@@ -523,7 +518,9 @@ export function planImport(text: string): Plan {
     const rowNum = i + 2
     const cell = (c: string) => (idx.has(c) ? (row[idx.get(c)!] ?? "").trim() : undefined)
     const loginId = (cell("loginId") ?? "").toLowerCase()
-    const name = cell("name"), email = cell("email"), site = cell("site")
+    const name = cell("name"), email = cell("email"), site = cell("site"), location = cell("location")
+    const locId = location ? locs.byName(location) : null
+    const locNote = location && !locId ? `location “${location}” doesn't exist, left as it was` : undefined
     const add = (r: PlanRow) => { out.push(r); counts[r.kind]++ }
 
     if (!loginId) { add({ row: rowNum, loginId: "", name, kind: "invalid", reason: "no login ID" }); continue }
@@ -534,7 +531,7 @@ export function planImport(text: string): Plan {
     const existing = byLogin.get(loginId)
     if (!existing) {
       const other = byLocal.get(loginLocalPart(loginId))
-      add({ row: rowNum, loginId, name, kind: "new", lookalike: other && other !== loginId ? other : undefined })
+      add({ row: rowNum, loginId, name, kind: "new", lookalike: other && other !== loginId ? other : undefined, note: locNote })
       continue
     }
     // A blank cell keeps the current value.
@@ -542,7 +539,8 @@ export function planImport(text: string): Plan {
     if (name && name !== existing.name) changes.push({ field: "name", from: existing.name, to: name })
     if (email && email !== existing.email) changes.push({ field: "email", from: existing.email, to: email })
     if (site && site !== existing.site) changes.push({ field: "site", from: existing.site, to: site })
-    add({ row: rowNum, loginId, name: existing.name, kind: changes.length ? "update" : "unchanged", changes })
+    if (locId && locId !== existing.locationId) changes.push({ field: "location", from: locs.name(existing.locationId), to: locs.name(locId) })
+    add({ row: rowNum, loginId, name: existing.name, kind: changes.length ? "update" : "unchanged", changes, note: locNote })
   }
 
   const s = stats()
@@ -567,7 +565,7 @@ export function applyPlan(plan: Plan, text: string) {
       const row = byRow.get(r.row)!
       const get = (c: string) => (idx.has(c) ? (row[idx.get(c)!] ?? "").trim() : "")
       adds.push({ userId: hashId(r.loginId), loginId: r.loginId, name: get("name"), email: get("email"), site: get("site"),
-        active: true, registerStatus: "", createdAt: now, updatedAt: now, lastSeen: null, locationId: null })
+        active: true, registerStatus: "", createdAt: now, updatedAt: now, lastSeen: null, locationId: get("location") ? locs.byName(get("location")) : null })
       summary.added++
     } else if (r.kind === "invalid" || r.kind === "duplicate") summary.skipped++
   }
@@ -576,7 +574,7 @@ export function applyPlan(plan: Plan, text: string) {
       const up = updates.get(u.loginId)
       if (!up) return u
       const next = { ...u, updatedAt: now }
-      up.changes?.forEach((c) => { next[c.field] = c.to })
+      up.changes?.forEach((c) => { if (c.field === "location") next.locationId = locs.byName(c.to); else next[c.field] = c.to })
       return next
     }),
     ...adds,
@@ -599,9 +597,9 @@ export const samples = {
   addUpdate() {
     const users = state.users
     const edits = pick(users, Math.min(8, users.length), 11)
-    const lines = ["loginId,name,email,site"]
-    for (let i = 1; i <= 20; i++) lines.push(`corp\\new.starter${i},New Starter ${i},new.starter${i}@acme.example,Sydney`)
-    edits.forEach((u, i) => lines.push([u.loginId, u.name, i % 2 ? `${loginLocalPart(u.loginId)}@acme.example` : u.email, i % 2 ? u.site : "Melbourne"].map(esc).join(",")))
+    const lines = ["loginId,name,email,site,location"]
+    for (let i = 1; i <= 20; i++) lines.push(`corp\\new.starter${i},New Starter ${i},new.starter${i}@acme.example,Sydney,${i === 7 ? "Brisbane" : "Sydney"}`)
+    edits.forEach((u, i) => lines.push([u.loginId, u.name, i % 2 ? `${loginLocalPart(u.loginId)}@acme.example` : u.email, i % 2 ? u.site : "Melbourne", i % 2 ? "" : "Melbourne"].map(esc).join(",")))
     const look = users.find((u) => u.loginId.includes("\\"))
     if (look) lines.push([loginLocalPart(look.loginId), look.name, look.email, look.site].map(esc).join(","))
     lines.push(",No Login,no.login@acme.example,Sydney")
