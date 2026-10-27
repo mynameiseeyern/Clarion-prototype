@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { FolderTree, Link2, Lock, MoreHorizontal, Pencil, Plus, Search, Sparkles, Trash2, X } from "lucide-react"
+import { Eye, FolderTree, Link2, Lock, MapPin, MoreHorizontal, Pencil, Plus, Search, Sparkles, Trash2, X } from "lucide-react"
 import {
   Alert, AlertDescription, AlertTitle, Avatar, AvatarFallback, Badge, Button, Card, CardAction, CardHeader, CardHeaderText, CardTitle,
   Checkbox, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -7,11 +7,11 @@ import {
   DrawerTitle, DrawerTitleGroup,
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
   EmptyState, Field, FieldControl, FieldError, FieldLabel, Input, InputGroup, InputGroupAddon, InputGroupInput,
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea,
+  SegmentedControl, SegmentedControlItem, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea,
 } from "@ir/ui"
 import { toast } from "@/components/ui/toast"
-import { ME, access, assignmentLabel, createSuggested, initials, suggestedGroups, wouldOrphanTenant, type Group, type Suggestion } from "@/data/access"
-import { AddRoleDialog, PeoplePicker, PersonCell, RoleBadge, fmt, plural, useAccess } from "@/components/admin/access/AccessBits"
+import { ME, access, assignmentLabel, createSuggested, describeRole, locationName, updateGroupRole, initials, suggestedGroups, wouldOrphanTenant, type Group, type Suggestion } from "@/data/access"
+import { AddRoleDialog, LocationChecklist, PeoplePicker, PersonCell, RoleBadge, fmt, plural, useAccess } from "@/components/admin/access/AccessBits"
 
 /**
  * Groups (Iris platform, Client Admin). Flat — groups can't contain groups — so they
@@ -137,6 +137,7 @@ function GroupDrawer({ id, onClose, onRename, onDelete }: { id: string | null; o
   const g = id ? access.group(id) : undefined
   const [roleOpen, setRoleOpen] = useState(false)
   const [peopleOpen, setPeopleOpen] = useState(false)
+  const [editLocs, setEditLocs] = useState<string | null>(null)
   if (!g) return <Drawer open={false} />
   const members = g.members.map((m) => access.person(m)).filter(Boolean)
 
@@ -185,9 +186,12 @@ function GroupDrawer({ id, onClose, onRename, onDelete }: { id: string | null; o
                 {g.assignments.map((x) => (
                   <li key={x.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
                     <RoleBadge x={x} />
-                    {g.locked && x.role === "tenant_admin"
-                      ? <Lock className="size-4 text-content-neutral-subtle" aria-label="Locked" />
-                      : <Button variant="ghost" size="icon-xs" aria-label={`Remove ${assignmentLabel(x)}`} onClick={() => removeRole(x.id)}><X aria-hidden /></Button>}
+                    <div className="flex items-center gap-1">
+                      {x.product && <Button variant="ghost" size="sm" onClick={() => setEditLocs(x.id)}><MapPin aria-hidden /> Edit locations</Button>}
+                      {g.locked && x.role === "tenant_admin"
+                        ? <Lock className="size-4 text-content-neutral-subtle" aria-label="Locked" />
+                        : <Button variant="ghost" size="icon-xs" aria-label={`Remove ${assignmentLabel(x)}`} onClick={() => removeRole(x.id)}><X aria-hidden /></Button>}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -222,6 +226,7 @@ function GroupDrawer({ id, onClose, onRename, onDelete }: { id: string | null; o
         </DrawerFooter>
       </DrawerContent>
 
+      <EditLocationsDialog group={g} assignmentId={editLocs} onClose={() => setEditLocs(null)} />
       <AddRoleDialog open={roleOpen} onOpenChange={setRoleOpen} title={`Add a role to ${g.name}`} existing={g.assignments}
         onAdd={(x) => { access.addGroupRole(g.id, x); toast({ title: `${g.name} now has ${assignmentLabel({ ...x, id: "" })}.`, description: `${plural(g.members.length, "member")} get it from their next request.` }) }} />
       <PeoplePicker open={peopleOpen} onOpenChange={setPeopleOpen} title={`Add people to ${g.name}`} exclude={g.members}
@@ -361,6 +366,59 @@ function SuggestGroupsDialog({ open, onOpenChange, suggestions }: { open: boolea
             toast({ title: `${plural(chosen.length, "group")} created.`, description: "They're empty. Add people with Give access on Users." })
             onOpenChange(false)
           }}>{chosen.length ? `Create ${plural(chosen.length, "group")}` : "Create groups"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// --------------------------------------------------------- edit locations ---
+// Change which sites a group's role covers in place — tick Brisbane, done.
+
+function EditLocationsDialog({ group, assignmentId, onClose }: { group: Group; assignmentId: string | null; onClose: () => void }) {
+  const x = group.assignments.find((a) => a.id === assignmentId)
+  const [where, setWhere] = useState<"some" | "all">("some")
+  const [locs, setLocs] = useState<string[]>([])
+  const [last, setLast] = useState<string | null>(null)
+  if (assignmentId !== last) { setLast(assignmentId); setWhere(x && x.locations.length === 0 ? "all" : "some"); setLocs(x?.locations ?? []) }
+  if (!x) return <Dialog open={false} />
+  const next = where === "all" ? [] : locs
+  const added = next.filter((l) => !x.locations.includes(l)), removed = x.locations.filter((l) => !next.includes(l))
+  const changed = where === "all" ? x.locations.length > 0 : added.length + removed.length > 0 || x.locations.length === 0
+  const d = describeRole(x.role, next)
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose() }}>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>Locations for {group.name}</DialogTitle>
+          <DialogDescription>Changes what all {plural(group.members.length, "member")} can see, from their next page load.</DialogDescription>
+        </DialogHeader>
+        <DialogBody className="gap-4">
+          <SegmentedControl size="sm" value={where} onValueChange={(v: string) => setWhere(v as "some" | "all")} aria-label="Which locations">
+            <SegmentedControlItem value="some">Some locations</SegmentedControlItem>
+            <SegmentedControlItem value="all">All locations</SegmentedControlItem>
+          </SegmentedControl>
+          {where === "some" ? <LocationChecklist value={locs} onChange={setLocs} /> : <p className="text-body-sm text-content-neutral-muted">Every location, plus widget users with no location.</p>}
+          {(added.length > 0 || removed.length > 0) && where === "some" && (
+            <div className="flex flex-wrap gap-1.5 text-body-sm">
+              {added.map((l) => <Badge key={l} color="success">+ {locationName(l)}</Badge>)}
+              {removed.map((l) => <Badge key={l} color="danger">− {locationName(l)}</Badge>)}
+            </div>
+          )}
+          {!(where === "some" && !locs.length) && (
+            <div className="flex items-start gap-3 rounded-lg bg-surface-neutral-subtle p-4" aria-live="polite">
+              <Eye className="mt-0.5 size-4 shrink-0 text-content-neutral-muted" aria-hidden />
+              <span className="text-body-md text-content-neutral-emphasis">Members will see {d.sees}.</span>
+            </div>
+          )}
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button disabled={!changed || (where === "some" && !locs.length)} onClick={() => {
+            updateGroupRole(group.id, x.id, next)
+            toast({ title: `${group.name} updated.`, description: "Recorded in the audit log." })
+            onClose()
+          }}>Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

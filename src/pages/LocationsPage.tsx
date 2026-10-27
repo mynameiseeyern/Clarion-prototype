@@ -8,8 +8,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea,
 } from "@ir/ui"
 import { toast } from "@/components/ui/toast"
-import { access, createSuggested, unassignedWidgetUsers, whoSees, widgetUsersIn, type Location } from "@/data/access"
-import { RoleBadge, fmt, plural, useAccess } from "@/components/admin/access/AccessBits"
+import { access, planMatch, unassignedWidgetUsers, usersForNewLocation, whoSees, widgetUsersIn, type Location } from "@/data/access"
+import { setLocation } from "@/data/widgetUsers"
+import { MatchLocationsDialog } from "@/components/admin/access/LocationTools"
+import { PersonCell, RoleBadge, fmt, plural, useAccess } from "@/components/admin/access/AccessBits"
 import { GiveAccessDialog } from "@/components/admin/access/GiveAccessDialog"
 
 /**
@@ -22,15 +24,22 @@ export function LocationsPage({ onOpenWidgetUsers }: { onOpenWidgetUsers?: () =>
   const [editing, setEditing] = useState<Location | "new" | null>(null)
   const [deleting, setDeleting] = useState<Location | null>(null)
   const [giveFor, setGiveFor] = useState<string | null>(null)
+  const [matchOpen, setMatchOpen] = useState(false)
   const locs = access.locations()
   const unassigned = unassignedWidgetUsers()
+  const matchable = planMatch().matched.reduce((n, m) => n + m.users.length, 0)
 
   return (
     <div className="flex flex-col gap-4">
       {unassigned > 0 && (
-        <Alert variant="warning" action={onOpenWidgetUsers && <Button variant="outline" size="xs" onClick={onOpenWidgetUsers}>Set locations</Button>}>
+        <Alert variant="warning" action={matchable
+          ? <Button variant="outline" size="xs" onClick={() => setMatchOpen(true)}><MapPin aria-hidden /> Match {fmt(matchable)} from site</Button>
+          : onOpenWidgetUsers && <Button variant="outline" size="xs" onClick={onOpenWidgetUsers}>Set locations</Button>}>
           <AlertTitle>{plural(unassigned, "widget user has", "widget users have")} no location</AlertTitle>
-          <AlertDescription>Only people with Clarion access to all locations see them. Set their location in Widget users.</AlertDescription>
+          <AlertDescription>
+            Only people with Clarion access to all locations see them.
+            {matchable ? ` ${fmt(matchable)} can be matched from the site they already have.` : " Set their location in Widget users."}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -99,6 +108,7 @@ export function LocationsPage({ onOpenWidgetUsers }: { onOpenWidgetUsers?: () =>
 
       <LocationDialog value={editing} onClose={() => setEditing(null)} />
       <DeleteLocationDialog loc={deleting} onClose={() => setDeleting(null)} />
+      <MatchLocationsDialog open={matchOpen} onOpenChange={setMatchOpen} onShowUnassigned={onOpenWidgetUsers} />
       <GiveAccessDialog open={giveFor !== null} onOpenChange={(o) => { if (!o) setGiveFor(null) }} locations={giveFor ? [giveFor] : []} />
     </div>
   )
@@ -107,59 +117,111 @@ export function LocationsPage({ onOpenWidgetUsers }: { onOpenWidgetUsers?: () =>
 function LocationDialog({ value, onClose }: { value: Location | "new" | null; onClose: () => void }) {
   const isNew = value === "new"
   const l = value && value !== "new" ? value : null
+  const [step, setStep] = useState(1)
   const [name, setName] = useState("")
   const [desc, setDesc] = useState("")
   const [tried, setTried] = useState(false)
+  const [skipUsers, setSkipUsers] = useState<string[]>([])
   const [withGroup, setWithGroup] = useState(true)
+  const [gName, setGName] = useState("")
+  const [managers, setManagers] = useState<string[]>([])
   const [lastKey, setLastKey] = useState<string | null>(null)
   const key = value === null ? null : isNew ? "new" : l!.id
-  if (key !== lastKey) { setLastKey(key); setName(l?.name ?? ""); setDesc(l?.description ?? ""); setTried(false); setWithGroup(true) }
-  const groupName = `${name.trim() || "[Location]"} CC managers`
-  const groupClash = access.groups().some((g) => g.name.toLowerCase() === groupName.toLowerCase())
+  if (key !== lastKey) { setLastKey(key); setStep(1); setName(l?.name ?? ""); setDesc(l?.description ?? ""); setTried(false); setSkipUsers([]); setWithGroup(true); setGName(""); setManagers([]) }
+
   const clash = access.locations().some((x) => x.id !== l?.id && x.name.trim().toLowerCase() === name.trim().toLowerCase())
   const err = tried && !name.trim() ? "Give the location a name." : clash ? "Another location already has this name." : null
-  const save = () => {
-    setTried(true)
-    if (!name.trim() || clash) return
-    if (isNew) {
-      const id = access.createLocation({ name, description: desc })
-      const makeGroup = withGroup && !groupClash
-      if (makeGroup) createSuggested([{ name: groupName, description: `Contact centre managers at ${name.trim()}`, assignment: { role: "viewer", product: "clarion", locations: [id] } }])
-      toast({ title: makeGroup ? `${name.trim()} and ${groupName} were created.` : `${name.trim()} was added.`, description: "Next: put widget users in it from Widget users." })
+  const suggestedUsers = isNew && step > 1 ? usersForNewLocation(name.trim()) : []
+  const pickedUsers = suggestedUsers.filter((u) => !skipUsers.includes(u.userId))
+  const groupName = gName || `${name.trim()} CC managers`
+  const groupClash = access.groups().some((g) => g.name.toLowerCase() === groupName.trim().toLowerCase())
+  const people = access.people().filter((p) => p.status !== "deactivated")
+
+  const next = () => { setTried(true); if (!name.trim() || clash) return; setStep(step + 1) }
+  const finish = () => {
+    const id = access.createLocation({ name, description: desc })
+    if (pickedUsers.length) setLocation(pickedUsers.map((u) => u.userId), id)
+    let gid: string | null = null
+    if (withGroup && !groupClash) {
+      gid = access.createGroup({ name: groupName, description: `Contact centre managers at ${name.trim()}` })
+      access.addGroupRole(gid, { role: "viewer", product: "clarion", locations: [id] })
+      if (managers.length) access.addMembers(gid, managers)
     }
-    else { access.updateLocation(l!.id, { name: name.trim(), description: desc.trim() }); toast({ title: "Location updated." }) }
+    toast({
+      title: `${name.trim()} is set up.`,
+      description: [pickedUsers.length && `${plural(pickedUsers.length, "widget user")} moved in`, gid && `${groupName} created${managers.length ? ` with ${plural(managers.length, "person", "people")}` : ""}`].filter(Boolean).join(" · ") || "Add widget users and managers when you're ready.",
+    })
     onClose()
   }
+  const rename = () => { setTried(true); if (!name.trim() || clash) return; access.updateLocation(l!.id, { name: name.trim(), description: desc.trim() }); toast({ title: "Location updated." }); onClose() }
+
   return (
     <Dialog open={value !== null} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent size="sm">
+      <DialogContent size={isNew && step > 1 ? "md" : "sm"}>
         <DialogHeader>
-          <DialogTitle>{isNew ? "Add location" : `Rename ${l?.name}`}</DialogTitle>
-          {isNew && <DialogDescription>Used by every Iris product in your tenant.</DialogDescription>}
+          <DialogTitle>{isNew ? (step === 1 ? "Add location" : step === 2 ? `Who's in ${name.trim()}?` : `Who manages ${name.trim()}?`) : `Rename ${l?.name}`}</DialogTitle>
+          <DialogDescription>
+            {!isNew ? "Shared by every Iris product in your tenant." : step === 1 ? "Step 1 of 3 · Name the site. Used by every Iris product in your tenant."
+              : step === 2 ? "Step 2 of 3 · We found widget users whose site matches. Untick anyone who isn't there."
+              : "Step 3 of 3 · Give the site's managers the Clarion dashboard for it. You can skip this."}
+          </DialogDescription>
         </DialogHeader>
-        <DialogBody className="gap-4">
-          <Field invalid={!!err}>
-            <FieldLabel required>Name</FieldLabel>
-            <FieldControl required><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Sydney" autoFocus /></FieldControl>
-            <FieldError>{err}</FieldError>
-            <FieldDescription>A site, office or region. Locations can&apos;t contain other locations.</FieldDescription>
-          </Field>
-          <Field>
-            <FieldLabel>Description</FieldLabel>
-            <FieldControl><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={2} /></FieldControl>
-          </Field>
-          {isNew && (
-            <div className="rounded-lg border border-line-neutral-muted p-3">
-              <FieldOption control={<Checkbox checked={withGroup && !groupClash} disabled={groupClash} onCheckedChange={() => setWithGroup((v) => !v)} />}
-                description={groupClash ? "A group with this name already exists." : "Clarion dashboard, read-only, for this location. Created empty; add people with Give access."}>
-                Also create a {groupName} group
-              </FieldOption>
+        <DialogBody className="max-h-[64vh] gap-4 overflow-y-auto">
+          {step === 1 && (
+            <>
+              <Field invalid={!!err}>
+                <FieldLabel required>Name</FieldLabel>
+                <FieldControl required><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Brisbane" autoFocus /></FieldControl>
+                <FieldError>{err}</FieldError>
+                <FieldDescription>A site, office or region. Locations can&apos;t contain other locations.</FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel>Description</FieldLabel>
+                <FieldControl><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={2} /></FieldControl>
+              </Field>
+            </>
+          )}
+          {step === 2 && (suggestedUsers.length ? (
+            <div className="max-h-80 overflow-y-auto rounded-lg border border-line-neutral-muted p-1">
+              {suggestedUsers.map((u) => (
+                <label key={u.userId} className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-surface-neutral-subtle-hovered">
+                  <Checkbox size="sm" checked={!skipUsers.includes(u.userId)} onCheckedChange={() => setSkipUsers((xs) => (xs.includes(u.userId) ? xs.filter((x) => x !== u.userId) : [...xs, u.userId]))} />
+                  <span className="flex min-w-0 flex-1 flex-col"><span className="truncate text-body-sm text-content-neutral-emphasis">{u.name || u.loginId}</span><span className="truncate text-body-xs text-content-neutral-muted">{u.loginId} · site “{u.site}”</span></span>
+                </label>
+              ))}
             </div>
+          ) : <p className="text-body-sm text-content-neutral-muted">No widget users without a location have a site matching “{name.trim()}”. You can move users here later from Widget users.</p>)}
+          {step === 3 && (
+            <>
+              <div className="rounded-lg border border-line-neutral-muted p-3">
+                <FieldOption control={<Checkbox checked={withGroup && !groupClash} disabled={groupClash} onCheckedChange={() => setWithGroup((v) => !v)} />}
+                  description={groupClash ? "A group with this name already exists." : `Sees Overview and Endpoints for ${name.trim()}, read-only.`}>
+                  Create a group for this site&apos;s managers
+                </FieldOption>
+                {withGroup && !groupClash && <div className="mt-3 ps-7"><Input size="sm" aria-label="Group name" value={groupName} onChange={(e) => setGName(e.target.value)} /></div>}
+              </div>
+              {withGroup && !groupClash && (
+                <div className="flex flex-col gap-2">
+                  <span className="text-label-md text-content-neutral-emphasis">Add people now <span className="text-content-neutral-muted">· optional</span></span>
+                  <div className="max-h-56 overflow-y-auto rounded-lg border border-line-neutral-muted p-1">
+                    {people.map((p) => (
+                      <label key={p.id} className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-surface-neutral-subtle-hovered">
+                        <Checkbox size="sm" checked={managers.includes(p.id)} onCheckedChange={() => setManagers((xs) => (xs.includes(p.id) ? xs.filter((x) => x !== p.id) : [...xs, p.id]))} />
+                        <PersonCell p={p} />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </DialogBody>
         <DialogFooter>
+          {isNew && step > 1 && <Button variant="ghost" className="me-auto" onClick={() => setStep(step - 1)}>Back</Button>}
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={save}>{isNew ? "Add location" : "Save"}</Button>
+          {!isNew ? <Button onClick={rename}>Save</Button>
+            : step < 3 ? <Button onClick={next}>{step === 2 && pickedUsers.length ? `Next · ${plural(pickedUsers.length, "user")}` : "Next"}</Button>
+            : <Button onClick={finish}>Add {name.trim()}</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>

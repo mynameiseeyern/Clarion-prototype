@@ -37,7 +37,7 @@ export function ImportFlow({ open, onOpenChange }: { open: boolean; onOpenChange
       <DialogContent size={plan ? "lg" : "sm"}>
         <DialogHeader>
           <DialogTitle>Import users</DialogTitle>
-          <DialogDescription>Adds new login IDs and updates people already on the list. Nobody is removed.</DialogDescription>
+          <DialogDescription>Adds new login IDs and updates people already on the list, including their location. Nobody is removed.</DialogDescription>
         </DialogHeader>
 
         <DialogBody className="max-h-[68vh] gap-4 overflow-y-auto">
@@ -108,6 +108,7 @@ function Outcome({ r }: { r: PlanRow }) {
     <div className="flex flex-col gap-1">
       <Badge color="success" className="self-start">New</Badge>
       {r.lookalike && <span className="text-body-sm text-content-warning-emphasis">Looks like <span className="font-mono">{r.lookalike}</span></span>}
+      {r.note && <span className="text-body-sm text-content-warning-emphasis">Imported, but {r.note}</span>}
     </div>
   )
   if (r.kind === "update") return (
@@ -117,6 +118,7 @@ function Outcome({ r }: { r: PlanRow }) {
           {c.field}: <s>{c.from || "blank"}</s> → <span className="text-content-neutral-emphasis">{c.to}</span>
         </span>
       ))}
+      {r.note && <span className="text-content-warning-emphasis">{r.note}</span>}
     </div>
   )
   return <span className="text-body-sm text-content-danger-emphasis">Skipped — {r.reason}</span>

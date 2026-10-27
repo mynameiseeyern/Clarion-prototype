@@ -33,6 +33,12 @@ IR owns a fixed set of roles. **Tenant roles** (Tenant Admin, User Admin, Audito
 - **Bulk on Users** — tick people, then Give access, Add to group or Remove from group (with last-admin safeguards).
 - **Roles → Permission details** — Vanta-style full matrix in words (Full / Their locations / View only / No access).
 - **Built-in IT administrators group** — locked like Retool's Admin group: always Tenant Admin, can't be renamed or deleted; membership can still change.
+- **Suggested groups** — Groups page offers one *[Site] CC managers* group per location (+ leadership, Clarion administrators); Add location offers its group too. Nothing is created until confirmed.
+- **Match from site** — reads each widget user's typed site ("Sydney", "SYD", "Sydney CBD") as a location and sets them in one go; unmatched sites can become locations in one click. CSV import/export gains a *location* column.
+- **Edit locations** on a group's role in place (tick Brisbane, done).
+- **Move to another site** — swaps a manager's site group in one step.
+- **Add location** is one 3-step dialog: name → confirm matching widget users → create the site's group and pick its managers.
+- **Who can see this?** on a widget user — everyone whose access covers them, and why.
 - Later: group templates, "Same access as…", a needs-attention strip.
 
 Safeguards built in: last Tenant Admin can't be removed, demoted or deactivated; you can't remove your own admin access; break-glass accounts are always Tenant Admin and can't be deactivated here.

@@ -4,7 +4,7 @@ import {
   MoreHorizontal, RotateCcw, Search, Upload, UserPlus, UserRoundPlus, X,
 } from "lucide-react"
 import {
-  Badge, Button, Card, Checkbox,
+  Alert, AlertDescription, AlertTitle, Badge, Button, Card, Checkbox,
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
   EmptyState, InputGroup, InputGroupAddon, InputGroupInput, Progress, SegmentedControl, SegmentedControlItem, Select,
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -20,7 +20,8 @@ import {
 } from "@/components/admin/widget-users/dialogs"
 import { ImportFlow } from "@/components/admin/widget-users/ImportFlow"
 import { SetLocationDialog } from "@/components/admin/widget-users/SetLocationDialog"
-import { access, locationName } from "@/data/access"
+import { access, locationName, planMatch } from "@/data/access"
+import { MatchLocationsDialog, WhoCanSeeDialog } from "@/components/admin/access/LocationTools"
 import { useAccess } from "@/components/admin/access/AccessBits"
 
 type View = "current" | "proposed"
@@ -167,6 +168,9 @@ export function WidgetUsersPage() {
   const [deactivateTarget, setDeactivateTarget] = useState<Target | null>(null)
   const [editUser, setEditUser] = useState<WidgetUser | null>(null)
   const [locationTarget, setLocationTarget] = useState<Target | null>(null)
+  const [matchOpen, setMatchOpen] = useState(false)
+  const [whoUser, setWhoUser] = useState<WidgetUser | null>(null)
+  const matchable = useMemo(() => (proposed ? planMatch().matched.reduce((n, m) => n + m.users.length, 0) : 0), [proposed, version]) // eslint-disable-line react-hooks/exhaustive-deps
   const doSetLocation = (t: Target, loc: string | null) => {
     const r = setLocation(t.users.map((u) => u.userId), loc)
     if (r.ok) toast({ title: loc ? `${r.changed === 1 ? t.label : plural(r.changed, "user")} moved to ${locationName(loc)}.` : `${r.changed === 1 ? t.label : plural(r.changed, "user")} now ${r.changed === 1 ? "has" : "have"} no location.`, description: "Who can see them changes from the next request. Recorded in the audit log." })
@@ -250,6 +254,13 @@ export function WidgetUsersPage() {
       </Card>
 
       <Progress label="Clarion licenses in use" value={pct} valueLabel={`${fmt(s.active)}/${fmt(s.limit)}`} />
+
+      {matchable > 0 && (
+        <Alert variant="info" action={<Button variant="outline" size="xs" onClick={() => setMatchOpen(true)}><MapPin aria-hidden /> Match from site</Button>}>
+          <AlertTitle>{plural(matchable, "widget user", "widget users")} can be put in a location automatically</AlertTitle>
+          <AlertDescription>Their site already says where they are. Until they have a location, only people with access to all locations see them.</AlertDescription>
+        </Alert>
+      )}
 
       <Card className="gap-0 overflow-hidden p-0">
         {/* header */}
@@ -416,6 +427,7 @@ export function WidgetUsersPage() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onSelect={() => setEditUser(u)}>Edit details</DropdownMenuItem>
                               <DropdownMenuItem onSelect={() => setLocationTarget(targetFor([u]))}>Set location…</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setWhoUser(u)}>Who can see this?</DropdownMenuItem>
                               {u.active
                                 ? <DropdownMenuItem onSelect={() => setDeactivateTarget(targetFor([u]))}>Deactivate</DropdownMenuItem>
                                 : <DropdownMenuItem onSelect={() => doReactivate(targetFor([u]))}>Reactivate</DropdownMenuItem>}
@@ -449,6 +461,8 @@ export function WidgetUsersPage() {
       <ImportFlow open={importOpen} onOpenChange={setImportOpen} />
       <RemoveDialog open={!!removeTarget} onOpenChange={(o) => { if (!o) setRemoveTarget(null) }} target={removeTarget}
         onRemove={doRemove} onDeactivateInstead={() => { if (removeTarget) { setDeactivateTarget(onlyActive(removeTarget, true)); setRemoveTarget(null) } }} />
+      <MatchLocationsDialog open={matchOpen} onOpenChange={setMatchOpen} onShowUnassigned={() => setFilters({ ...filters, location: ["none"] })} />
+      <WhoCanSeeDialog user={whoUser} onClose={() => setWhoUser(null)} />
       <SetLocationDialog target={locationTarget} onClose={() => setLocationTarget(null)} onConfirm={doSetLocation} />
       <EditUserDialog open={!!editUser} onOpenChange={(o) => { if (!o) setEditUser(null) }} user={editUser} />
       <DeactivateDialog open={!!deactivateTarget} onOpenChange={(o) => { if (!o) setDeactivateTarget(null) }} target={deactivateTarget}

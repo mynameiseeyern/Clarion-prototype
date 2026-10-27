@@ -10,11 +10,11 @@ import {
   DrawerTitle, DrawerTitleGroup,
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
   EmptyState, Field, FieldControl, FieldDescription, FieldError, FieldLabel, Input, InputGroup, InputGroupAddon, InputGroupInput,
-  Select, Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  FieldOption, Radio, RadioGroup, Select, Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@ir/ui"
 import { toast } from "@/components/ui/toast"
 import {
-  ME, access, assignmentLabel, clarionAccess, clarionReach, grantsOf, groupsOf, isTenantAdmin, roleDef, roles,
+  ME, access, assignmentLabel, describeRole, locationName, moveTarget, siteGroupsOf, clarionAccess, clarionReach, grantsOf, groupsOf, isTenantAdmin, roleDef, roles,
   statusLabel, tenantAdmins, wouldOrphanTenant, type Person, type PersonStatus,
 } from "@/data/access"
 import { AddRoleDialog, PersonCell, RoleBadge, fmt, locList, plural, useAccess } from "@/components/admin/access/AccessBits"
@@ -39,6 +39,7 @@ export function UsersRolesPage() {
   const [selected, setSelected] = useState<string[]>([])
   const [give, setGive] = useState<string[] | null>(null)
   const [bulkGroup, setBulkGroup] = useState<"add" | "remove" | null>(null)
+  const [moveFor, setMoveFor] = useState<string | null>(null)
 
   const people = access.people()
   const filtered = people.filter((p) => {
@@ -145,7 +146,7 @@ export function UsersRolesPage() {
                   <TableCell className="text-content-neutral-muted">{p.status === "invited" ? `Invited ${p.invitedAgo}` : (p.lastActive ?? "—")}</TableCell>
                   <TableCell><Badge color={statusColor[p.status]} dot>{statusLabel[p.status]}</Badge></TableCell>
                   <TableCell className="pe-3" onClick={(e) => e.stopPropagation()}>
-                    <RowMenu p={p} onOpen={() => setOpen(p.id)} />
+                    <RowMenu p={p} onOpen={() => setOpen(p.id)} onMove={() => setMoveFor(p.id)} />
                   </TableCell>
                 </TableRow>
               )
@@ -162,7 +163,8 @@ export function UsersRolesPage() {
         </Table>
       </Card>
 
-      <UserDrawer id={open} onClose={() => setOpen(null)} onGive={(id) => setGive([id])} />
+      <UserDrawer id={open} onClose={() => setOpen(null)} onGive={(id) => setGive([id])} onMove={(id) => setMoveFor(id)} />
+      <MoveSiteDialog personId={moveFor} onClose={() => setMoveFor(null)} />
       <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} />
       <GiveAccessDialog open={give !== null} onOpenChange={(o) => { if (!o) { if (give && give.length > 1) setSelected([]); setGive(null) } }} people={give ?? []} />
       <BulkGroupDialog mode={bulkGroup} people={selected} onClose={(done) => { setBulkGroup(null); if (done) setSelected([]) }} />
@@ -190,7 +192,7 @@ function AccessSummary({ p }: { p: Person }) {
   )
 }
 
-function RowMenu({ p, onOpen }: { p: Person; onOpen: () => void }) {
+function RowMenu({ p, onOpen, onMove }: { p: Person; onOpen: () => void; onMove: () => void }) {
   const lastAdmin = isTenantAdmin(p.id) && tenantAdmins().length <= 1
   const deactivate = () => {
     if (p.breakGlass) { toast({ title: "Break-glass accounts can't be deactivated here.", description: "Turn off \"SSO required\" first, then remove the break-glass flag in Single sign-on.", variant: "danger" }); return }
@@ -206,6 +208,7 @@ function RowMenu({ p, onOpen }: { p: Person; onOpen: () => void }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onSelect={onOpen}><ShieldCheck aria-hidden /> View access</DropdownMenuItem>
+        {siteGroupsOf(p.id).length > 0 && <DropdownMenuItem onSelect={onMove}><MapPin aria-hidden /> Move to another site…</DropdownMenuItem>}
         {p.status === "invited" && <DropdownMenuItem onSelect={() => toast({ title: `Invite resent to ${p.email}.` })}><Mail aria-hidden /> Resend invite</DropdownMenuItem>}
         {p.status === "active" && <DropdownMenuItem onSelect={() => toast({ title: `Password reset sent to ${p.email}.` })}><KeyRound aria-hidden /> Send password reset</DropdownMenuItem>}
         <DropdownMenuSeparator />
@@ -219,7 +222,7 @@ function RowMenu({ p, onOpen }: { p: Person; onOpen: () => void }) {
 
 // ---------------------------------------------------------------- drawer ----
 
-function UserDrawer({ id, onClose, onGive }: { id: string | null; onClose: () => void; onGive: (id: string) => void }) {
+function UserDrawer({ id, onClose, onGive, onMove }: { id: string | null; onClose: () => void; onGive: (id: string) => void; onMove: (id: string) => void }) {
   useAccess()
   const p = id ? access.person(id) : undefined
   const [roleOpen, setRoleOpen] = useState(false)
@@ -284,6 +287,7 @@ function UserDrawer({ id, onClose, onGive }: { id: string | null; onClose: () =>
             <div className="flex items-center justify-between">
               <h3 className="text-label-lg text-content-neutral-emphasis">Groups</h3>
               <div className="flex gap-2">
+                {siteGroupsOf(p.id).length > 0 && <Button variant="outline" size="sm" onClick={() => onMove(p.id)}><MapPin aria-hidden /> Move site</Button>}
                 <Button variant="outline" size="sm" onClick={() => onGive(p.id)}><ShieldCheck aria-hidden /> Give access</Button>
                 <Button variant="ghost" size="sm" onClick={() => setGroupOpen(true)}><Plus aria-hidden /> Add to group</Button>
               </div>
@@ -485,6 +489,71 @@ function BulkGroupDialog({ mode, people, onClose }: { mode: "add" | "remove" | n
         <DialogFooter>
           <Button variant="outline" onClick={() => onClose()}>Cancel</Button>
           <Button variant={mode === "remove" ? "destructive" : undefined} disabled={!picked.length} onClick={apply}>{mode === "add" ? "Add" : "Remove"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// -------------------------------------------------------------- move site ---
+// A manager moves from Sydney to Melbourne: one step, not remove-then-add.
+
+function MoveSiteDialog({ personId, onClose }: { personId: string | null; onClose: () => void }) {
+  useAccess()
+  const p = personId ? access.person(personId) : undefined
+  const from = p ? siteGroupsOf(p.id) : []
+  const [fromId, setFromId] = useState<string>("")
+  const [to, setTo] = useState<string>("")
+  const [last, setLast] = useState<string | null>(null)
+  if (personId !== last) { setLast(personId); setFromId(from[0]?.id ?? ""); setTo("") }
+  if (!p || !from.length) return <Dialog open={false} />
+  const g = access.group(fromId) ?? from[0]
+  const current = g.assignments[0].locations[0]
+  const target = to ? moveTarget(g.id, to) : null
+  const d = target ? describeRole(target.draft.role, [to]) : null
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose() }}>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>Move {p.name} to another site</DialogTitle>
+          <DialogDescription>Takes them out of {g.name} and into the group for the new site, in one step.</DialogDescription>
+        </DialogHeader>
+        <DialogBody className="gap-5">
+          {from.length > 1 && (
+            <section className="flex flex-col gap-2">
+              <span className="text-label-md text-content-neutral-emphasis">Which site are they leaving?</span>
+              <RadioGroup value={g.id} onValueChange={(v) => { setFromId(v); setTo("") }} className="gap-2">
+                {from.map((x) => <FieldOption key={x.id} control={<Radio value={x.id} />} description={assignmentLabel(x.assignments[0])}>{x.name}</FieldOption>)}
+              </RadioGroup>
+            </section>
+          )}
+          <section className="flex flex-col gap-2">
+            <span className="text-label-md text-content-neutral-emphasis">Moving from {locationName(current)} to</span>
+            <RadioGroup value={to} onValueChange={setTo} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {access.locations().filter((l) => l.id !== current).map((l) => <FieldOption key={l.id} control={<Radio value={l.id} />}>{l.name}</FieldOption>)}
+            </RadioGroup>
+          </section>
+          {target && d && (
+            <section className="flex flex-col gap-3 rounded-lg border border-line-neutral-muted p-4">
+              <span className="text-body-sm text-content-neutral-emphasis">
+                <span className="text-content-danger-emphasis">− {g.name}</span>{"  "}<span className="text-content-success-emphasis">+ {target.match ? target.match.name : `${target.name} (new group)`}</span>
+              </span>
+              <span className="text-body-md text-content-neutral-emphasis">{p.name.split(" ")[0]} will see {d.sees}.</span>
+            </section>
+          )}
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button disabled={!target} onClick={() => {
+            if (!target) return
+            let gid = target.match?.id
+            if (!gid) { gid = access.createGroup({ name: target.name, description: "" }); access.addGroupRole(gid, target.draft) }
+            access.removeMember(g.id, p.id)
+            access.addMembers(gid, [p.id])
+            toast({ title: `${p.name} moved to ${locationName(to)}.`, description: `Now in ${access.group(gid)!.name}. Applies from their next page load.` })
+            onClose()
+          }}>Move</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -15,7 +15,7 @@
 // example "Sydney CC managers") holding Clarion Viewer, limited to Sydney.
 // See RBAC-PROPOSAL.md.
 
-import { clearLocation, store as widgetStore } from "@/data/widgetUsers"
+import { clearLocation, setLocation, setLocationResolver, store as widgetStore, type WidgetUser } from "@/data/widgetUsers"
 
 // ------------------------------------------------------------------ catalogue --
 
@@ -391,4 +391,98 @@ export function createSuggested(list: { name: string; description: string; assig
     const id = access.createGroup({ name: s.name, description: s.description })
     access.addGroupRole(id, s.assignment)
   }
+}
+
+// ------------------------------------------------- locations ↔ widget users --
+
+const norm = (v: string) => v.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim()
+const ALIASES: Record<string, string> = { syd: "sydney", mel: "melbourne", melb: "melbourne", akl: "auckland", mnl: "manila", ldn: "london", chi: "chicago", nyc: "new york", bne: "brisbane" }
+
+/** Read a free-text site as one of the tenant's locations, if it clearly is one. */
+export function matchLocation(site: string, among: Location[] = state.locations): string | null {
+  const s = norm(site)
+  if (!s) return null
+  const target = ALIASES[s] ?? s
+  for (const l of among) {
+    const n = norm(l.name)
+    if (target === n || target.startsWith(n + " ") || (target.length >= 3 && n.startsWith(target))) return l.id
+  }
+  return null
+}
+
+// CSV import/export reads and writes locations by name.
+setLocationResolver({
+  byName: (name) => state.locations.find((l) => norm(l.name) === norm(name))?.id ?? matchLocation(name),
+  name: (id) => (id ? state.locations.find((l) => l.id === id)?.name ?? "" : ""),
+})
+
+export interface MatchPlan {
+  matched: { locationId: string; users: WidgetUser[]; sites: string[] }[]
+  unmatched: { site: string; users: WidgetUser[] }[]
+  /** No location and no site typed either: set by hand. */
+  blank: number
+}
+
+/** Widget users with no location, read from their typed site. */
+export function planMatch(): MatchPlan {
+  const pending = widgetStore.all().filter((u) => !u.locationId)
+  const matched = new Map<string, { users: WidgetUser[]; sites: Set<string> }>()
+  const unmatched = new Map<string, WidgetUser[]>()
+  let blank = 0
+  for (const u of pending) {
+    if (!u.site.trim()) { blank++; continue }
+    const id = matchLocation(u.site)
+    if (id) { const m = matched.get(id) ?? { users: [], sites: new Set() }; m.users.push(u); m.sites.add(u.site.trim()); matched.set(id, m) }
+    else { const k = u.site.trim(); unmatched.set(k, [...(unmatched.get(k) ?? []), u]) }
+  }
+  return {
+    matched: [...matched].map(([locationId, m]) => ({ locationId, users: m.users, sites: [...m.sites] })).sort((a, b) => b.users.length - a.users.length),
+    unmatched: [...unmatched].map(([site, users]) => ({ site, users })).sort((a, b) => b.users.length - a.users.length),
+    blank,
+  }
+}
+
+export function applyMatch(plan: MatchPlan, locationIds: string[]) {
+  let n = 0
+  for (const m of plan.matched) if (locationIds.includes(m.locationId)) n += (setLocation(m.users.map((u) => u.userId), m.locationId) as { changed: number }).changed
+  return n
+}
+
+/** Unassigned widget users whose site reads as this (new) location name. */
+export const usersForNewLocation = (name: string) =>
+  widgetStore.all().filter((u) => !u.locationId && u.site.trim() && matchLocation(u.site, [{ id: "new", name, description: "" }]) === "new")
+
+/** Everyone who can see a widget user (and so their endpoints) in Clarion, and why. */
+export function whoCanSee(locationId: string | null) {
+  return state.people.filter((p) => p.status !== "deactivated").flatMap((p) => {
+    const acc = clarionAccess(p.id)
+    if (!acc.role) return []
+    if (acc.locations !== null && (!locationId || !acc.locations.includes(locationId))) return []
+    const via = grantsOf(p.id).filter((g) => g.assignment.role === "tenant_admin" || (g.assignment.product === "clarion" &&
+      (g.assignment.locations.length === 0 || (locationId !== null && g.assignment.locations.includes(locationId)))))
+    return [{ person: p, role: acc.role, everywhere: acc.locations === null, via }]
+  })
+}
+
+export function updateGroupRole(groupId: string, assignmentId: string, locations: string[]) {
+  const g = access.group(groupId)
+  if (!g) return
+  access.removeGroupRole(groupId, assignmentId)
+  const x = g.assignments.find((a) => a.id === assignmentId)!
+  access.addGroupRole(groupId, { role: x.role, product: x.product, locations })
+}
+
+/** Groups that tie someone to one site (a product role limited to one location). */
+export const siteGroupsOf = (personId: string) =>
+  groupsOf(personId).filter((g) => g.source === "local" && g.assignments.length === 1 && g.assignments[0].product && g.assignments[0].locations.length === 1)
+
+/** The group someone moving from `fromGroup` to `toLocation` should land in: an existing match, or a new name. */
+export function moveTarget(fromGroupId: string, toLocation: string) {
+  const g = access.group(fromGroupId)!
+  const x = g.assignments[0]
+  const draft = { role: x.role, product: x.product, locations: [toLocation] }
+  const match = matchingGroup(draft)
+  const oldName = locationName(x.locations[0]), newName = locationName(toLocation)
+  const name = g.name.includes(oldName) ? g.name.replace(oldName, newName) : suggestGroupName(x.role === "product_admin" ? "manage" : "view", [toLocation])
+  return { draft, match, name }
 }

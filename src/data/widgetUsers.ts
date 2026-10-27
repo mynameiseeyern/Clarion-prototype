@@ -181,6 +181,8 @@ function makeUser(r: () => number, name: string, loginId: string, email: string,
 
 // Location ids match the seed in data/access.ts.
 const LOCS: [string | null, number][] = [["loc-syd", 10], ["loc-mel", 5], ["loc-mnl", 8], ["loc-ldn", 4], ["loc-chi", 3], ["loc-akl", 2], [null, 6]]
+/** Users with no typed site were placed by an admin already. Users with a typed site
+ *  start without a location, so "Match from site" has something to do. */
 function placeAll(users: WidgetUser[], r: () => number) {
   for (const u of users) u.locationId = u.site.trim() ? null : pickWeighted(r, LOCS)
   return users
